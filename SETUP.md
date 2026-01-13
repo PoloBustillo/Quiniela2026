@@ -141,19 +141,96 @@ npm run db:generate  # Genera el cliente de Prisma
 
 Cuando estés listo para desplegar:
 
-1. **Base de Datos:** Usa un servicio como:
+### 1. **Base de Datos PostgreSQL en la Nube**
 
-   - [Neon](https://neon.tech) (PostgreSQL gratis)
-   - [Supabase](https://supabase.com) (PostgreSQL gratis)
-   - [Railway](https://railway.app)
+Opciones recomendadas (gratis):
 
-2. **Aplicación:** Despliega en:
+- **[Neon](https://neon.tech)** - PostgreSQL serverless (Recomendado)
+- **[Supabase](https://supabase.com)** - PostgreSQL con extras
+- **[Railway](https://railway.app)** - PostgreSQL con $5 gratis/mes
 
-   - [Vercel](https://vercel.com) (Recomendado para Next.js)
-   - [Netlify](https://netlify.com)
-   - [Railway](https://railway.app)
+### 2. **Despliegue en Vercel (Recomendado)**
 
-3. **Configura variables de entorno** en tu plataforma de despliegue
+#### Pasos para desplegar:
+
+1. **Conecta tu repositorio:**
+   - Ve a [Vercel](https://vercel.com)
+   - Importa tu repositorio de GitHub
+   - Vercel detectará automáticamente Next.js
+
+2. **Configura las variables de entorno:**
+   ```env
+   DATABASE_URL="tu-postgresql-url-de-produccion"
+   NEXTAUTH_URL="https://tu-dominio.vercel.app"
+   NEXTAUTH_SECRET="tu-secret-super-seguro"
+   GOOGLE_CLIENT_ID="tu-google-client-id"
+   GOOGLE_CLIENT_SECRET="tu-google-client-secret"
+   ```
+
+3. **Actualiza Google OAuth:**
+   - Ve a [Google Cloud Console](https://console.cloud.google.com)
+   - Agrega tu URL de Vercel a las URIs autorizadas:
+     - Origen: `https://tu-dominio.vercel.app`
+     - Redirect: `https://tu-dominio.vercel.app/api/auth/callback/google`
+
+4. **Despliega:**
+   - Vercel construirá automáticamente
+   - El script `postinstall` generará Prisma Client
+   - El comando `build` incluye `prisma generate`
+
+#### ⚠️ Importante para Vercel:
+
+El proyecto ya está configurado con:
+- ✅ Script `postinstall: "prisma generate"` en package.json
+- ✅ Script `build: "prisma generate && next build"`
+- ✅ Archivo `vercel.json` con configuración óptima
+
+Esto asegura que Prisma Client se genere correctamente en cada deploy.
+
+### 3. **Migración de Base de Datos en Producción**
+
+Después del primer deploy:
+
+```bash
+# Opción 1: Usar Prisma Studio (más fácil)
+npx prisma studio --schema=./prisma/schema.prisma
+
+# Opción 2: Push directo (para desarrollo)
+npx prisma db push
+
+# Opción 3: Migraciones (para producción)
+npx prisma migrate deploy
+```
+
+### 4. **Alternativas de Despliegue**
+
+Si prefieres otra plataforma:
+
+- **[Netlify](https://netlify.com)** - Similar a Vercel
+- **[Railway](https://railway.app)** - Base de datos + App en un lugar
+- **[Fly.io](https://fly.io)** - Alternativa con buen tier gratuito
+
+### 5. **Monitoreo y Logs**
+
+- Vercel Dashboard → Tu proyecto → Logs
+- Vercel Analytics (opcional pero recomendado)
+- Prisma Studio para revisar datos
+
+## 🔧 Troubleshooting en Vercel
+
+### Error: "Prisma Client not generated"
+
+**Solución:** Ya está arreglado con el script postinstall, pero si persiste:
+1. Ve a Vercel Dashboard → Settings → General
+2. Asegúrate que "Build Command" sea: `prisma generate && next build`
+3. Redespliega
+
+### Error: "Database connection"
+
+**Solución:**
+1. Verifica que DATABASE_URL esté correcta en variables de entorno
+2. Asegúrate que la base de datos acepte conexiones externas
+3. Verifica que el pool de conexiones no esté lleno
 
 ## 📞 Ayuda
 
