@@ -154,11 +154,13 @@ Opciones recomendadas (gratis):
 #### Pasos para desplegar:
 
 1. **Conecta tu repositorio:**
+
    - Ve a [Vercel](https://vercel.com)
    - Importa tu repositorio de GitHub
    - Vercel detectará automáticamente Next.js
 
 2. **Configura las variables de entorno:**
+
    ```env
    DATABASE_URL="tu-postgresql-url-de-produccion"
    NEXTAUTH_URL="https://tu-dominio.vercel.app"
@@ -168,6 +170,7 @@ Opciones recomendadas (gratis):
    ```
 
 3. **Actualiza Google OAuth:**
+
    - Ve a [Google Cloud Console](https://console.cloud.google.com)
    - Agrega tu URL de Vercel a las URIs autorizadas:
      - Origen: `https://tu-dominio.vercel.app`
@@ -181,6 +184,7 @@ Opciones recomendadas (gratis):
 #### ⚠️ Importante para Vercel:
 
 El proyecto ya está configurado con:
+
 - ✅ Script `postinstall: "prisma generate"` en package.json
 - ✅ Script `build: "prisma generate && next build"`
 - ✅ Archivo `vercel.json` con configuración óptima
@@ -221,6 +225,7 @@ Si prefieres otra plataforma:
 ### Error: "Prisma Client not generated"
 
 **Solución:** Ya está arreglado con el script postinstall, pero si persiste:
+
 1. Ve a Vercel Dashboard → Settings → General
 2. Asegúrate que "Build Command" sea: `prisma generate && next build`
 3. Redespliega
@@ -228,6 +233,7 @@ Si prefieres otra plataforma:
 ### Error: "Database connection"
 
 **Solución:**
+
 1. Verifica que DATABASE_URL esté correcta en variables de entorno
 2. Asegúrate que la base de datos acepte conexiones externas
 3. Verifica que el pool de conexiones no esté lleno

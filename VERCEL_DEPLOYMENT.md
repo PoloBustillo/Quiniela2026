@@ -7,15 +7,19 @@ Este proyecto está optimizado para desplegarse en Vercel con Prisma.
 El proyecto ya incluye:
 
 1. **Script postinstall** en `package.json`:
+
    ```json
    "postinstall": "prisma generate"
    ```
+
    Esto genera automáticamente Prisma Client después de `npm install`
 
 2. **Script build mejorado**:
+
    ```json
    "build": "prisma generate && next build"
    ```
+
    Asegura que Prisma Client esté actualizado en cada build
 
 3. **Archivo vercel.json** con configuración óptima
@@ -27,18 +31,21 @@ El proyecto ya incluye:
 Obtén una base de datos PostgreSQL en la nube:
 
 **Opción A: Neon (Recomendado)**
+
 - Ve a [neon.tech](https://neon.tech)
 - Crea una cuenta gratis
 - Crea un nuevo proyecto
 - Copia la connection string
 
 **Opción B: Supabase**
+
 - Ve a [supabase.com](https://supabase.com)
 - Crea un proyecto
 - Ve a Settings → Database
 - Copia la connection string (pooler mode)
 
 **Opción C: Railway**
+
 - Ve a [railway.app](https://railway.app)
 - Crea un proyecto con PostgreSQL
 - Copia la connection string
@@ -108,6 +115,7 @@ npx prisma migrate deploy
 ```
 
 O usa Prisma Studio para verificar:
+
 ```bash
 npx prisma studio
 ```
@@ -125,11 +133,13 @@ npx prisma studio
 **Causa:** Vercel cachea dependencias y no regenera Prisma Client
 
 **Solución:** Ya está arreglado con:
+
 - Script `postinstall` en package.json
 - Script `build` actualizado
 - Archivo vercel.json configurado
 
 Si persiste:
+
 1. Ve a Vercel Dashboard → Settings → General
 2. Verifica que Build Command sea: `prisma generate && next build`
 3. Limpia el cache: Settings → General → Clear Build Cache
@@ -138,6 +148,7 @@ Si persiste:
 ### Error: "Can't reach database server"
 
 **Solución:**
+
 1. Verifica que DATABASE_URL sea correcta
 2. Asegúrate que la base de datos acepte conexiones externas
 3. Verifica el formato de la connection string:
@@ -149,6 +160,7 @@ Si persiste:
 ### Error: "OAuth redirect_uri_mismatch"
 
 **Solución:**
+
 1. Ve a Google Cloud Console
 2. Actualiza las URIs autorizadas con tu URL de Vercel
 3. Espera 5 minutos para que se propague
@@ -158,6 +170,7 @@ Si persiste:
 
 **Solución:**
 Conecta a tu base de datos y ejecuta:
+
 ```bash
 # Desde tu máquina local con la DATABASE_URL de producción
 DATABASE_URL="tu-connection-string-produccion" npx prisma db push
@@ -166,28 +179,34 @@ DATABASE_URL="tu-connection-string-produccion" npx prisma db push
 ## 📊 Monitoreo
 
 ### Logs en Vercel
+
 - Dashboard → Tu Proyecto → Deployments
 - Click en cualquier deployment → View Function Logs
 
 ### Métricas
+
 - Dashboard → Tu Proyecto → Analytics
 - Vercel Analytics (activar en Settings)
 
 ### Base de Datos
+
 - Prisma Studio: `npx prisma studio`
 - O usa la UI de Neon/Supabase/Railway
 
 ## 🔄 Redeployar
 
 ### Automático (Recomendado)
+
 Cada push a la rama `main` desplegará automáticamente
 
 ### Manual
+
 ```bash
 vercel --prod
 ```
 
 ### Desde Vercel UI
+
 Dashboard → Tu Proyecto → Deployments → Redeploy
 
 ## 🎯 Configuración Avanzada
@@ -215,9 +234,10 @@ vercel env add DATABASE_URL development
 ### Edge Functions (Opcional)
 
 Para mejor rendimiento, considera usar Edge Functions:
+
 ```javascript
 // app/api/route.ts
-export const runtime = 'edge'
+export const runtime = "edge";
 ```
 
 ## 📚 Recursos
