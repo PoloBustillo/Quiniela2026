@@ -5,11 +5,12 @@ import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import {
   Trophy,
-  Target,
-  TrendingUp,
+  BookOpen,
+  Settings2,
   Settings,
   LogOut,
   Menu,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,9 +33,10 @@ export function Navigation() {
   const isAdmin = session?.user?.role === "ADMIN";
 
   const navLinks = [
-    { href: "/predictions", icon: Target, label: "Predicciones" },
+    { href: "/", icon: Calendar, label: "Partidos" },
+    { href: "/rules", icon: BookOpen, label: "Reglas" },
     { href: "/leaderboard", icon: Trophy, label: "Tabla" },
-    { href: "/stats", icon: TrendingUp, label: "Stats" },
+    { href: "/settings", icon: Settings2, label: "Configuraciones" },
   ];
 
   if (isAdmin) {

@@ -1,0 +1,120 @@
+export const countryTranslations: Record<string, string> = {
+  // Equipos principales
+  Mexico: "México",
+  "South Africa": "Sudáfrica",
+  "South Korea": "Corea del Sur",
+  Canada: "Canadá",
+  Qatar: "Catar",
+  Switzerland: "Suiza",
+  "United States": "Estados Unidos",
+  USA: "Estados Unidos",
+  Peru: "Perú",
+  Belgium: "Bélgica",
+  Morocco: "Marruecos",
+  Honduras: "Honduras",
+  France: "Francia",
+  Croatia: "Croacia",
+  Nigeria: "Nigeria",
+  Iran: "Irán",
+  "New Zealand": "Nueva Zelanda",
+  Argentina: "Argentina",
+  Spain: "España",
+  Denmark: "Dinamarca",
+  Tunisia: "Túnez",
+  Australia: "Australia",
+  Paraguay: "Paraguay",
+  Brazil: "Brasil",
+  Germany: "Alemania",
+  Cameroon: "Camerún",
+  "Saudi Arabia": "Arabia Saudita",
+  Wales: "Gales",
+  Uruguay: "Uruguay",
+  England: "Inglaterra",
+  Poland: "Polonia",
+  Ghana: "Ghana",
+  Serbia: "Serbia",
+  Colombia: "Colombia",
+  Portugal: "Portugal",
+  Sweden: "Suecia",
+  "Ivory Coast": "Costa de Marfil",
+  "Costa Rica": "Costa Rica",
+  Iceland: "Islandia",
+  Chile: "Chile",
+  Netherlands: "Países Bajos",
+  Ukraine: "Ucrania",
+  Egypt: "Egipto",
+  Jamaica: "Jamaica",
+  Japan: "Japón",
+  Panama: "Panamá",
+  Senegal: "Senegal",
+  Italy: "Italia",
+  Ecuador: "Ecuador",
+  Algeria: "Argelia",
+  Austria: "Austria",
+  "Cape Verde": "Cabo Verde",
+  Curacao: "Curazao",
+  Haiti: "Haití",
+  Jordan: "Jordania",
+  Norway: "Noruega",
+  Scotland: "Escocia",
+  Uzbekistan: "Uzbekistán",
+
+  // Placeholders
+  "Winner UEFA Playoff A": "Ganador Playoff UEFA A",
+  "Winner UEFA Playoff B": "Ganador Playoff UEFA B",
+  "Winner UEFA Playoff C": "Ganador Playoff UEFA C",
+  "Winner UEFA Playoff D": "Ganador Playoff UEFA D",
+  "Winner Intercontinental Playoff 1": "Ganador Playoff Intercontinental 1",
+  "Winner Intercontinental Playoff 2": "Ganador Playoff Intercontinental 2",
+  TBD: "Por Definir",
+};
+
+export const cityTranslations: Record<string, string> = {
+  Atlanta: "Atlanta",
+  Boston: "Boston",
+  Dallas: "Dallas",
+  Houston: "Houston",
+  "Kansas City": "Kansas City",
+  "Los Angeles": "Los Ángeles",
+  Miami: "Miami",
+  "New York/New Jersey": "Nueva York/Nueva Jersey",
+  Philadelphia: "Filadelfia",
+  "San Francisco Bay Area": "Área de la Bahía de San Francisco",
+  Seattle: "Seattle",
+  Toronto: "Toronto",
+  Vancouver: "Vancouver",
+  Guadalajara: "Guadalajara",
+  "Mexico City": "Ciudad de México",
+  Monterrey: "Monterrey",
+};
+
+export const stadiumTranslations: Record<string, string> = {
+  "Mercedes-Benz Stadium": "Estadio Mercedes-Benz",
+  "Gillette Stadium": "Estadio Gillette",
+  "AT&T Stadium": "Estadio AT&T",
+  "NRG Stadium": "Estadio NRG",
+  "Arrowhead Stadium": "Estadio Arrowhead",
+  "SoFi Stadium": "Estadio SoFi",
+  "Hard Rock Stadium": "Estadio Hard Rock",
+  "MetLife Stadium": "Estadio MetLife",
+  "Lincoln Financial Field": "Estadio Lincoln Financial",
+  "Levi's Stadium": "Estadio Levi's",
+  "Lumen Field": "Estadio Lumen",
+  "BMO Field": "Estadio BMO",
+  "BC Place": "BC Place",
+  "Estadio Akron": "Estadio Akron",
+  "Estadio Azteca": "Estadio Azteca",
+  "Estadio BBVA": "Estadio BBVA",
+};
+
+export function translateCountry(countryName: string): string {
+  return countryTranslations[countryName] || countryName;
+}
+
+export function translateCity(cityName: string): string {
+  return cityTranslations[cityName] || cityName;
+}
+
+export function translateStadium(stadiumName: string): string {
+  return stadiumTranslations[stadiumName] || stadiumName;
+}

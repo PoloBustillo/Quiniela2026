@@ -1,0 +1,798 @@
+{
+  "teams": [
+    {
+      "id": 1,
+      "name": "Mexico",
+      "code": "mex",
+      "group": "A",
+      "flag": "/flags/mex.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 2,
+      "name": "South Africa",
+      "code": "rsa",
+      "group": "A",
+      "flag": "/flags/rsa.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 3,
+      "name": "South Korea",
+      "code": "kor",
+      "group": "A",
+      "flag": "/flags/kor.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 4,
+      "name": "Winner UEFA Playoff D",
+      "code": "uepd",
+      "group": "A",
+      "flag": "/flags/uepd.png",
+      "isPlaceholder": true
+    },
+    {
+      "id": 5,
+      "name": "Canada",
+      "code": "can",
+      "group": "B",
+      "flag": "/flags/can.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 6,
+      "name": "Winner UEFA Playoff A",
+      "code": "uepa",
+      "group": "B",
+      "flag": "/flags/uepa.png",
+      "isPlaceholder": true
+    },
+    {
+      "id": 7,
+      "name": "Qatar",
+      "code": "qat",
+      "group": "B",
+      "flag": "/flags/qat.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 8,
+      "name": "Switzerland",
+      "code": "sui",
+      "group": "B",
+      "flag": "/flags/sui.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 9,
+      "name": "Brazil",
+      "code": "bra",
+      "group": "C",
+      "flag": "/flags/bra.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 10,
+      "name": "Morocco",
+      "code": "mar",
+      "group": "C",
+      "flag": "/flags/mar.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 11,
+      "name": "Haiti",
+      "code": "hai",
+      "group": "C",
+      "flag": "/flags/hai.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 12,
+      "name": "Scotland",
+      "code": "sco",
+      "group": "C",
+      "flag": "/flags/sco.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 13,
+      "name": "USA",
+      "code": "usa",
+      "group": "D",
+      "flag": "/flags/usa.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 14,
+      "name": "Paraguay",
+      "code": "par",
+      "group": "D",
+      "flag": "/flags/par.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 15,
+      "name": "Australia",
+      "code": "aus",
+      "group": "D",
+      "flag": "/flags/aus.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 16,
+      "name": "Winner UEFA Playoff C",
+      "code": "uepc",
+      "group": "D",
+      "flag": "/flags/uepc.png",
+      "isPlaceholder": true
+    },
+    {
+      "id": 17,
+      "name": "Germany",
+      "code": "ger",
+      "group": "E",
+      "flag": "/flags/ger.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 18,
+      "name": "Curaçao",
+      "code": "cur",
+      "group": "E",
+      "flag": "/flags/cur.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 19,
+      "name": "Côte d'Ivoire",
+      "code": "civ",
+      "group": "E",
+      "flag": "/flags/civ.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 20,
+      "name": "Ecuador",
+      "code": "ecu",
+      "group": "E",
+      "flag": "/flags/ecu.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 21,
+      "name": "Netherlands",
+      "code": "ned",
+      "group": "F",
+      "flag": "/flags/ned.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 22,
+      "name": "Japan",
+      "code": "jpn",
+      "group": "F",
+      "flag": "/flags/jpn.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 23,
+      "name": "Winner UEFA Playoff B",
+      "code": "uepb",
+      "group": "F",
+      "flag": "/flags/uepb.png",
+      "isPlaceholder": true
+    },
+    {
+      "id": 24,
+      "name": "Tunisia",
+      "code": "tun",
+      "group": "F",
+      "flag": "/flags/tun.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 25,
+      "name": "Belgium",
+      "code": "bel",
+      "group": "G",
+      "flag": "/flags/bel.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 26,
+      "name": "Egypt",
+      "code": "egy",
+      "group": "G",
+      "flag": "/flags/egy.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 27,
+      "name": "IR Iran",
+      "code": "irn",
+      "group": "G",
+      "flag": "/flags/irn.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 28,
+      "name": "New Zealand",
+      "code": "nzl",
+      "group": "G",
+      "flag": "/flags/nzl.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 29,
+      "name": "Spain",
+      "code": "esp",
+      "group": "H",
+      "flag": "/flags/esp.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 30,
+      "name": "Cabo Verde",
+      "code": "cpv",
+      "group": "H",
+      "flag": "/flags/cpv.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 31,
+      "name": "Saudi Arabia",
+      "code": "ksa",
+      "group": "H",
+      "flag": "/flags/ksa.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 32,
+      "name": "Uruguay",
+      "code": "uru",
+      "group": "H",
+      "flag": "/flags/uru.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 33,
+      "name": "France",
+      "code": "fra",
+      "group": "I",
+      "flag": "/flags/fra.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 34,
+      "name": "Senegal",
+      "code": "sen",
+      "group": "I",
+      "flag": "/flags/sen.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 35,
+      "name": "Winner FIFA Playoff 2",
+      "code": "fp02",
+      "group": "I",
+      "flag": "/flags/fp02.png",
+      "isPlaceholder": true
+    },
+    {
+      "id": 36,
+      "name": "Norway",
+      "code": "nor",
+      "group": "I",
+      "flag": "/flags/nor.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 37,
+      "name": "Argentina",
+      "code": "arg",
+      "group": "J",
+      "flag": "/flags/arg.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 38,
+      "name": "Algeria",
+      "code": "alg",
+      "group": "J",
+      "flag": "/flags/alg.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 39,
+      "name": "Austria",
+      "code": "aut",
+      "group": "J",
+      "flag": "/flags/aut.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 40,
+      "name": "Jordan",
+      "code": "jor",
+      "group": "J",
+      "flag": "/flags/jor.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 41,
+      "name": "Portugal",
+      "code": "por",
+      "group": "K",
+      "flag": "/flags/por.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 42,
+      "name": "Winner FIFA Playoff 1",
+      "code": "fp01",
+      "group": "K",
+      "flag": "/flags/fp01.png",
+      "isPlaceholder": true
+    },
+    {
+      "id": 43,
+      "name": "Uzbekistan",
+      "code": "uzb",
+      "group": "K",
+      "flag": "/flags/uzb.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 44,
+      "name": "Colombia",
+      "code": "col",
+      "group": "K",
+      "flag": "/flags/col.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 45,
+      "name": "England",
+      "code": "eng",
+      "group": "L",
+      "flag": "/flags/eng.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 46,
+      "name": "Croatia",
+      "code": "cro",
+      "group": "L",
+      "flag": "/flags/cro.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 47,
+      "name": "Ghana",
+      "code": "gha",
+      "group": "L",
+      "flag": "/flags/gha.png",
+      "isPlaceholder": false
+    },
+    {
+      "id": 48,
+      "name": "Panama",
+      "code": "pan",
+      "group": "L",
+      "flag": "/flags/pan.png",
+      "isPlaceholder": false
+    }
+  ],
+  "groups": {
+    "A": [
+      {
+        "id": 1,
+        "name": "Mexico",
+        "code": "mex",
+        "group": "A",
+        "flag": "/flags/mex.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 2,
+        "name": "South Africa",
+        "code": "rsa",
+        "group": "A",
+        "flag": "/flags/rsa.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 3,
+        "name": "South Korea",
+        "code": "kor",
+        "group": "A",
+        "flag": "/flags/kor.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 4,
+        "name": "Winner UEFA Playoff D",
+        "code": "uepd",
+        "group": "A",
+        "flag": "/flags/uepd.png",
+        "isPlaceholder": true
+      }
+    ],
+    "B": [
+      {
+        "id": 5,
+        "name": "Canada",
+        "code": "can",
+        "group": "B",
+        "flag": "/flags/can.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 6,
+        "name": "Winner UEFA Playoff A",
+        "code": "uepa",
+        "group": "B",
+        "flag": "/flags/uepa.png",
+        "isPlaceholder": true
+      },
+      {
+        "id": 7,
+        "name": "Qatar",
+        "code": "qat",
+        "group": "B",
+        "flag": "/flags/qat.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 8,
+        "name": "Switzerland",
+        "code": "sui",
+        "group": "B",
+        "flag": "/flags/sui.png",
+        "isPlaceholder": false
+      }
+    ],
+    "C": [
+      {
+        "id": 9,
+        "name": "Brazil",
+        "code": "bra",
+        "group": "C",
+        "flag": "/flags/bra.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 10,
+        "name": "Morocco",
+        "code": "mar",
+        "group": "C",
+        "flag": "/flags/mar.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 11,
+        "name": "Haiti",
+        "code": "hai",
+        "group": "C",
+        "flag": "/flags/hai.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 12,
+        "name": "Scotland",
+        "code": "sco",
+        "group": "C",
+        "flag": "/flags/sco.png",
+        "isPlaceholder": false
+      }
+    ],
+    "D": [
+      {
+        "id": 13,
+        "name": "USA",
+        "code": "usa",
+        "group": "D",
+        "flag": "/flags/usa.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 14,
+        "name": "Paraguay",
+        "code": "par",
+        "group": "D",
+        "flag": "/flags/par.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 15,
+        "name": "Australia",
+        "code": "aus",
+        "group": "D",
+        "flag": "/flags/aus.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 16,
+        "name": "Winner UEFA Playoff C",
+        "code": "uepc",
+        "group": "D",
+        "flag": "/flags/uepc.png",
+        "isPlaceholder": true
+      }
+    ],
+    "E": [
+      {
+        "id": 17,
+        "name": "Germany",
+        "code": "ger",
+        "group": "E",
+        "flag": "/flags/ger.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 18,
+        "name": "Curaçao",
+        "code": "cur",
+        "group": "E",
+        "flag": "/flags/cur.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 19,
+        "name": "Côte d'Ivoire",
+        "code": "civ",
+        "group": "E",
+        "flag": "/flags/civ.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 20,
+        "name": "Ecuador",
+        "code": "ecu",
+        "group": "E",
+        "flag": "/flags/ecu.png",
+        "isPlaceholder": false
+      }
+    ],
+    "F": [
+      {
+        "id": 21,
+        "name": "Netherlands",
+        "code": "ned",
+        "group": "F",
+        "flag": "/flags/ned.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 22,
+        "name": "Japan",
+        "code": "jpn",
+        "group": "F",
+        "flag": "/flags/jpn.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 23,
+        "name": "Winner UEFA Playoff B",
+        "code": "uepb",
+        "group": "F",
+        "flag": "/flags/uepb.png",
+        "isPlaceholder": true
+      },
+      {
+        "id": 24,
+        "name": "Tunisia",
+        "code": "tun",
+        "group": "F",
+        "flag": "/flags/tun.png",
+        "isPlaceholder": false
+      }
+    ],
+    "G": [
+      {
+        "id": 25,
+        "name": "Belgium",
+        "code": "bel",
+        "group": "G",
+        "flag": "/flags/bel.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 26,
+        "name": "Egypt",
+        "code": "egy",
+        "group": "G",
+        "flag": "/flags/egy.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 27,
+        "name": "IR Iran",
+        "code": "irn",
+        "group": "G",
+        "flag": "/flags/irn.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 28,
+        "name": "New Zealand",
+        "code": "nzl",
+        "group": "G",
+        "flag": "/flags/nzl.png",
+        "isPlaceholder": false
+      }
+    ],
+    "H": [
+      {
+        "id": 29,
+        "name": "Spain",
+        "code": "esp",
+        "group": "H",
+        "flag": "/flags/esp.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 30,
+        "name": "Cabo Verde",
+        "code": "cpv",
+        "group": "H",
+        "flag": "/flags/cpv.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 31,
+        "name": "Saudi Arabia",
+        "code": "ksa",
+        "group": "H",
+        "flag": "/flags/ksa.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 32,
+        "name": "Uruguay",
+        "code": "uru",
+        "group": "H",
+        "flag": "/flags/uru.png",
+        "isPlaceholder": false
+      }
+    ],
+    "I": [
+      {
+        "id": 33,
+        "name": "France",
+        "code": "fra",
+        "group": "I",
+        "flag": "/flags/fra.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 34,
+        "name": "Senegal",
+        "code": "sen",
+        "group": "I",
+        "flag": "/flags/sen.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 35,
+        "name": "Winner FIFA Playoff 2",
+        "code": "fp02",
+        "group": "I",
+        "flag": "/flags/fp02.png",
+        "isPlaceholder": true
+      },
+      {
+        "id": 36,
+        "name": "Norway",
+        "code": "nor",
+        "group": "I",
+        "flag": "/flags/nor.png",
+        "isPlaceholder": false
+      }
+    ],
+    "J": [
+      {
+        "id": 37,
+        "name": "Argentina",
+        "code": "arg",
+        "group": "J",
+        "flag": "/flags/arg.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 38,
+        "name": "Algeria",
+        "code": "alg",
+        "group": "J",
+        "flag": "/flags/alg.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 39,
+        "name": "Austria",
+        "code": "aut",
+        "group": "J",
+        "flag": "/flags/aut.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 40,
+        "name": "Jordan",
+        "code": "jor",
+        "group": "J",
+        "flag": "/flags/jor.png",
+        "isPlaceholder": false
+      }
+    ],
+    "K": [
+      {
+        "id": 41,
+        "name": "Portugal",
+        "code": "por",
+        "group": "K",
+        "flag": "/flags/por.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 42,
+        "name": "Winner FIFA Playoff 1",
+        "code": "fp01",
+        "group": "K",
+        "flag": "/flags/fp01.png",
+        "isPlaceholder": true
+      },
+      {
+        "id": 43,
+        "name": "Uzbekistan",
+        "code": "uzb",
+        "group": "K",
+        "flag": "/flags/uzb.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 44,
+        "name": "Colombia",
+        "code": "col",
+        "group": "K",
+        "flag": "/flags/col.png",
+        "isPlaceholder": false
+      }
+    ],
+    "L": [
+      {
+        "id": 45,
+        "name": "England",
+        "code": "eng",
+        "group": "L",
+        "flag": "/flags/eng.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 46,
+        "name": "Croatia",
+        "code": "cro",
+        "group": "L",
+        "flag": "/flags/cro.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 47,
+        "name": "Ghana",
+        "code": "gha",
+        "group": "L",
+        "flag": "/flags/gha.png",
+        "isPlaceholder": false
+      },
+      {
+        "id": 48,
+        "name": "Panama",
+        "code": "pan",
+        "group": "L",
+        "flag": "/flags/pan.png",
+        "isPlaceholder": false
+      }
+    ]
+  }
+}

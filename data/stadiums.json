@@ -1,0 +1,132 @@
+{
+  "stadiums": [
+    {
+      "id": "azteca",
+      "name": "Estadio Azteca",
+      "city": "Ciudad de México",
+      "country": "México",
+      "capacity": 87523,
+      "timezone": "America/Mexico_City"
+    },
+    {
+      "id": "bbva",
+      "name": "Estadio BBVA",
+      "city": "Monterrey",
+      "country": "México",
+      "capacity": 53500,
+      "timezone": "America/Monterrey"
+    },
+    {
+      "id": "akron",
+      "name": "Estadio Akron",
+      "city": "Guadalajara",
+      "country": "México",
+      "capacity": 46232,
+      "timezone": "America/Mexico_City"
+    },
+    {
+      "id": "sofi",
+      "name": "SoFi Stadium",
+      "city": "Los Ángeles",
+      "country": "Estados Unidos",
+      "capacity": 70240,
+      "timezone": "America/Los_Angeles"
+    },
+    {
+      "id": "metlife",
+      "name": "MetLife Stadium",
+      "city": "Nueva York/Nueva Jersey",
+      "country": "Estados Unidos",
+      "capacity": 82500,
+      "timezone": "America/New_York"
+    },
+    {
+      "id": "att",
+      "name": "AT&T Stadium",
+      "city": "Dallas",
+      "country": "Estados Unidos",
+      "capacity": 80000,
+      "timezone": "America/Chicago"
+    },
+    {
+      "id": "arrowhead",
+      "name": "Arrowhead Stadium",
+      "city": "Kansas City",
+      "country": "Estados Unidos",
+      "capacity": 76416,
+      "timezone": "America/Chicago"
+    },
+    {
+      "id": "nrg",
+      "name": "NRG Stadium",
+      "city": "Houston",
+      "country": "Estados Unidos",
+      "capacity": 72220,
+      "timezone": "America/Chicago"
+    },
+    {
+      "id": "mercedes",
+      "name": "Mercedes-Benz Stadium",
+      "city": "Atlanta",
+      "country": "Estados Unidos",
+      "capacity": 71000,
+      "timezone": "America/New_York"
+    },
+    {
+      "id": "hardrock",
+      "name": "Hard Rock Stadium",
+      "city": "Miami",
+      "country": "Estados Unidos",
+      "capacity": 67518,
+      "timezone": "America/New_York"
+    },
+    {
+      "id": "lincoln",
+      "name": "Lincoln Financial Field",
+      "city": "Filadelfia",
+      "country": "Estados Unidos",
+      "capacity": 69796,
+      "timezone": "America/New_York"
+    },
+    {
+      "id": "gillette",
+      "name": "Gillette Stadium",
+      "city": "Boston",
+      "country": "Estados Unidos",
+      "capacity": 65878,
+      "timezone": "America/New_York"
+    },
+    {
+      "id": "levis",
+      "name": "Levi's Stadium",
+      "city": "San Francisco",
+      "country": "Estados Unidos",
+      "capacity": 68500,
+      "timezone": "America/Los_Angeles"
+    },
+    {
+      "id": "lumen",
+      "name": "Lumen Field",
+      "city": "Seattle",
+      "country": "Estados Unidos",
+      "capacity": 69000,
+      "timezone": "America/Los_Angeles"
+    },
+    {
+      "id": "bmo",
+      "name": "BMO Field",
+      "city": "Toronto",
+      "country": "Canadá",
+      "capacity": 45500,
+      "timezone": "America/Toronto"
+    },
+    {
+      "id": "bcplace",
+      "name": "BC Place",
+      "city": "Vancouver",
+      "country": "Canadá",
+      "capacity": 54500,
+      "timezone": "America/Vancouver"
+    }
+  ]
+}
