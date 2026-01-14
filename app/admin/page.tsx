@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Settings, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { KnockoutMatchManager } from "@/components/admin/KnockoutMatchManager";
+import { AllMatchesManager } from "@/components/admin/AllMatchesManager";
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
@@ -26,7 +26,7 @@ export default async function AdminPage() {
             Panel de Administración
           </h1>
           <p className="text-muted-foreground mt-2">
-            Gestiona partidos eliminatorios y resultados del mundial
+            Gestiona todos los partidos, fechas y resultados del mundial
           </p>
         </div>
         <Badge variant="destructive" className="w-fit">
@@ -34,7 +34,7 @@ export default async function AdminPage() {
         </Badge>
       </div>
 
-      <KnockoutMatchManager />
+      <AllMatchesManager />
     </div>
   );
 }

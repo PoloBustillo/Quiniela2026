@@ -56,6 +56,7 @@ export default function PredictionCard({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(!!existingPrediction);
+  const [error, setError] = useState<string | null>(null);
 
   const matchDate = new Date(match.date);
   const isPast = matchDate < new Date();
@@ -84,6 +85,7 @@ export default function PredictionCard({
 
   const handleSave = async () => {
     setIsSaving(true);
+    setError(null);
     try {
       const response = await fetch("/api/predictions", {
         method: "POST",
@@ -99,16 +101,20 @@ export default function PredictionCard({
         setSaved(true);
         // Refrescar la página para actualizar las estadísticas
         router.refresh();
+      } else {
+        const data = await response.json();
+        setError(data.error || "Error al guardar la predicción");
       }
     } catch (error) {
       console.error("Error saving prediction:", error);
+      setError("Error al guardar la predicción");
     } finally {
       setIsSaving(false);
     }
   };
 
   const incrementScore = (team: "home" | "away") => {
-    if (isPast) return;
+    if (isDisabled) return;
     if (team === "home") {
       setHomeScore((prev) => Math.min(prev + 1, 20));
     } else {
@@ -117,7 +123,7 @@ export default function PredictionCard({
   };
 
   const decrementScore = (team: "home" | "away") => {
-    if (isPast) return;
+    if (isDisabled) return;
     if (team === "home") {
       setHomeScore((prev) => Math.max(prev - 1, 0));
     } else {
@@ -126,7 +132,7 @@ export default function PredictionCard({
   };
 
   const handleInputChange = (team: "home" | "away", value: string) => {
-    if (isPast) return;
+    if (isDisabled) return;
     const numValue = parseInt(value) || 0;
     const clampedValue = Math.max(0, Math.min(20, numValue));
     if (team === "home") {
@@ -138,63 +144,7 @@ export default function PredictionCard({
 
   return (
     <>
-      {isTBD && (
-        <Card className="overflow-hidden border-dashed border-2 opacity-60">
-          <CardContent className="p-3 sm:p-4 md:p-6 text-center">
-            <p className="text-sm sm:text-base font-medium mb-2">
-              {match.group ? `Grupo ${match.group}` : match.stage}
-            </p>
-            <p className="text-xs text-muted-foreground mb-4">
-              Equipos por definir
-            </p>
-            <div className="flex items-center justify-center gap-4">
-              <div className="text-center">
-                <div className="relative w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 opacity-50 grayscale">
-                  <Image
-                    src={match.homeTeam.flag}
-                    alt={match.homeTeam.name}
-                    fill
-                    className="object-cover rounded-md"
-                    unoptimized
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {match.homeTeam.code === "TBD"
-                    ? "Por Definir"
-                    : translateCountry(match.homeTeam.name)}
-                </p>
-              </div>
-              <span className="text-2xl font-bold text-muted-foreground">VS</span>
-              <div className="text-center">
-                <div className="relative w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 opacity-50 grayscale">
-                  <Image
-                    src={match.awayTeam.flag}
-                    alt={match.awayTeam.name}
-                    fill
-                    className="object-cover rounded-md"
-                    unoptimized
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {match.awayTeam.code === "TBD"
-                    ? "Por Definir"
-                    : translateCountry(match.awayTeam.name)}
-                </p>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-4">
-              {matchDate.toLocaleDateString("es-MX", {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-          </CardContent>
-        </Card>
-      )}
-      {!isTBD && compact ? (
+      {compact ? (
         // Modo Compacto - Layout horizontal para lista
         <Card
           className={`overflow-hidden hover:shadow-md transition-all ${
@@ -228,7 +178,7 @@ export default function PredictionCard({
                     size="icon"
                     className="h-6 w-6 sm:h-7 sm:w-7"
                     onClick={() => decrementScore("home")}
-                    disabled={isPast || isSaving || homeScore === 0}
+                    disabled={isDisabled || isSaving || homeScore === 0}
                   >
                     <Minus className="h-3 w-3" />
                   </Button>
@@ -240,7 +190,7 @@ export default function PredictionCard({
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange("home", e.target.value)
                     }
-                    disabled={isPast || isSaving}
+                    disabled={isDisabled || isSaving}
                     className="w-9 sm:w-11 h-7 sm:h-8 text-center text-sm sm:text-base font-bold px-0.5"
                   />
                   <Button
@@ -248,7 +198,7 @@ export default function PredictionCard({
                     size="icon"
                     className="h-6 w-6 sm:h-7 sm:w-7"
                     onClick={() => incrementScore("home")}
-                    disabled={isPast || isSaving || homeScore === 20}
+                    disabled={isDisabled || isSaving || homeScore === 20}
                   >
                     <Plus className="h-3 w-3" />
                   </Button>
@@ -266,7 +216,7 @@ export default function PredictionCard({
                     size="icon"
                     className="h-6 w-6 sm:h-7 sm:w-7"
                     onClick={() => decrementScore("away")}
-                    disabled={isPast || isSaving || awayScore === 0}
+                    disabled={isDisabled || isSaving || awayScore === 0}
                   >
                     <Minus className="h-3 w-3" />
                   </Button>
@@ -278,7 +228,7 @@ export default function PredictionCard({
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange("away", e.target.value)
                     }
-                    disabled={isPast || isSaving}
+                    disabled={isDisabled || isSaving}
                     className="w-9 sm:w-11 h-7 sm:h-8 text-center text-sm sm:text-base font-bold px-0.5"
                   />
                   <Button
@@ -286,7 +236,7 @@ export default function PredictionCard({
                     size="icon"
                     className="h-6 w-6 sm:h-7 sm:w-7"
                     onClick={() => incrementScore("away")}
-                    disabled={isPast || isSaving || awayScore === 20}
+                    disabled={isDisabled || isSaving || awayScore === 20}
                   >
                     <Plus className="h-3 w-3" />
                   </Button>
@@ -312,7 +262,7 @@ export default function PredictionCard({
               {/* Save Button - Compacto */}
               <Button
                 onClick={handleSave}
-                disabled={isPast || isSaving}
+                disabled={isDisabled || isSaving}
                 size="sm"
                 className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm flex-shrink-0"
                 variant={saved ? "outline" : "default"}
@@ -333,6 +283,13 @@ export default function PredictionCard({
                 })}
               </span>
             </div>
+
+            {/* Error message */}
+            {error && (
+              <div className="mt-2 text-xs text-destructive text-center">
+                {error}
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -385,7 +342,7 @@ export default function PredictionCard({
                     size="icon"
                     className="h-7 w-7 sm:h-8 sm:w-8"
                     onClick={() => decrementScore("home")}
-                    disabled={isPast || isSaving || homeScore === 0}
+                    disabled={isDisabled || isSaving || homeScore === 0}
                   >
                     <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
@@ -397,7 +354,7 @@ export default function PredictionCard({
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange("home", e.target.value)
                     }
-                    disabled={isPast || isSaving}
+                    disabled={isDisabled || isSaving}
                     className="w-12 sm:w-16 h-8 sm:h-10 text-center text-base sm:text-xl font-bold px-1"
                   />
                   <Button
@@ -405,7 +362,7 @@ export default function PredictionCard({
                     size="icon"
                     className="h-7 w-7 sm:h-8 sm:w-8"
                     onClick={() => incrementScore("home")}
-                    disabled={isPast || isSaving || homeScore === 20}
+                    disabled={isDisabled || isSaving || homeScore === 20}
                   >
                     <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
@@ -443,7 +400,7 @@ export default function PredictionCard({
                     size="icon"
                     className="h-7 w-7 sm:h-8 sm:w-8"
                     onClick={() => decrementScore("away")}
-                    disabled={isPast || isSaving || awayScore === 0}
+                    disabled={isDisabled || isSaving || awayScore === 0}
                   >
                     <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
@@ -455,7 +412,7 @@ export default function PredictionCard({
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange("away", e.target.value)
                     }
-                    disabled={isPast || isSaving}
+                    disabled={isDisabled || isSaving}
                     className="w-12 sm:w-16 h-8 sm:h-10 text-center text-base sm:text-xl font-bold px-1"
                   />
                   <Button
@@ -463,7 +420,7 @@ export default function PredictionCard({
                     size="icon"
                     className="h-7 w-7 sm:h-8 sm:w-8"
                     onClick={() => incrementScore("away")}
-                    disabled={isPast || isSaving || awayScore === 20}
+                    disabled={isDisabled || isSaving || awayScore === 20}
                   >
                     <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
@@ -477,10 +434,17 @@ export default function PredictionCard({
               {translateCountry(match.country)}
             </p>
 
+            {/* Error message */}
+            {error && (
+              <div className="mb-3 text-xs text-destructive text-center bg-destructive/10 p-2 rounded">
+                {error}
+              </div>
+            )}
+
             {/* Save Button */}
             <Button
               onClick={handleSave}
-              disabled={isPast || isSaving}
+              disabled={isDisabled || isSaving}
               className="w-full h-9 sm:h-10 text-sm sm:text-base"
               variant={saved ? "outline" : "default"}
             >
@@ -488,8 +452,8 @@ export default function PredictionCard({
                 ? "Guardando..."
                 : saved
                 ? "✓ Guardado"
-                : isPast
-                ? "Partido Finalizado"
+                : isDisabled
+                ? "No Disponible"
                 : "Guardar Predicción"}
             </Button>
           </CardContent>

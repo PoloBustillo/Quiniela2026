@@ -39,15 +39,15 @@ export default async function HomePage() {
   // Transform knockout matches to match the expected format
   const formattedKnockoutMatches = knockoutMatches.map((match, index) => ({
     id: 1000 + index, // Use IDs starting from 1000 to avoid conflicts with group stage
-    matchNumber: 0,
+    matchNumber: 1000 + index,
     homeTeam: {
-      id: match.homeTeam.code === "TBD" ? 999 : parseInt(match.homeTeamId),
+      id: 1000 + index, // Simple numeric ID for frontend
       name: match.homeTeam.name,
       code: match.homeTeam.code,
       flag: match.homeTeam.flag || "/flags/tbd.png",
     },
     awayTeam: {
-      id: match.awayTeam.code === "TBD" ? 999 : parseInt(match.awayTeamId),
+      id: 1000 + index, // Simple numeric ID for frontend
       name: match.awayTeam.name,
       code: match.awayTeam.code,
       flag: match.awayTeam.flag || "/flags/tbd.png",
@@ -58,6 +58,7 @@ export default async function HomePage() {
     country: "",
     stage: match.phase,
     phase: match.phase,
+    group: "", // No group for knockout matches
   }));
 
   // Combine group stage matches from JSON with knockout matches from DB
@@ -66,7 +67,13 @@ export default async function HomePage() {
   // Create a map of predictions by matchId for easy lookup
   const predictionMap = predictions.reduce((acc, pred) => {
     // Extract the numeric match ID from the stored string (e.g., "match_1" -> 1)
-    const matchId = parseInt(pred.matchId.replace("match_", ""));
+    // Handle both "match_X" format (group stage) and numeric IDs (knockout)
+    let matchId: number;
+    if (pred.matchId.startsWith("match_")) {
+      matchId = parseInt(pred.matchId.replace("match_", ""));
+    } else {
+      matchId = parseInt(pred.matchId);
+    }
     acc[matchId] = {
       homeScore: pred.homeScore,
       awayScore: pred.awayScore,

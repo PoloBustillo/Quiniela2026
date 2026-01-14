@@ -47,6 +47,8 @@ model User {
     emailVerified DateTime?
     image         String?
     role          UserRole     @default(USER)
+    hasPaid       Boolean      @default(false) // Si el usuario ha pagado
+    paidAt        DateTime? // Fecha de pago
     createdAt     DateTime     @default(now())
     updatedAt     DateTime     @updatedAt
     accounts      Account[]
@@ -98,6 +100,7 @@ model Prediction {
     id        String   @id @default(cuid())
     userId    String
     matchId   String // Reference to match ID (can be from JSON data)
+    phase     String? // Phase of the match for grouping points
     user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     homeScore Int
     awayScore Int
@@ -108,6 +111,20 @@ model Prediction {
     @@unique([userId, matchId])
     @@index([userId])
     @@index([matchId])
+    @@index([phase])
+}
+
+model PointsRule {
+    id                    String   @id @default(cuid())
+    exactScore            Int      @default(5) // Puntos por marcador exacto
+    correctWinner         Int      @default(3) // Puntos por acertar ganador
+    correctDraw           Int      @default(3) // Puntos por acertar empate
+    correctGoalDifference Int      @default(2) // Puntos por acertar diferencia de goles
+    isActive              Boolean  @default(true)
+    createdAt             DateTime @default(now())
+    updatedAt             DateTime @updatedAt
+
+    @@index([isActive])
 }
 
 // Enums

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import matchesData from "@/data/matches.json";
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,6 +23,38 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
     }
 
+    // Verificar si el partido ya empezó y obtener la fase
+    let matchDate: Date | null = null;
+    let matchPhase: string | null = null;
+
+    // Buscar en partidos de fase de grupos (JSON)
+    if (matchId < 1000) {
+      const jsonMatch = matchesData.matches.find((m: any) => m.id === matchId);
+      if (jsonMatch) {
+        matchDate = new Date(jsonMatch.date);
+        matchPhase = "GROUP_STAGE";
+      }
+    } else {
+      // Buscar en partidos de eliminatorias (DB)
+      const dbMatch = await prisma.match.findFirst({
+        where: {
+          // Buscar por el índice relativo (matchId - 1000)
+        },
+      });
+      if (dbMatch) {
+        matchDate = dbMatch.matchDate;
+        matchPhase = dbMatch.phase;
+      }
+    }
+
+    // Si el partido ya empezó, rechazar la predicción
+    if (matchDate && matchDate < new Date()) {
+      return NextResponse.json(
+        { error: "No puedes hacer predicciones para partidos que ya empezaron" },
+        { status: 400 }
+      );
+    }
+
     // Convert matchId to string for database storage
     const matchIdStr = `match_${matchId}`;
 
@@ -35,12 +68,14 @@ export async function POST(req: NextRequest) {
       update: {
         homeScore,
         awayScore,
+        phase: matchPhase,
       },
       create: {
         userId: session.user.id,
         matchId: matchIdStr,
         homeScore,
         awayScore,
+        phase: matchPhase,
       },
     });
 

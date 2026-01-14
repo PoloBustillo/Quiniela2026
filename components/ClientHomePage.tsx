@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import PredictionCard from "@/components/PredictionCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LayoutGrid, List, Calendar, Trophy, Target, CheckCircle2, Award } from "lucide-react";
 
 interface Match {
   id: number;
@@ -30,24 +31,41 @@ interface ClientHomePageProps {
   totalPoints: number;
 }
 
+// Orden de fases para sorting
+const PHASE_ORDER: Record<string, number> = {
+  "GROUP_STAGE": 0,
+  "ROUND_OF_32": 1,
+  "ROUND_OF_16": 2,
+  "QUARTER_FINAL": 3,
+  "SEMI_FINAL": 4,
+  "THIRD_PLACE": 5,
+  "FINAL": 6,
+};
+
+// Mapeo de fases a nombres en español
+const getPhaseDisplay = (phase: string): string => {
+  const phaseNames: Record<string, string> = {
+    GROUP_STAGE: "Fase de Grupos",
+    ROUND_OF_32: "32avos de Final",
+    ROUND_OF_16: "16avos de Final",
+    QUARTER_FINAL: "Cuartos de Final",
+    SEMI_FINAL: "Semifinales",
+    THIRD_PLACE: "Tercer Lugar",
+    FINAL: "Final",
+  };
+  return phaseNames[phase] || phase;
+};
+
 // Mapeo de grupos para determinar el grupo de cada partido
 const getGroupFromMatch = (match: Match): string => {
   // Si es una fase eliminatoria, usar el nombre de la fase
   if (match.phase && match.phase !== "GROUP_STAGE") {
-    const phaseNames: Record<string, string> = {
-      ROUND_OF_32: "32avos",
-      ROUND_OF_16: "16avos",
-      QUARTER_FINAL: "Cuartos",
-      SEMI_FINAL: "Semifinales",
-      THIRD_PLACE: "3er Lugar",
-      FINAL: "Final",
-    };
-    return phaseNames[match.phase] || match.phase;
+    return match.phase;
   }
   
   // Usar el campo group directamente del JSON para fase de grupos
   if (match.group) {
-    return match.group;
+    return `Grupo ${match.group}`;
   }
   return "Otros";
 };
@@ -58,7 +76,8 @@ export default function ClientHomePage({
   totalPredictions,
   totalPoints,
 }: ClientHomePageProps) {
-  const [viewMode, setViewMode] = useState<"date" | "group" | "list">("date");
+  const [viewMode, setViewMode] = useState<"date" | "group">("date");
+  const [displayMode, setDisplayMode] = useState<"cards" | "list">("cards");
   const [selectedGroup, setSelectedGroup] = useState<string>("all");
 
   // Agrupar partidos por fecha
@@ -93,22 +112,33 @@ export default function ClientHomePage({
   }, [matches]);
 
   const groups = useMemo(() => {
-    return Object.keys(matchesByGroup).sort();
+    const allGroups = Object.keys(matchesByGroup);
+    
+    // Separar grupos de fase de grupos y fases eliminatorias
+    const groupStageGroups = allGroups.filter(g => g.startsWith("Grupo ")).sort();
+    const knockoutPhases = allGroups
+      .filter(g => !g.startsWith("Grupo ") && g !== "Otros")
+      .sort((a, b) => {
+        const orderA = PHASE_ORDER[a] ?? 999;
+        const orderB = PHASE_ORDER[b] ?? 999;
+        return orderA - orderB;
+      });
+    
+    // Combinar: primero fase de grupos, luego eliminatorias
+    return [...groupStageGroups, ...knockoutPhases];
   }, [matchesByGroup]);
 
   const filteredMatches = useMemo(() => {
     if (viewMode === "date") {
       return matchesByDate;
-    } else if (viewMode === "group") {
+    } else {
+      // viewMode === "group"
       if (selectedGroup === "all") {
         return matchesByGroup;
       }
       return { [selectedGroup]: matchesByGroup[selectedGroup] || [] };
-    } else {
-      // Vista de lista: todos los partidos sin agrupar
-      return { "Todos los Partidos": matches };
     }
-  }, [viewMode, selectedGroup, matchesByDate, matchesByGroup, matches]);
+  }, [viewMode, selectedGroup, matchesByDate, matchesByGroup]);
 
   const completionPercentage = Math.round(
     (totalPredictions / matches.length) * 100
@@ -126,97 +156,154 @@ export default function ClientHomePage({
       </div>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">
-        <div className="bg-card p-3 sm:p-4 rounded-lg border">
-          <p className="text-xl sm:text-2xl font-bold">{totalPredictions}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-4 rounded-lg border border-blue-500/20">
+          <div className="flex items-center justify-between mb-2">
+            <Target className="h-5 w-5 text-blue-500" />
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">
+            {totalPredictions}
+          </p>
           <p className="text-xs sm:text-sm text-muted-foreground">
             Predicciones
           </p>
         </div>
-        <div className="bg-card p-3 sm:p-4 rounded-lg border">
-          <p className="text-xl sm:text-2xl font-bold">{matches.length}</p>
+        
+        <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 p-4 rounded-lg border border-purple-500/20">
+          <div className="flex items-center justify-between mb-2">
+            <Calendar className="h-5 w-5 text-purple-500" />
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">
+            {matches.length}
+          </p>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Partidos Totales
+            Partidos
           </p>
         </div>
-        <div className="bg-card p-3 sm:p-4 rounded-lg border">
-          <p className="text-xl sm:text-2xl font-bold">{totalPoints}</p>
+        
+        <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 p-4 rounded-lg border border-yellow-500/20">
+          <div className="flex items-center justify-between mb-2">
+            <Award className="h-5 w-5 text-yellow-500" />
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+            {totalPoints}
+          </p>
           <p className="text-xs sm:text-sm text-muted-foreground">Puntos</p>
         </div>
-        <div className="bg-card p-3 sm:p-4 rounded-lg border">
-          <p className="text-xl sm:text-2xl font-bold">
+        
+        <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 p-4 rounded-lg border border-green-500/20">
+          <div className="flex items-center justify-between mb-2">
+            <CheckCircle2 className="h-5 w-5 text-green-500" />
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">
             {completionPercentage}%
           </p>
           <p className="text-xs sm:text-sm text-muted-foreground">Completado</p>
         </div>
       </div>
 
-      {/* View Mode Tabs */}
-      <Tabs
-        value={viewMode}
-        onValueChange={(v: string) =>
-          setViewMode(v as "date" | "group" | "list")
-        }
-        className="mb-4 sm:mb-6"
-      >
-        <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3">
-          <TabsTrigger value="date" className="text-xs sm:text-sm md:text-base">
-            Por Fecha
-          </TabsTrigger>
-          <TabsTrigger
-            value="group"
-            className="text-xs sm:text-sm md:text-base"
-          >
-            Por Grupo
-          </TabsTrigger>
-          <TabsTrigger value="list" className="text-xs sm:text-sm md:text-base">
-            Lista
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* Controls */}
+      <div className="bg-card border rounded-lg p-4 mb-6 space-y-4">
+        {/* View Mode Selection */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Agrupar por:</label>
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === "date" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("date")}
+                className="gap-2"
+              >
+                <Calendar className="h-4 w-4" />
+                Fecha
+              </Button>
+              <Button
+                variant={viewMode === "group" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("group")}
+                className="gap-2"
+              >
+                <Trophy className="h-4 w-4" />
+                Fase
+              </Button>
+            </div>
+          </div>
 
-      {/* Group Filter (only visible in group mode) */}
-      {viewMode === "group" && (
-        <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-6 justify-center">
-          <Button
-            variant={selectedGroup === "all" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSelectedGroup("all")}
-            className="text-xs sm:text-sm h-8 px-2 sm:px-3"
-          >
-            Todos
-          </Button>
-          {groups.map((group) => (
-            <Button
-              key={group}
-              variant={selectedGroup === group ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedGroup(group)}
-              className="text-xs sm:text-sm h-8 px-2 sm:px-3"
-            >
-              Grupo {group}
-            </Button>
-          ))}
+          {/* Display Mode Selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Vista:</label>
+            <div className="flex gap-2">
+              <Button
+                variant={displayMode === "cards" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDisplayMode("cards")}
+                className="gap-2"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                Tarjetas
+              </Button>
+              <Button
+                variant={displayMode === "list" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDisplayMode("list")}
+                className="gap-2"
+              >
+                <List className="h-4 w-4" />
+                Lista
+              </Button>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Group Filter (only visible in group mode) */}
+        {viewMode === "group" && (
+          <div className="border-t pt-4">
+            <label className="text-sm font-medium mb-3 block">Filtrar fase:</label>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={selectedGroup === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedGroup("all")}
+              >
+                Todas
+              </Button>
+              {groups.map((group) => (
+                <Button
+                  key={group}
+                  variant={selectedGroup === group ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedGroup(group)}
+                >
+                  {group.startsWith("Grupo ") ? group : getPhaseDisplay(group)}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Matches Display */}
       <div className="space-y-6 sm:space-y-8">
         {Object.entries(filteredMatches).map(([key, groupMatches]) => (
           <div key={key}>
-            {viewMode !== "list" && (
-              <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 capitalize px-1">
-                {viewMode === "date"
-                  ? key
-                  : key.includes("avos") || key === "Cuartos" || key === "Semifinales" || key === "3er Lugar" || key === "Final"
-                  ? key
-                  : `Grupo ${key}`}
-              </h2>
-            )}
+            <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 capitalize px-1 flex items-center gap-2">
+              {viewMode === "date" ? (
+                <>
+                  <Calendar className="h-5 w-5" />
+                  {key}
+                </>
+              ) : (
+                <>
+                  <Trophy className="h-5 w-5" />
+                  {key.startsWith("Grupo ") ? key : getPhaseDisplay(key)}
+                </>
+              )}
+            </h2>
             <div
               className={`grid ${
-                viewMode === "list"
-                  ? "grid-cols-1 max-w-4xl mx-auto gap-2"
+                displayMode === "list"
+                  ? "grid-cols-1 max-w-5xl mx-auto gap-2"
                   : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
               }`}
             >
@@ -225,7 +312,7 @@ export default function ClientHomePage({
                   key={match.id}
                   match={match}
                   existingPrediction={predictionMap[match.id]}
-                  compact={viewMode === "list"}
+                  compact={displayMode === "list"}
                 />
               ))}
             </div>
