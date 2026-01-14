@@ -267,7 +267,7 @@ export function AllMatchesManager() {
             <div>
               <h2 className="text-2xl font-bold">Partidos Eliminatorios</h2>
               <p className="text-muted-foreground">
-                Selecciona equipos, cambia fechas y escribe marcadores. Presiona el botón "Guardar" para aplicar cambios.
+                Selecciona equipos, cambia fechas y escribe marcadores. Presiona el botón &ldquo;Guardar&rdquo; para aplicar cambios.
               </p>
             </div>
             <Select value={selectedPhase} onValueChange={setSelectedPhase}>
@@ -571,7 +571,7 @@ export function AllMatchesManager() {
           <div>
             <h2 className="text-2xl font-bold">Partidos de Fase de Grupos</h2>
             <p className="text-muted-foreground">
-              Escribe los marcadores y presiona "Guardar Marcadores" para actualizar cada partido. También puedes cambiar las fechas.
+              Escribe los marcadores y presiona &ldquo;Guardar Marcadores&rdquo; para actualizar cada partido. También puedes cambiar las fechas.
             </p>
           </div>
 
