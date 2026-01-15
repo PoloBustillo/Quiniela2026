@@ -78,7 +78,8 @@ export function UsersPaymentManager() {
           Gestión de Usuarios y Pagos
         </CardTitle>
         <CardDescription>
-          Marca los usuarios que han pagado para incluirlos en la tabla de posiciones
+          Marca los usuarios que han pagado para incluirlos en la tabla de
+          posiciones
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -87,14 +88,18 @@ export function UsersPaymentManager() {
           <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-600">Pagados</span>
+              <span className="text-sm font-medium text-green-600">
+                Pagados
+              </span>
             </div>
             <p className="text-2xl font-bold">{paidUsers.length}</p>
           </div>
           <div className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
             <div className="flex items-center gap-2 mb-1">
               <XCircle className="h-4 w-4 text-orange-600" />
-              <span className="text-sm font-medium text-orange-600">Pendientes</span>
+              <span className="text-sm font-medium text-orange-600">
+                Pendientes
+              </span>
             </div>
             <p className="text-2xl font-bold">{unpaidUsers.length}</p>
           </div>
@@ -131,7 +136,9 @@ export function UsersPaymentManager() {
                   )}
                   <div>
                     <p className="font-medium">{user.name || "Sin nombre"}</p>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {user.email}
+                    </p>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="text-xs">
                         {user._count.predictions} predicciones

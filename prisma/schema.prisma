@@ -114,6 +114,16 @@ model Prediction {
     @@index([phase])
 }
 
+model GroupMatchScore {
+    id        String   @id @default(cuid())
+    matchId   Int      @unique // ID del partido en matches.json
+    homeScore Int?
+    awayScore Int?
+    updatedAt DateTime @updatedAt
+
+    @@index([matchId])
+}
+
 model PointsRule {
     id                    String   @id @default(cuid())
     exactScore            Int      @default(5) // Puntos por marcador exacto

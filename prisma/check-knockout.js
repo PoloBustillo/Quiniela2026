@@ -22,10 +22,14 @@ async function main() {
 
   if (knockoutMatches.length === 0) {
     console.log("❌ No hay partidos de eliminatorias en la base de datos.");
-    console.log("   Usa el panel de administrador en /admin para crear partidos.");
+    console.log(
+      "   Usa el panel de administrador en /admin para crear partidos."
+    );
   } else {
-    console.log(`✅ Se encontraron ${knockoutMatches.length} partidos de eliminatorias:\n`);
-    
+    console.log(
+      `✅ Se encontraron ${knockoutMatches.length} partidos de eliminatorias:\n`
+    );
+
     knockoutMatches.forEach((match, i) => {
       console.log(`${i + 1}. ${match.phase}`);
       console.log(`   ${match.homeTeam.name} vs ${match.awayTeam.name}`);

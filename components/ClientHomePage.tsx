@@ -4,7 +4,15 @@ import { useState, useMemo } from "react";
 import PredictionCard from "@/components/PredictionCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutGrid, List, Calendar, Trophy, Target, CheckCircle2, Award } from "lucide-react";
+import {
+  LayoutGrid,
+  List,
+  Calendar,
+  Trophy,
+  Target,
+  CheckCircle2,
+  Award,
+} from "lucide-react";
 
 interface Match {
   id: number;
@@ -33,13 +41,13 @@ interface ClientHomePageProps {
 
 // Orden de fases para sorting
 const PHASE_ORDER: Record<string, number> = {
-  "GROUP_STAGE": 0,
-  "ROUND_OF_32": 1,
-  "ROUND_OF_16": 2,
-  "QUARTER_FINAL": 3,
-  "SEMI_FINAL": 4,
-  "THIRD_PLACE": 5,
-  "FINAL": 6,
+  GROUP_STAGE: 0,
+  ROUND_OF_32: 1,
+  ROUND_OF_16: 2,
+  QUARTER_FINAL: 3,
+  SEMI_FINAL: 4,
+  THIRD_PLACE: 5,
+  FINAL: 6,
 };
 
 // Mapeo de fases a nombres en español
@@ -62,7 +70,7 @@ const getGroupFromMatch = (match: Match): string => {
   if (match.phase && match.phase !== "GROUP_STAGE") {
     return match.phase;
   }
-  
+
   // Usar el campo group directamente del JSON para fase de grupos
   if (match.group) {
     return `Grupo ${match.group}`;
@@ -113,17 +121,19 @@ export default function ClientHomePage({
 
   const groups = useMemo(() => {
     const allGroups = Object.keys(matchesByGroup);
-    
+
     // Separar grupos de fase de grupos y fases eliminatorias
-    const groupStageGroups = allGroups.filter(g => g.startsWith("Grupo ")).sort();
+    const groupStageGroups = allGroups
+      .filter((g) => g.startsWith("Grupo "))
+      .sort();
     const knockoutPhases = allGroups
-      .filter(g => !g.startsWith("Grupo ") && g !== "Otros")
+      .filter((g) => !g.startsWith("Grupo ") && g !== "Otros")
       .sort((a, b) => {
         const orderA = PHASE_ORDER[a] ?? 999;
         const orderB = PHASE_ORDER[b] ?? 999;
         return orderA - orderB;
       });
-    
+
     // Combinar: primero fase de grupos, luego eliminatorias
     return [...groupStageGroups, ...knockoutPhases];
   }, [matchesByGroup]);
@@ -168,7 +178,7 @@ export default function ClientHomePage({
             Predicciones
           </p>
         </div>
-        
+
         <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 p-4 rounded-lg border border-purple-500/20">
           <div className="flex items-center justify-between mb-2">
             <Calendar className="h-5 w-5 text-purple-500" />
@@ -176,11 +186,9 @@ export default function ClientHomePage({
           <p className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">
             {matches.length}
           </p>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Partidos
-          </p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Partidos</p>
         </div>
-        
+
         <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 p-4 rounded-lg border border-yellow-500/20">
           <div className="flex items-center justify-between mb-2">
             <Award className="h-5 w-5 text-yellow-500" />
@@ -190,7 +198,7 @@ export default function ClientHomePage({
           </p>
           <p className="text-xs sm:text-sm text-muted-foreground">Puntos</p>
         </div>
-        
+
         <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 p-4 rounded-lg border border-green-500/20">
           <div className="flex items-center justify-between mb-2">
             <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -259,7 +267,9 @@ export default function ClientHomePage({
         {/* Group Filter (only visible in group mode) */}
         {viewMode === "group" && (
           <div className="border-t pt-4">
-            <label className="text-sm font-medium mb-3 block">Filtrar fase:</label>
+            <label className="text-sm font-medium mb-3 block">
+              Filtrar fase:
+            </label>
             <div className="flex flex-wrap gap-2">
               <Button
                 variant={selectedGroup === "all" ? "default" : "outline"}

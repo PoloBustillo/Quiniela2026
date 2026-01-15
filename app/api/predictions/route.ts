@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import matchesData from "@/data/matches.json";
+import { parseMatchDate, isPredictionClosed } from "@/lib/points";
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
     if (matchId < 1000) {
       const jsonMatch = matchesData.matches.find((m: any) => m.id === matchId);
       if (jsonMatch) {
-        matchDate = new Date(jsonMatch.date);
+        matchDate = parseMatchDate(jsonMatch.date);
         matchPhase = "GROUP_STAGE";
       }
     } else {
@@ -47,10 +48,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Si el partido ya empezó, rechazar la predicción
-    if (matchDate && matchDate < new Date()) {
+    // VALIDACIÓN EN SERVIDOR: Si el partido ya empezó, rechazar la predicción
+    if (matchDate && isPredictionClosed(matchDate)) {
       return NextResponse.json(
-        { error: "No puedes hacer predicciones para partidos que ya empezaron" },
+        {
+          error: "No puedes hacer predicciones para partidos que ya empezaron",
+        },
         { status: 400 }
       );
     }

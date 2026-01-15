@@ -50,7 +50,8 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { exactScore, correctWinner, correctDraw, correctGoalDifference } = body;
+    const { exactScore, correctWinner, correctDraw, correctGoalDifference } =
+      body;
 
     // Desactivar reglas anteriores
     await prisma.pointsRule.updateMany({

@@ -35,14 +35,19 @@ export function MatchCard({ match, teams }: MatchCardProps) {
   const awayTeam = teams[match.awayTeam];
 
   const matchDate = new Date(match.date);
+
+  // Formatear fecha en zona horaria de Ciudad de México (CST/UTC-6)
   const dateStr = matchDate.toLocaleDateString("es-MX", {
     weekday: "short",
     day: "numeric",
     month: "short",
+    timeZone: "America/Mexico_City",
   });
+
   const timeStr = matchDate.toLocaleTimeString("es-MX", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "America/Mexico_City",
   });
 
   return (

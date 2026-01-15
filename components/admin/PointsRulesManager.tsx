@@ -88,9 +88,7 @@ export function PointsRulesManager() {
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Marcador Exacto
-            </label>
+            <label className="text-sm font-medium">Marcador Exacto</label>
             <Input
               type="number"
               min="0"
@@ -104,9 +102,7 @@ export function PointsRulesManager() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Ganador Correcto
-            </label>
+            <label className="text-sm font-medium">Ganador Correcto</label>
             <Input
               type="number"
               min="0"
@@ -120,9 +116,7 @@ export function PointsRulesManager() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Empate Correcto
-            </label>
+            <label className="text-sm font-medium">Empate Correcto</label>
             <Input
               type="number"
               min="0"
@@ -136,9 +130,7 @@ export function PointsRulesManager() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Diferencia de Goles
-            </label>
+            <label className="text-sm font-medium">Diferencia de Goles</label>
             <Input
               type="number"
               min="0"
@@ -159,15 +151,21 @@ export function PointsRulesManager() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between p-2 bg-muted rounded">
               <span>Real: 2-1, Predicción: 2-1</span>
-              <span className="font-bold text-green-600">{exactScore} puntos</span>
+              <span className="font-bold text-green-600">
+                {exactScore} puntos
+              </span>
             </div>
             <div className="flex justify-between p-2 bg-muted rounded">
               <span>Real: 2-1, Predicción: 3-0</span>
-              <span className="font-bold text-blue-600">{correctWinner} puntos</span>
+              <span className="font-bold text-blue-600">
+                {correctWinner} puntos
+              </span>
             </div>
             <div className="flex justify-between p-2 bg-muted rounded">
               <span>Real: 1-1, Predicción: 2-2</span>
-              <span className="font-bold text-blue-600">{correctDraw} puntos</span>
+              <span className="font-bold text-blue-600">
+                {correctDraw} puntos
+              </span>
             </div>
             <div className="flex justify-between p-2 bg-muted rounded">
               <span>Real: 3-1, Predicción: 2-0</span>

@@ -60,11 +60,10 @@ export default function PredictionCard({
 
   const matchDate = new Date(match.date);
   const isPast = matchDate < new Date();
-  
+
   // Verificar si algún equipo es TBD (Por Definir)
-  const isTBD =
-    match.homeTeam.code === "TBD" || match.awayTeam.code === "TBD";
-  
+  const isTBD = match.homeTeam.code === "TBD" || match.awayTeam.code === "TBD";
+
   // Deshabilitar predicciones si es TBD o si el partido ya pasó
   const isDisabled = isTBD || isPast;
 
@@ -280,6 +279,7 @@ export default function PredictionCard({
                   day: "numeric",
                   hour: "2-digit",
                   minute: "2-digit",
+                  timeZone: "America/Mexico_City",
                 })}
               </span>
             </div>
@@ -312,6 +312,7 @@ export default function PredictionCard({
                   day: "numeric",
                   hour: "2-digit",
                   minute: "2-digit",
+                  timeZone: "America/Mexico_City",
                 })}
               </p>
             </div>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { calculatePoints } from "@/lib/points";
 
 export async function GET(request: Request) {
   try {
@@ -96,7 +97,17 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { id, homeTeamId, awayTeamId, homeScore, awayScore, status } = body;
+    const {
+      id,
+      homeTeamId,
+      awayTeamId,
+      homeScore,
+      awayScore,
+      status,
+      matchDate,
+      stadium,
+      city,
+    } = body;
 
     const match = await prisma.match.update({
       where: { id },
@@ -106,12 +117,51 @@ export async function PUT(request: Request) {
         ...(homeScore !== undefined && { homeScore }),
         ...(awayScore !== undefined && { awayScore }),
         ...(status && { status }),
+        ...(matchDate && { matchDate: new Date(matchDate) }),
+        ...(stadium !== undefined && { stadium }),
+        ...(city !== undefined && { city }),
       },
       include: {
         homeTeam: true,
         awayTeam: true,
       },
     });
+
+    // Si se actualizaron los marcadores, calcular puntos para todas las predicciones
+    if (homeScore !== undefined && awayScore !== undefined) {
+      // Obtener todas las predicciones para este partido
+      // El matchId en predictions está en formato "match_1000", "match_1001", etc.
+      // donde los IDs > 1000 son partidos de knockout en la BD
+      // Necesitamos obtener el índice del partido para construir el matchId correcto
+      const allMatches = await prisma.match.findMany({
+        orderBy: { matchDate: "asc" },
+      });
+      const matchIndex = allMatches.findIndex((m) => m.id === id);
+      const predictionMatchId = `match_${1000 + matchIndex}`;
+
+      const predictions = await prisma.prediction.findMany({
+        where: { matchId: predictionMatchId },
+      });
+
+      // Actualizar puntos para cada predicción
+      for (const prediction of predictions) {
+        const points = calculatePoints(
+          prediction.homeScore,
+          prediction.awayScore,
+          homeScore,
+          awayScore
+        );
+
+        await prisma.prediction.update({
+          where: { id: prediction.id },
+          data: { points },
+        });
+      }
+
+      console.log(
+        `✅ Actualizados puntos para ${predictions.length} predicciones del partido ${id}`
+      );
+    }
 
     return NextResponse.json(match);
   } catch (error) {

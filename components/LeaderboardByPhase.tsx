@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Trophy, Medal, Award } from "lucide-react";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Trophy,
+  Medal,
+  Award,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import Image from "next/image";
 
 interface UserWithPoints {
@@ -71,9 +82,6 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
       .sort((a, b) => b.points - a.points);
   }, [users, selectedPhase]);
 
-  const top3 = leaderboard.slice(0, 3);
-  const rest = leaderboard.slice(3);
-
   return (
     <div className="space-y-6">
       {/* Phase Selector */}
@@ -93,125 +101,152 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
         </Select>
       </div>
 
-      {leaderboard.length === 0 ? (
-        <Card className="text-center py-16 border-dashed">
-          <CardContent className="space-y-4">
-            <div className="text-7xl mb-4">📊</div>
-            <CardTitle className="text-2xl md:text-3xl">
-              No hay predicciones para esta fase
-            </CardTitle>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          {/* Top 3 */}
-          <div className="grid md:grid-cols-3 gap-4">
-            {top3.map((user, index) => {
-              const icons = [
-                <Trophy key="trophy" className="h-6 w-6 text-yellow-500" />,
-                <Medal key="medal" className="h-6 w-6 text-gray-400" />,
-                <Award key="award" className="h-6 w-6 text-amber-600" />,
-              ];
+      {/* Tabla completa de posiciones */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-yellow-500" />
+            Clasificación General
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-16 text-center">Pos</TableHead>
+                <TableHead>Participante</TableHead>
+                <TableHead className="text-center">Predicciones</TableHead>
+                <TableHead className="text-center">Puntos</TableHead>
+                <TableHead className="text-center">Promedio</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {leaderboard.map((user, index) => {
+                const position = index + 1;
+                const avgPoints =
+                  user.predictionsCount > 0
+                    ? (user.points / user.predictionsCount).toFixed(2)
+                    : "0.00";
 
-              return (
-                <Card
-                  key={user.id}
-                  className={`${
-                    user.isCurrentUser
-                      ? "ring-2 ring-primary animate-pulse-subtle"
-                      : ""
-                  }`}
-                >
-                  <CardHeader className="text-center space-y-4">
-                    <div className="flex justify-center">{icons[index]}</div>
-                    <div className="space-y-2">
-                      {user.image ? (
-                        <Image
-                          src={user.image}
-                          alt={user.name}
-                          width={80}
-                          height={80}
-                          className="rounded-full mx-auto"
-                        />
-                      ) : (
-                        <div className="w-20 h-20 bg-muted rounded-full mx-auto flex items-center justify-center text-2xl font-bold">
-                          {user.name[0]}
-                        </div>
-                      )}
-                      <CardTitle className="text-lg">{user.name}</CardTitle>
-                      {user.isCurrentUser && (
-                        <Badge variant="default">Tú</Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="text-center space-y-2">
-                    <div className="text-4xl font-bold text-primary">
-                      {user.points}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {user.predictionsCount} predicciones
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                let positionIcon = null;
+                let positionColor = "";
 
-          {/* Rest of the leaderboard */}
-          {rest.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Resto de Participantes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {rest.map((user, index) => (
-                    <div
-                      key={user.id}
-                      className={`flex items-center justify-between p-4 rounded-lg border ${
-                        user.isCurrentUser ? "bg-primary/5 ring-2 ring-primary" : "bg-card"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="text-2xl font-bold text-muted-foreground w-8">
-                          {index + 4}
-                        </div>
+                if (position === 1) {
+                  positionIcon = <Trophy className="h-5 w-5 text-yellow-500" />;
+                  positionColor = "bg-yellow-50 dark:bg-yellow-950/20";
+                } else if (position === 2) {
+                  positionIcon = <Medal className="h-5 w-5 text-gray-400" />;
+                  positionColor = "bg-gray-50 dark:bg-gray-950/20";
+                } else if (position === 3) {
+                  positionIcon = <Award className="h-5 w-5 text-amber-600" />;
+                  positionColor = "bg-amber-50 dark:bg-amber-950/20";
+                }
+
+                return (
+                  <TableRow
+                    key={user.id}
+                    className={`${
+                      user.isCurrentUser
+                        ? "bg-primary/10 ring-2 ring-primary font-semibold"
+                        : positionColor
+                    }`}
+                  >
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        {positionIcon || (
+                          <span className="text-lg font-bold text-muted-foreground">
+                            {position}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
                         {user.image ? (
                           <Image
                             src={user.image}
                             alt={user.name}
-                            width={48}
-                            height={48}
+                            width={40}
+                            height={40}
                             className="rounded-full"
                           />
                         ) : (
-                          <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-lg font-bold">
+                          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center font-bold">
                             {user.name[0]}
                           </div>
                         )}
                         <div>
-                          <div className="font-semibold flex items-center gap-2">
-                            {user.name}
+                          <div className="flex items-center gap-2">
+                            <span>{user.name}</span>
                             {user.isCurrentUser && (
-                              <Badge variant="default">Tú</Badge>
+                              <Badge variant="default" className="text-xs">
+                                Tú
+                              </Badge>
                             )}
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {user.predictionsCount} predicciones
-                          </div>
+                          {user.email && (
+                            <div className="text-xs text-muted-foreground">
+                              {user.email}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">{user.points}</div>
-                        <div className="text-sm text-muted-foreground">puntos</div>
-                      </div>
-                    </div>
-                  ))}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="outline">{user.predictionsCount}</Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="text-lg font-bold text-primary">
+                        {user.points}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center text-muted-foreground">
+                      {avgPoints}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Resumen de tu posición si no estás en el top 3 */}
+      {leaderboard.findIndex((u) => u.isCurrentUser) > 2 && (
+        <Card className="border-primary">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="text-3xl font-bold text-primary">
+                  #{leaderboard.findIndex((u) => u.isCurrentUser) + 1}
                 </div>
-              </CardContent>
-            </Card>
-          )}
-        </>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Tu posición actual
+                  </p>
+                  <p className="font-semibold">
+                    {leaderboard.find((u) => u.isCurrentUser)?.points || 0}{" "}
+                    puntos totales
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">
+                  Para alcanzar el podio necesitas
+                </p>
+                <p className="text-2xl font-bold text-primary">
+                  {Math.max(
+                    0,
+                    (leaderboard[2]?.points || 0) -
+                      (leaderboard.find((u) => u.isCurrentUser)?.points || 0) +
+                      1
+                  )}{" "}
+                  puntos
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

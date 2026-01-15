@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   Trophy,
   BookOpen,
-  Settings2,
   Settings,
   LogOut,
   Menu,
@@ -36,7 +35,6 @@ export function Navigation() {
     { href: "/", icon: Calendar, label: "Partidos" },
     { href: "/rules", icon: BookOpen, label: "Reglas" },
     { href: "/leaderboard", icon: Trophy, label: "Tabla" },
-    { href: "/settings", icon: Settings2, label: "Configuraciones" },
   ];
 
   if (isAdmin) {
