@@ -33,6 +33,40 @@ export default async function LeaderboardPage() {
     },
   });
 
+  // Obtener información de todos los partidos con equipos
+  const matches = await prisma.match.findMany({
+    include: {
+      homeTeam: {
+        select: {
+          name: true,
+          code: true,
+          flag: true,
+        },
+      },
+      awayTeam: {
+        select: {
+          name: true,
+          code: true,
+          flag: true,
+        },
+      },
+    },
+  });
+
+  // Crear un mapa de partidos para acceso rápido
+  const matchesMap = matches.reduce(
+    (acc, match) => {
+      acc[match.id] = {
+        homeTeam: match.homeTeam,
+        awayTeam: match.awayTeam,
+        homeScore: match.homeScore,
+        awayScore: match.awayScore,
+      };
+      return acc;
+    },
+    {} as Record<string, any>,
+  );
+
   // También obtener estadísticas generales para debug
   const totalUsers = await prisma.user.count();
   const paidUsers = await prisma.user.count({ where: { hasPaid: true } });
@@ -45,7 +79,10 @@ export default async function LeaderboardPage() {
     email: user.email,
     image: user.image,
     isCurrentUser: user.id === session.user?.id,
-    predictions: user.predictions,
+    predictions: user.predictions.map((pred) => ({
+      ...pred,
+      match: matchesMap[pred.matchId],
+    })),
   }));
 
   return (

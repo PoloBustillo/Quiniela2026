@@ -44,6 +44,12 @@ interface UserWithPoints {
     points: number;
     homeScore: number;
     awayScore: number;
+    match?: {
+      homeTeam: { name: string; code: string; flag: string | null };
+      awayTeam: { name: string; code: string; flag: string | null };
+      homeScore: number | null;
+      awayScore: number | null;
+    };
   }[];
 }
 
@@ -88,15 +94,15 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
 
         const totalPoints = filteredPredictions.reduce(
           (sum, pred) => sum + pred.points,
-          0
+          0,
         );
 
         // Separar predicciones con puntos de las que no
         const scoredPredictions = filteredPredictions.filter(
-          (p) => p.points > 0
+          (p) => p.points > 0,
         );
         const unscoredPredictions = filteredPredictions.filter(
-          (p) => p.points === 0
+          (p) => p.points === 0,
         );
 
         return {
@@ -321,25 +327,49 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                                   Predicciones Acertadas (
                                   {user.scoredPredictions.length})
                                 </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-64 overflow-y-auto">
                                   {user.scoredPredictions
                                     .sort((a, b) => b.points - a.points)
                                     .map((pred, idx) => (
                                       <div
                                         key={idx}
-                                        className="flex items-center justify-between p-2 bg-background rounded border border-green-200 dark:border-green-800"
+                                        className="flex flex-col items-center gap-1 p-2 bg-background rounded-lg border-2 border-green-500 shadow-sm"
                                       >
-                                        <div className="flex items-center gap-2">
-                                          <span className="text-xs text-muted-foreground">
-                                            {pred.matchId.replace("match_", "#")}
-                                          </span>
-                                          <span className="text-sm font-mono">
-                                            {pred.homeScore}-{pred.awayScore}
-                                          </span>
+                                        {/* Banderas como avatares */}
+                                        <div className="flex items-center gap-1">
+                                          <Image
+                                            src={
+                                              pred.match?.homeTeam?.flag ||
+                                              "/flags/tbd.png"
+                                            }
+                                            alt={
+                                              pred.match?.homeTeam?.code || ""
+                                            }
+                                            width={24}
+                                            height={24}
+                                            className="rounded-sm border border-gray-300"
+                                          />
+                                          <Image
+                                            src={
+                                              pred.match?.awayTeam?.flag ||
+                                              "/flags/tbd.png"
+                                            }
+                                            alt={
+                                              pred.match?.awayTeam?.code || ""
+                                            }
+                                            width={24}
+                                            height={24}
+                                            className="rounded-sm border border-gray-300"
+                                          />
                                         </div>
+                                        {/* Marcador */}
+                                        <div className="text-xs font-bold text-center">
+                                          {pred.homeScore}-{pred.awayScore}
+                                        </div>
+                                        {/* Puntos */}
                                         <Badge
                                           variant="default"
-                                          className="bg-green-600"
+                                          className="bg-green-600 text-[10px] px-1 py-0"
                                         >
                                           +{pred.points}
                                         </Badge>
@@ -357,18 +387,43 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                                   Predicciones Falladas (
                                   {user.unscoredPredictions.length})
                                 </h4>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-40 overflow-y-auto">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-40 overflow-y-auto">
                                   {user.unscoredPredictions.map((pred, idx) => (
                                     <div
                                       key={idx}
-                                      className="flex items-center justify-between p-2 bg-background rounded border border-red-200 dark:border-red-800"
+                                      className="flex flex-col items-center gap-1 p-2 bg-background rounded-lg border-2 border-red-500 shadow-sm"
                                     >
-                                      <span className="text-xs text-muted-foreground">
-                                        {pred.matchId.replace("match_", "#")}
-                                      </span>
-                                      <span className="text-sm font-mono text-muted-foreground">
+                                      {/* Banderas como avatares */}
+                                      <div className="flex items-center gap-1">
+                                        <Image
+                                          src={
+                                            pred.match?.homeTeam?.flag ||
+                                            "/flags/tbd.png"
+                                          }
+                                          alt={
+                                            pred.match?.homeTeam?.code || ""
+                                          }
+                                          width={24}
+                                          height={24}
+                                          className="rounded-sm border border-gray-300"
+                                        />
+                                        <Image
+                                          src={
+                                            pred.match?.awayTeam?.flag ||
+                                            "/flags/tbd.png"
+                                          }
+                                          alt={
+                                            pred.match?.awayTeam?.code || ""
+                                          }
+                                          width={24}
+                                          height={24}
+                                          className="rounded-sm border border-gray-300"
+                                        />
+                                      </div>
+                                      {/* Marcador */}
+                                      <div className="text-xs font-mono text-muted-foreground text-center">
                                         {pred.homeScore}-{pred.awayScore}
-                                      </span>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
@@ -414,7 +469,7 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                     0,
                     (leaderboard[2]?.points || 0) -
                       (leaderboard.find((u) => u.isCurrentUser)?.points || 0) +
-                      1
+                      1,
                   )}{" "}
                   puntos
                 </p>
