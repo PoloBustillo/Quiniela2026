@@ -59,7 +59,7 @@
         "code": "uepa",
         "flag": "/flags/uepa.png"
       },
-      "date": "2026-06-12 11:00:00-04",
+      "date": "2026-06-12 09:00:00-06",
       "stadium": "BMO Field",
       "city": "Toronto",
       "country": "Canada",
@@ -81,7 +81,7 @@
         "code": "par",
         "flag": "/flags/par.png"
       },
-      "date": "2026-06-12 20:00:00-07",
+      "date": "2026-06-12 21:00:00-06",
       "stadium": "SoFi Stadium",
       "city": "Los Angeles",
       "country": "USA",
@@ -103,7 +103,7 @@
         "code": "sui",
         "flag": "/flags/sui.png"
       },
-      "date": "2026-06-13 14:00:00-07",
+      "date": "2026-06-13 15:00:00-06",
       "stadium": "Levi's Stadium",
       "city": "San Francisco Bay Area",
       "country": "USA",
@@ -125,7 +125,7 @@
         "code": "mar",
         "flag": "/flags/mar.png"
       },
-      "date": "2026-06-13 14:00:00-04",
+      "date": "2026-06-13 12:00:00-06",
       "stadium": "MetLife Stadium",
       "city": "New York/New Jersey",
       "country": "USA",
@@ -147,7 +147,7 @@
         "code": "sco",
         "flag": "/flags/sco.png"
       },
-      "date": "2026-06-13 17:00:00-04",
+      "date": "2026-06-13 15:00:00-06",
       "stadium": "Gillette Stadium",
       "city": "Boston",
       "country": "USA",
@@ -169,7 +169,7 @@
         "code": "uepc",
         "flag": "/flags/uepc.png"
       },
-      "date": "2026-06-13 23:00:00-07",
+      "date": "2026-06-15 00:00:00-06",
       "stadium": "BC Place",
       "city": "Vancouver",
       "country": "Canada",
@@ -191,7 +191,7 @@
         "code": "cur",
         "flag": "/flags/cur.png"
       },
-      "date": "2026-06-14 10:00:00-05",
+      "date": "2026-06-14 09:00:00-06",
       "stadium": "NRG Stadium",
       "city": "Houston",
       "country": "USA",
@@ -213,7 +213,7 @@
         "code": "jpn",
         "flag": "/flags/jpn.png"
       },
-      "date": "2026-06-14 13:00:00-05",
+      "date": "2026-06-14 12:00:00-06",
       "stadium": "AT&T Stadium",
       "city": "Dallas",
       "country": "USA",
@@ -235,7 +235,7 @@
         "code": "ecu",
         "flag": "/flags/ecu.png"
       },
-      "date": "2026-06-14 15:00:00-04",
+      "date": "2026-06-14 13:00:00-06",
       "stadium": "Lincoln Financial Field",
       "city": "Philadelphia",
       "country": "USA",
@@ -279,7 +279,7 @@
         "code": "cpv",
         "flag": "/flags/cpv.png"
       },
-      "date": "2026-06-15 08:00:00-04",
+      "date": "2026-06-15 06:00:00-06",
       "stadium": "Mercedes-Benz Stadium",
       "city": "Atlanta",
       "country": "USA",
@@ -301,7 +301,7 @@
         "code": "egy",
         "flag": "/flags/egy.png"
       },
-      "date": "2026-06-15 14:00:00-07",
+      "date": "2026-06-15 15:00:00-06",
       "stadium": "Lumen Field",
       "city": "Seattle",
       "country": "USA",
@@ -323,7 +323,7 @@
         "code": "uru",
         "flag": "/flags/uru.png"
       },
-      "date": "2026-06-15 14:00:00-04",
+      "date": "2026-06-15 12:00:00-06",
       "stadium": "Hard Rock Stadium",
       "city": "Miami",
       "country": "USA",
@@ -345,7 +345,7 @@
         "code": "nzl",
         "flag": "/flags/nzl.png"
       },
-      "date": "2026-06-15 20:00:00-07",
+      "date": "2026-06-15 21:00:00-06",
       "stadium": "SoFi Stadium",
       "city": "Los Angeles",
       "country": "USA",
@@ -367,7 +367,7 @@
         "code": "sen",
         "flag": "/flags/sen.png"
       },
-      "date": "2026-06-16 11:00:00-04",
+      "date": "2026-06-16 09:00:00-06",
       "stadium": "MetLife Stadium",
       "city": "New York/New Jersey",
       "country": "USA",
@@ -389,7 +389,7 @@
         "code": "nor",
         "flag": "/flags/nor.png"
       },
-      "date": "2026-06-16 14:00:00-04",
+      "date": "2026-06-16 12:00:00-06",
       "stadium": "Gillette Stadium",
       "city": "Boston",
       "country": "USA",
@@ -411,7 +411,7 @@
         "code": "alg",
         "flag": "/flags/alg.png"
       },
-      "date": "2026-06-16 18:00:00-05",
+      "date": "2026-06-16 17:00:00-06",
       "stadium": "Arrowhead Stadium",
       "city": "Kansas City",
       "country": "USA",
@@ -433,7 +433,7 @@
         "code": "jor",
         "flag": "/flags/jor.png"
       },
-      "date": "2026-06-16 23:00:00-07",
+      "date": "2026-06-18 00:00:00-06",
       "stadium": "Levi's Stadium",
       "city": "San Francisco Bay Area",
       "country": "USA",
@@ -455,7 +455,7 @@
         "code": "fp01",
         "flag": "/flags/fp01.png"
       },
-      "date": "2026-06-17 10:00:00-05",
+      "date": "2026-06-17 09:00:00-06",
       "stadium": "NRG Stadium",
       "city": "Houston",
       "country": "USA",
@@ -477,7 +477,7 @@
         "code": "cro",
         "flag": "/flags/cro.png"
       },
-      "date": "2026-06-17 13:00:00-05",
+      "date": "2026-06-17 12:00:00-06",
       "stadium": "AT&T Stadium",
       "city": "Dallas",
       "country": "USA",
@@ -499,7 +499,7 @@
         "code": "pan",
         "flag": "/flags/pan.png"
       },
-      "date": "2026-06-17 15:00:00-04",
+      "date": "2026-06-17 13:00:00-06",
       "stadium": "BMO Field",
       "city": "Toronto",
       "country": "Canada",
@@ -543,7 +543,7 @@
         "code": "rsa",
         "flag": "/flags/rsa.png"
       },
-      "date": "2026-06-18 08:00:00-04",
+      "date": "2026-06-18 06:00:00-06",
       "stadium": "Mercedes-Benz Stadium",
       "city": "Atlanta",
       "country": "USA",
@@ -565,7 +565,7 @@
         "code": "uepa",
         "flag": "/flags/uepa.png"
       },
-      "date": "2026-06-18 14:00:00-07",
+      "date": "2026-06-18 15:00:00-06",
       "stadium": "SoFi Stadium",
       "city": "Los Angeles",
       "country": "USA",
@@ -587,7 +587,7 @@
         "code": "qat",
         "flag": "/flags/qat.png"
       },
-      "date": "2026-06-18 17:00:00-07",
+      "date": "2026-06-18 18:00:00-06",
       "stadium": "BC Place",
       "city": "Vancouver",
       "country": "Canada",
@@ -631,7 +631,7 @@
         "code": "aus",
         "flag": "/flags/aus.png"
       },
-      "date": "2026-06-19 14:00:00-07",
+      "date": "2026-06-19 15:00:00-06",
       "stadium": "Lumen Field",
       "city": "Seattle",
       "country": "USA",
@@ -653,7 +653,7 @@
         "code": "mar",
         "flag": "/flags/mar.png"
       },
-      "date": "2026-06-19 14:00:00-04",
+      "date": "2026-06-19 12:00:00-06",
       "stadium": "Gillette Stadium",
       "city": "Boston",
       "country": "USA",
@@ -675,7 +675,7 @@
         "code": "hai",
         "flag": "/flags/hai.png"
       },
-      "date": "2026-06-19 17:00:00-04",
+      "date": "2026-06-19 15:00:00-06",
       "stadium": "Lincoln Financial Field",
       "city": "Philadelphia",
       "country": "USA",
@@ -697,7 +697,7 @@
         "code": "par",
         "flag": "/flags/par.png"
       },
-      "date": "2026-06-19 23:00:00-07",
+      "date": "2026-06-21 00:00:00-06",
       "stadium": "Levi's Stadium",
       "city": "San Francisco Bay Area",
       "country": "USA",
@@ -719,7 +719,7 @@
         "code": "uepb",
         "flag": "/flags/uepb.png"
       },
-      "date": "2026-06-20 10:00:00-05",
+      "date": "2026-06-20 09:00:00-06",
       "stadium": "NRG Stadium",
       "city": "Houston",
       "country": "USA",
@@ -741,7 +741,7 @@
         "code": "civ",
         "flag": "/flags/civ.png"
       },
-      "date": "2026-06-20 12:00:00-04",
+      "date": "2026-06-20 10:00:00-06",
       "stadium": "BMO Field",
       "city": "Toronto",
       "country": "Canada",
@@ -763,7 +763,7 @@
         "code": "cur",
         "flag": "/flags/cur.png"
       },
-      "date": "2026-06-20 17:00:00-05",
+      "date": "2026-06-20 16:00:00-06",
       "stadium": "Arrowhead Stadium",
       "city": "Kansas City",
       "country": "USA",
@@ -807,7 +807,7 @@
         "code": "ksa",
         "flag": "/flags/ksa.png"
       },
-      "date": "2026-06-21 08:00:00-04",
+      "date": "2026-06-21 06:00:00-06",
       "stadium": "Mercedes-Benz Stadium",
       "city": "Atlanta",
       "country": "USA",
@@ -829,7 +829,7 @@
         "code": "irn",
         "flag": "/flags/irn.png"
       },
-      "date": "2026-06-21 14:00:00-07",
+      "date": "2026-06-21 15:00:00-06",
       "stadium": "SoFi Stadium",
       "city": "Los Angeles",
       "country": "USA",
@@ -851,7 +851,7 @@
         "code": "cpv",
         "flag": "/flags/cpv.png"
       },
-      "date": "2026-06-21 14:00:00-04",
+      "date": "2026-06-21 12:00:00-06",
       "stadium": "Hard Rock Stadium",
       "city": "Miami",
       "country": "USA",
@@ -873,7 +873,7 @@
         "code": "egy",
         "flag": "/flags/egy.png"
       },
-      "date": "2026-06-21 20:00:00-07",
+      "date": "2026-06-21 21:00:00-06",
       "stadium": "BC Place",
       "city": "Vancouver",
       "country": "Canada",
@@ -895,7 +895,7 @@
         "code": "aut",
         "flag": "/flags/aut.png"
       },
-      "date": "2026-06-22 10:00:00-05",
+      "date": "2026-06-22 09:00:00-06",
       "stadium": "AT&T Stadium",
       "city": "Dallas",
       "country": "USA",
@@ -917,7 +917,7 @@
         "code": "fp02",
         "flag": "/flags/fp02.png"
       },
-      "date": "2026-06-22 13:00:00-04",
+      "date": "2026-06-22 11:00:00-06",
       "stadium": "Lincoln Financial Field",
       "city": "Philadelphia",
       "country": "USA",
@@ -939,7 +939,7 @@
         "code": "sen",
         "flag": "/flags/sen.png"
       },
-      "date": "2026-06-22 16:00:00-04",
+      "date": "2026-06-22 14:00:00-06",
       "stadium": "MetLife Stadium",
       "city": "New York/New Jersey",
       "country": "USA",
@@ -961,7 +961,7 @@
         "code": "alg",
         "flag": "/flags/alg.png"
       },
-      "date": "2026-06-22 22:00:00-07",
+      "date": "2026-06-22 23:00:00-06",
       "stadium": "Levi's Stadium",
       "city": "San Francisco Bay Area",
       "country": "USA",
@@ -983,7 +983,7 @@
         "code": "uzb",
         "flag": "/flags/uzb.png"
       },
-      "date": "2026-06-23 10:00:00-05",
+      "date": "2026-06-23 09:00:00-06",
       "stadium": "NRG Stadium",
       "city": "Houston",
       "country": "USA",
@@ -1005,7 +1005,7 @@
         "code": "gha",
         "flag": "/flags/gha.png"
       },
-      "date": "2026-06-23 12:00:00-04",
+      "date": "2026-06-23 10:00:00-06",
       "stadium": "Gillette Stadium",
       "city": "Boston",
       "country": "USA",
@@ -1027,7 +1027,7 @@
         "code": "cro",
         "flag": "/flags/cro.png"
       },
-      "date": "2026-06-23 15:00:00-04",
+      "date": "2026-06-23 13:00:00-06",
       "stadium": "BMO Field",
       "city": "Toronto",
       "country": "Canada",
@@ -1071,7 +1071,7 @@
         "code": "can",
         "flag": "/flags/can.png"
       },
-      "date": "2026-06-24 14:00:00-07",
+      "date": "2026-06-24 15:00:00-06",
       "stadium": "BC Place",
       "city": "Vancouver",
       "country": "Canada",
@@ -1093,7 +1093,7 @@
         "code": "qat",
         "flag": "/flags/qat.png"
       },
-      "date": "2026-06-24 14:00:00-07",
+      "date": "2026-06-24 15:00:00-06",
       "stadium": "Lumen Field",
       "city": "Seattle",
       "country": "USA",
@@ -1115,7 +1115,7 @@
         "code": "bra",
         "flag": "/flags/bra.png"
       },
-      "date": "2026-06-24 14:00:00-04",
+      "date": "2026-06-24 12:00:00-06",
       "stadium": "Hard Rock Stadium",
       "city": "Miami",
       "country": "USA",
@@ -1137,7 +1137,7 @@
         "code": "hai",
         "flag": "/flags/hai.png"
       },
-      "date": "2026-06-24 14:00:00-04",
+      "date": "2026-06-24 12:00:00-06",
       "stadium": "Mercedes-Benz Stadium",
       "city": "Atlanta",
       "country": "USA",
@@ -1203,7 +1203,7 @@
         "code": "civ",
         "flag": "/flags/civ.png"
       },
-      "date": "2026-06-25 12:00:00-04",
+      "date": "2026-06-25 10:00:00-06",
       "stadium": "Lincoln Financial Field",
       "city": "Philadelphia",
       "country": "USA",
@@ -1225,7 +1225,7 @@
         "code": "ger",
         "flag": "/flags/ger.png"
       },
-      "date": "2026-06-25 12:00:00-04",
+      "date": "2026-06-25 10:00:00-06",
       "stadium": "MetLife Stadium",
       "city": "New York/New Jersey",
       "country": "USA",
@@ -1247,7 +1247,7 @@
         "code": "uepb",
         "flag": "/flags/uepb.png"
       },
-      "date": "2026-06-25 16:00:00-05",
+      "date": "2026-06-25 15:00:00-06",
       "stadium": "AT&T Stadium",
       "city": "Dallas",
       "country": "USA",
@@ -1269,7 +1269,7 @@
         "code": "ned",
         "flag": "/flags/ned.png"
       },
-      "date": "2026-06-25 16:00:00-05",
+      "date": "2026-06-25 15:00:00-06",
       "stadium": "Arrowhead Stadium",
       "city": "Kansas City",
       "country": "USA",
@@ -1291,7 +1291,7 @@
         "code": "usa",
         "flag": "/flags/usa.png"
       },
-      "date": "2026-06-25 21:00:00-07",
+      "date": "2026-06-25 22:00:00-06",
       "stadium": "SoFi Stadium",
       "city": "Los Angeles",
       "country": "USA",
@@ -1313,7 +1313,7 @@
         "code": "aus",
         "flag": "/flags/aus.png"
       },
-      "date": "2026-06-25 21:00:00-07",
+      "date": "2026-06-25 22:00:00-06",
       "stadium": "Levi's Stadium",
       "city": "San Francisco Bay Area",
       "country": "USA",
@@ -1335,7 +1335,7 @@
         "code": "fra",
         "flag": "/flags/fra.png"
       },
-      "date": "2026-06-26 11:00:00-04",
+      "date": "2026-06-26 09:00:00-06",
       "stadium": "Gillette Stadium",
       "city": "Boston",
       "country": "USA",
@@ -1357,7 +1357,7 @@
         "code": "fp02",
         "flag": "/flags/fp02.png"
       },
-      "date": "2026-06-26 11:00:00-04",
+      "date": "2026-06-26 09:00:00-06",
       "stadium": "BMO Field",
       "city": "Toronto",
       "country": "Canada",
@@ -1379,7 +1379,7 @@
         "code": "ksa",
         "flag": "/flags/ksa.png"
       },
-      "date": "2026-06-26 17:00:00-05",
+      "date": "2026-06-26 16:00:00-06",
       "stadium": "NRG Stadium",
       "city": "Houston",
       "country": "USA",
@@ -1423,7 +1423,7 @@
         "code": "irn",
         "flag": "/flags/irn.png"
       },
-      "date": "2026-06-26 22:00:00-07",
+      "date": "2026-06-26 23:00:00-06",
       "stadium": "Lumen Field",
       "city": "Seattle",
       "country": "USA",
@@ -1445,7 +1445,7 @@
         "code": "bel",
         "flag": "/flags/bel.png"
       },
-      "date": "2026-06-26 22:00:00-07",
+      "date": "2026-06-26 23:00:00-06",
       "stadium": "BC Place",
       "city": "Vancouver",
       "country": "Canada",
@@ -1467,7 +1467,7 @@
         "code": "eng",
         "flag": "/flags/eng.png"
       },
-      "date": "2026-06-27 13:00:00-04",
+      "date": "2026-06-27 11:00:00-06",
       "stadium": "MetLife Stadium",
       "city": "New York/New Jersey",
       "country": "USA",
@@ -1489,7 +1489,7 @@
         "code": "gha",
         "flag": "/flags/gha.png"
       },
-      "date": "2026-06-27 13:00:00-04",
+      "date": "2026-06-27 11:00:00-06",
       "stadium": "Lincoln Financial Field",
       "city": "Philadelphia",
       "country": "USA",
@@ -1511,7 +1511,7 @@
         "code": "por",
         "flag": "/flags/por.png"
       },
-      "date": "2026-06-27 15:30:00-04",
+      "date": "2026-06-27 13:30:00-06",
       "stadium": "Hard Rock Stadium",
       "city": "Miami",
       "country": "USA",
@@ -1533,7 +1533,7 @@
         "code": "uzb",
         "flag": "/flags/uzb.png"
       },
-      "date": "2026-06-27 15:30:00-04",
+      "date": "2026-06-27 13:30:00-06",
       "stadium": "Mercedes-Benz Stadium",
       "city": "Atlanta",
       "country": "USA",
@@ -1555,7 +1555,7 @@
         "code": "aut",
         "flag": "/flags/aut.png"
       },
-      "date": "2026-06-27 19:00:00-05",
+      "date": "2026-06-27 18:00:00-06",
       "stadium": "Arrowhead Stadium",
       "city": "Kansas City",
       "country": "USA",
@@ -1577,7 +1577,7 @@
         "code": "arg",
         "flag": "/flags/arg.png"
       },
-      "date": "2026-06-27 19:00:00-05",
+      "date": "2026-06-27 18:00:00-06",
       "stadium": "AT&T Stadium",
       "city": "Dallas",
       "country": "USA",
