@@ -118,12 +118,12 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
   }, [users, selectedPhase]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Phase Selector */}
-      <div className="flex items-center gap-4">
-        <label className="text-sm font-medium">Filtrar por fase:</label>
+      <div className="flex flex-col xs:flex-row xs:items-center gap-2 xs:gap-4">
+        <label className="text-xs sm:text-sm font-medium">Filtrar por fase:</label>
         <Select value={selectedPhase} onValueChange={setSelectedPhase}>
-          <SelectTrigger className="w-[250px]">
+          <SelectTrigger className="w-full xs:w-[200px] sm:w-[250px] h-9">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -138,24 +138,24 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
 
       {/* Tabla completa de posiciones */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
             Clasificación General
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-2 sm:px-6">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12"></TableHead>
-                <TableHead className="w-16 text-center">Pos</TableHead>
-                <TableHead>Participante</TableHead>
-                <TableHead className="text-center hidden md:table-cell">
+                <TableHead className="w-8 sm:w-12 px-1 sm:px-4"></TableHead>
+                <TableHead className="w-12 sm:w-16 text-center px-1 sm:px-4 text-xs sm:text-sm">Pos</TableHead>
+                <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">Participante</TableHead>
+                <TableHead className="text-center hidden md:table-cell px-2 sm:px-4 text-xs sm:text-sm">
                   Predicciones
                 </TableHead>
-                <TableHead className="text-center">Puntos</TableHead>
-                <TableHead className="text-center hidden md:table-cell">
+                <TableHead className="text-center px-2 sm:px-4 text-xs sm:text-sm">Puntos</TableHead>
+                <TableHead className="text-center hidden md:table-cell px-2 sm:px-4 text-xs sm:text-sm">
                   Promedio
                 </TableHead>
               </TableRow>
@@ -196,25 +196,25 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                       onClick={() => toggleUserExpand(user.id)}
                     >
                       {/* Botón Expand/Collapse */}
-                      <TableCell className="text-center">
+                      <TableCell className="text-center px-1 sm:px-4">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-6 w-6 sm:h-8 sm:w-8 p-0"
                         >
                           {isExpanded ? (
-                            <ChevronUp className="h-4 w-4" />
+                            <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4" />
                           ) : (
-                            <ChevronDown className="h-4 w-4" />
+                            <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
                           )}
                         </Button>
                       </TableCell>
 
                       {/* Posición */}
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2">
+                      <TableCell className="text-center px-1 sm:px-4">
+                        <div className="flex items-center justify-center gap-1 sm:gap-2">
                           {positionIcon || (
-                            <span className="text-lg font-bold text-muted-foreground">
+                            <span className="text-base sm:text-lg font-bold text-muted-foreground">
                               {position}
                             </span>
                           )}
@@ -222,24 +222,24 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                       </TableCell>
 
                       {/* Participante */}
-                      <TableCell>
-                        <div className="flex items-center gap-3">
+                      <TableCell className="px-2 sm:px-4">
+                        <div className="flex items-center gap-2 sm:gap-3">
                           {user.image ? (
                             <Image
                               src={user.image}
                               alt={user.name}
-                              width={40}
-                              height={40}
-                              className="rounded-full"
+                              width={32}
+                              height={32}
+                              className="rounded-full w-8 h-8 sm:w-10 sm:h-10"
                             />
                           ) : (
-                            <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center font-bold">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-muted rounded-full flex items-center justify-center font-bold text-xs sm:text-sm">
                               {user.name[0]}
                             </div>
                           )}
                           <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="truncate">{user.name}</span>
+                            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                              <span className="truncate text-xs sm:text-sm md:text-base">{user.name}</span>
                               {user.isCurrentUser && (
                                 <Badge variant="default" className="text-xs">
                                   Tú
@@ -247,12 +247,12 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                               )}
                             </div>
                             {user.email && (
-                              <div className="text-xs text-muted-foreground truncate hidden md:block">
+                              <div className="text-[10px] sm:text-xs text-muted-foreground truncate hidden md:block">
                                 {user.email}
                               </div>
                             )}
                             {/* Info mobile */}
-                            <div className="text-xs text-muted-foreground md:hidden mt-1">
+                            <div className="text-[10px] sm:text-xs text-muted-foreground md:hidden mt-0.5">
                               {user.predictionsCount} predicciones • Promedio:{" "}
                               {avgPoints}
                             </div>
@@ -261,19 +261,19 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                       </TableCell>
 
                       {/* Predicciones (hidden on mobile) */}
-                      <TableCell className="text-center hidden md:table-cell">
-                        <Badge variant="outline">{user.predictionsCount}</Badge>
+                      <TableCell className="text-center hidden md:table-cell px-2 sm:px-4">
+                        <Badge variant="outline" className="text-xs">{user.predictionsCount}</Badge>
                       </TableCell>
 
                       {/* Puntos */}
-                      <TableCell className="text-center">
-                        <span className="text-lg font-bold text-primary">
+                      <TableCell className="text-center px-2 sm:px-4">
+                        <span className="text-base sm:text-lg font-bold text-primary">
                           {user.points}
                         </span>
                       </TableCell>
 
                       {/* Promedio (hidden on mobile) */}
-                      <TableCell className="text-center text-muted-foreground hidden md:table-cell">
+                      <TableCell className="text-center text-muted-foreground hidden md:table-cell px-2 sm:px-4 text-sm">
                         {avgPoints}
                       </TableCell>
                     </TableRow>
@@ -281,39 +281,39 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                     {/* Fila expandida con detalles */}
                     {isExpanded && (
                       <TableRow>
-                        <TableCell colSpan={6} className="bg-muted/30 p-4">
-                          <div className="space-y-4">
+                        <TableCell colSpan={6} className="bg-muted/30 p-3 sm:p-4">
+                          <div className="space-y-3 sm:space-y-4">
                             {/* Estadísticas resumidas */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                              <div className="text-center p-3 bg-background rounded-lg">
-                                <p className="text-2xl font-bold text-primary">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+                              <div className="text-center p-2 sm:p-3 bg-background rounded-lg">
+                                <p className="text-xl sm:text-2xl font-bold text-primary">
                                   {user.points}
                                 </p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-[10px] sm:text-xs text-muted-foreground">
                                   Puntos Totales
                                 </p>
                               </div>
-                              <div className="text-center p-3 bg-background rounded-lg">
-                                <p className="text-2xl font-bold text-green-600">
+                              <div className="text-center p-2 sm:p-3 bg-background rounded-lg">
+                                <p className="text-xl sm:text-2xl font-bold text-green-600">
                                   {user.scoredPredictions.length}
                                 </p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-[10px] sm:text-xs text-muted-foreground">
                                   Acertadas
                                 </p>
                               </div>
-                              <div className="text-center p-3 bg-background rounded-lg">
-                                <p className="text-2xl font-bold text-red-600">
+                              <div className="text-center p-2 sm:p-3 bg-background rounded-lg">
+                                <p className="text-xl sm:text-2xl font-bold text-red-600">
                                   {user.unscoredPredictions.length}
                                 </p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-[10px] sm:text-xs text-muted-foreground">
                                   Falladas
                                 </p>
                               </div>
-                              <div className="text-center p-3 bg-background rounded-lg">
-                                <p className="text-2xl font-bold text-blue-600">
+                              <div className="text-center p-2 sm:p-3 bg-background rounded-lg">
+                                <p className="text-xl sm:text-2xl font-bold text-blue-600">
                                   {avgPoints}
                                 </p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-[10px] sm:text-xs text-muted-foreground">
                                   Promedio
                                 </p>
                               </div>
@@ -322,8 +322,8 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                             {/* Lista de predicciones con puntos */}
                             {user.scoredPredictions.length > 0 && (
                               <div>
-                                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                                  <Trophy className="h-4 w-4 text-green-600" />
+                                <h4 className="font-semibold text-xs sm:text-sm mb-2 flex items-center gap-2">
+                                  <Trophy className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600" />
                                   Predicciones Acertadas (
                                   {user.scoredPredictions.length})
                                 </h4>
@@ -400,9 +400,7 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                                             pred.match?.homeTeam?.flag ||
                                             "/flags/tbd.png"
                                           }
-                                          alt={
-                                            pred.match?.homeTeam?.code || ""
-                                          }
+                                          alt={pred.match?.homeTeam?.code || ""}
                                           width={24}
                                           height={24}
                                           className="rounded-sm border border-gray-300"
@@ -412,9 +410,7 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                                             pred.match?.awayTeam?.flag ||
                                             "/flags/tbd.png"
                                           }
-                                          alt={
-                                            pred.match?.awayTeam?.code || ""
-                                          }
+                                          alt={pred.match?.awayTeam?.code || ""}
                                           width={24}
                                           height={24}
                                           className="rounded-sm border border-gray-300"

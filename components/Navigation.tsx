@@ -43,16 +43,17 @@ export function Navigation() {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 max-w-7xl">
-        <div className="flex h-16 items-center justify-between">
+      <div className="container mx-auto px-3 sm:px-4 max-w-7xl">
+        <div className="flex h-14 sm:h-16 items-center justify-between">
           {/* Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2 font-bold text-lg md:text-xl"
+            className="flex items-center gap-1.5 sm:gap-2 font-bold text-base sm:text-lg md:text-xl"
           >
-            <span className="text-3xl">⚽</span>
+            <span className="text-2xl sm:text-3xl">⚽</span>
             <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-              Mundial 2026
+              <span className="hidden sm:inline">Mundial 2026</span>
+              <span className="sm:hidden">Mundial</span>
             </span>
           </Link>
 
@@ -114,9 +115,9 @@ export function Navigation() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden pb-4 animate-slide-down">
-            <Separator className="mb-3" />
-            <div className="flex flex-col gap-2">
+          <div className="md:hidden pb-3 animate-slide-down">
+            <Separator className="mb-2" />
+            <div className="flex flex-col gap-1.5">
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 return (
@@ -125,7 +126,7 @@ export function Navigation() {
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                      "flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-colors",
                       isActive(link.href)
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
