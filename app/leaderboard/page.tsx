@@ -23,8 +23,11 @@ export default async function LeaderboardPage() {
     include: {
       predictions: {
         select: {
+          matchId: true,
           phase: true,
           points: true,
+          homeScore: true,
+          awayScore: true,
         },
       },
     },
