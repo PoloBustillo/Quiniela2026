@@ -420,11 +420,6 @@ export function AllMatchesManager() {
       delete newEdits[matchId];
       return newEdits;
     });
-    setEditingScores((prev) => {
-      const newScores = { ...prev };
-      delete newScores[String(matchId)];
-      return newScores;
-    });
   };
 
   const createKnockoutMatch = async () => {
