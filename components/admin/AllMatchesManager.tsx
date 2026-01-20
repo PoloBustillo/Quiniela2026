@@ -260,10 +260,10 @@ export function AllMatchesManager() {
       }
 
       // Otros campos solo si cambiaron
-      if (edits.homeTeamId && edits.homeTeamId !== originalMatch.homeTeamId) {
+      if (edits.homeTeamId && edits.homeTeamId !== originalMatch.homeTeam.id) {
         updateData.homeTeamId = edits.homeTeamId;
       }
-      if (edits.awayTeamId && edits.awayTeamId !== originalMatch.awayTeamId) {
+      if (edits.awayTeamId && edits.awayTeamId !== originalMatch.awayTeam.id) {
         updateData.awayTeamId = edits.awayTeamId;
       }
       if (edits.matchDate) {
