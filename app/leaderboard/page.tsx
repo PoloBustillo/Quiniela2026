@@ -56,13 +56,19 @@ export default async function LeaderboardPage() {
 
   // Obtener scores de partidos de grupo (de la BD)
   const groupScores = await prisma.groupMatchScore.findMany();
-  const groupScoresMap = groupScores.reduce((acc, score) => {
-    acc[score.matchId] = {
-      homeScore: score.homeScore,
-      awayScore: score.awayScore,
-    };
-    return acc;
-  }, {} as Record<number, { homeScore: number | null; awayScore: number | null }>);
+  const groupScoresMap = groupScores.reduce(
+    (acc, score) => {
+      acc[score.matchId] = {
+        homeScore: score.homeScore,
+        awayScore: score.awayScore,
+      };
+      return acc;
+    },
+    {} as Record<
+      number,
+      { homeScore: number | null; awayScore: number | null }
+    >,
+  );
 
   // Crear un mapa de partidos knockout para acceso rápido
   const matchesMap = knockoutMatches.reduce(

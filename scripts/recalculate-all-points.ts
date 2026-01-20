@@ -24,7 +24,7 @@ async function recalculateAllPoints() {
     });
 
     console.log(
-      `\n⚽ Partido ${match.id}: ${match.homeScore}-${match.awayScore}`
+      `\n⚽ Partido ${match.id}: ${match.homeScore}-${match.awayScore}`,
     );
 
     for (const prediction of predictions) {
@@ -33,7 +33,7 @@ async function recalculateAllPoints() {
         prediction.homeScore,
         prediction.awayScore,
         match.homeScore!,
-        match.awayScore!
+        match.awayScore!,
       );
 
       if (oldPoints !== newPoints) {
@@ -43,7 +43,7 @@ async function recalculateAllPoints() {
         });
 
         console.log(
-          `  ✏️  ${prediction.user.name}: ${prediction.homeScore}-${prediction.awayScore} | ${oldPoints}pts → ${newPoints}pts ✅`
+          `  ✏️  ${prediction.user.name}: ${prediction.homeScore}-${prediction.awayScore} | ${oldPoints}pts → ${newPoints}pts ✅`,
         );
         totalFixed++;
       }
@@ -73,7 +73,7 @@ async function recalculateAllPoints() {
     });
 
     console.log(
-      `\n⚽ Partido de grupo ${score.matchId}: ${score.homeScore}-${score.awayScore}`
+      `\n⚽ Partido de grupo ${score.matchId}: ${score.homeScore}-${score.awayScore}`,
     );
 
     for (const prediction of predictions) {
@@ -82,7 +82,7 @@ async function recalculateAllPoints() {
         prediction.homeScore,
         prediction.awayScore,
         score.homeScore!,
-        score.awayScore!
+        score.awayScore!,
       );
 
       if (oldPoints !== newPoints) {
@@ -92,7 +92,7 @@ async function recalculateAllPoints() {
         });
 
         console.log(
-          `  ✏️  ${prediction.user.name}: ${prediction.homeScore}-${prediction.awayScore} | ${oldPoints}pts → ${newPoints}pts ✅`
+          `  ✏️  ${prediction.user.name}: ${prediction.homeScore}-${prediction.awayScore} | ${oldPoints}pts → ${newPoints}pts ✅`,
         );
         totalFixed++;
       }

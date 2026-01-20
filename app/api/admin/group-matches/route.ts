@@ -21,48 +21,60 @@ export async function GET(request: Request) {
 
     // Obtener marcadores de la base de datos
     const scores = await prisma.groupMatchScore.findMany();
-    const scoresMap = scores.reduce((acc, score) => {
-      acc[score.matchId] = {
-        homeScore: score.homeScore,
-        awayScore: score.awayScore,
-        matchDate: score.matchDate, // Fecha personalizada si existe
-      };
-      return acc;
-    }, {} as Record<number, { homeScore: number | null; awayScore: number | null; matchDate: Date | null }>);
+    const scoresMap = scores.reduce(
+      (acc, score) => {
+        acc[score.matchId] = {
+          homeScore: score.homeScore,
+          awayScore: score.awayScore,
+          matchDate: score.matchDate, // Fecha personalizada si existe
+        };
+        return acc;
+      },
+      {} as Record<
+        number,
+        {
+          homeScore: number | null;
+          awayScore: number | null;
+          matchDate: Date | null;
+        }
+      >,
+    );
 
     // Combinar datos del JSON con marcadores de la BD
     const matchesWithScores = matchesData.matches.map((match: any) => {
       const score = scoresMap[match.id];
       let dateToUse = match.date;
-      
+
       // Si hay una fecha personalizada en BD, convertirla al formato del JSON
       if (score?.matchDate) {
         // Formatear como "YYYY-MM-DD HH:MM:SS-06" (formato México)
-        const year = score.matchDate.toLocaleString('en-US', { 
-          timeZone: 'America/Mexico_City', 
-          year: 'numeric' 
+        const year = score.matchDate.toLocaleString("en-US", {
+          timeZone: "America/Mexico_City",
+          year: "numeric",
         });
-        const month = score.matchDate.toLocaleString('en-US', { 
-          timeZone: 'America/Mexico_City', 
-          month: '2-digit' 
+        const month = score.matchDate.toLocaleString("en-US", {
+          timeZone: "America/Mexico_City",
+          month: "2-digit",
         });
-        const day = score.matchDate.toLocaleString('en-US', { 
-          timeZone: 'America/Mexico_City', 
-          day: '2-digit' 
+        const day = score.matchDate.toLocaleString("en-US", {
+          timeZone: "America/Mexico_City",
+          day: "2-digit",
         });
-        const hour = score.matchDate.toLocaleString('en-US', { 
-          timeZone: 'America/Mexico_City', 
-          hour: '2-digit', 
-          hour12: false 
-        }).padStart(2, '0');
-        const minute = score.matchDate.toLocaleString('en-US', { 
-          timeZone: 'America/Mexico_City', 
-          minute: '2-digit' 
+        const hour = score.matchDate
+          .toLocaleString("en-US", {
+            timeZone: "America/Mexico_City",
+            hour: "2-digit",
+            hour12: false,
+          })
+          .padStart(2, "0");
+        const minute = score.matchDate.toLocaleString("en-US", {
+          timeZone: "America/Mexico_City",
+          minute: "2-digit",
         });
-        
+
         dateToUse = `${year}-${month}-${day} ${hour}:${minute}:00-06`;
       }
-      
+
       return {
         ...match,
         date: dateToUse,
@@ -76,7 +88,7 @@ export async function GET(request: Request) {
     console.error("Error fetching group matches:", error);
     return NextResponse.json(
       { error: "Error al obtener partidos" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -98,7 +110,12 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { matchId, homeScore, awayScore, matchDate } = body;
 
-    console.log("🔧 API group-matches recibió:", { matchId, homeScore, awayScore, matchDate });
+    console.log("🔧 API group-matches recibió:", {
+      matchId,
+      homeScore,
+      awayScore,
+      matchDate,
+    });
 
     // Verificar que el partido existe en el JSON
     const match = matchesData.matches.find((m: any) => m.id === matchId);
@@ -106,7 +123,7 @@ export async function PUT(request: Request) {
     if (!match) {
       return NextResponse.json(
         { error: "Partido no encontrado" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -114,14 +131,16 @@ export async function PUT(request: Request) {
     const updateData: any = {};
     if (homeScore !== undefined) updateData.homeScore = homeScore;
     if (awayScore !== undefined) updateData.awayScore = awayScore;
-    if (matchDate !== undefined) updateData.matchDate = matchDate ? new Date(matchDate) : null;
+    if (matchDate !== undefined)
+      updateData.matchDate = matchDate ? new Date(matchDate) : null;
 
     const createData: any = {
       matchId: matchId,
       homeScore: homeScore ?? null,
       awayScore: awayScore ?? null,
     };
-    if (matchDate !== undefined) createData.matchDate = matchDate ? new Date(matchDate) : null;
+    if (matchDate !== undefined)
+      createData.matchDate = matchDate ? new Date(matchDate) : null;
 
     // Actualizar o crear el marcador en la base de datos
     const updatedScore = await prisma.groupMatchScore.upsert({
@@ -146,7 +165,7 @@ export async function PUT(request: Request) {
           prediction.homeScore,
           prediction.awayScore,
           homeScore,
-          awayScore
+          awayScore,
         );
 
         await prisma.prediction.update({
@@ -156,14 +175,16 @@ export async function PUT(request: Request) {
       }
 
       console.log(
-        `✅ Actualizados puntos para ${predictions.length} predicciones del partido de grupos ${matchId}`
+        `✅ Actualizados puntos para ${predictions.length} predicciones del partido de grupos ${matchId}`,
       );
     }
 
     // Retornar el partido con los datos actualizados
     return NextResponse.json({
       ...match,
-      date: updatedScore.matchDate ? updatedScore.matchDate.toISOString() : match.date,
+      date: updatedScore.matchDate
+        ? updatedScore.matchDate.toISOString()
+        : match.date,
       homeScore: updatedScore.homeScore,
       awayScore: updatedScore.awayScore,
     });
@@ -171,7 +192,7 @@ export async function PUT(request: Request) {
     console.error("Error updating group match:", error);
     return NextResponse.json(
       { error: "Error al actualizar partido" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

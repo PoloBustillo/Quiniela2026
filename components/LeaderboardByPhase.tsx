@@ -117,26 +117,41 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
         }
 
         // 2. Efectividad (% de aciertos)
-        const effectiveness = filteredPredictions.length > 0 
-          ? (scoredPredictions.length / filteredPredictions.length) * 100 
-          : 0;
+        const effectiveness =
+          filteredPredictions.length > 0
+            ? (scoredPredictions.length / filteredPredictions.length) * 100
+            : 0;
 
         // 3. Predicciones exactas (asumiendo que el máximo de puntos es 5)
-        const exactPredictions = filteredPredictions.filter((p) => p.points === 5).length;
+        const exactPredictions = filteredPredictions.filter(
+          (p) => p.points === 5,
+        ).length;
 
         // Determinar badges
         const badges = [];
-        
+
         if (currentStreak >= 3) {
-          badges.push({ icon: "🔥", label: "En racha", variant: "destructive" as const });
+          badges.push({
+            icon: "🔥",
+            label: "En racha",
+            variant: "destructive" as const,
+          });
         }
-        
+
         if (effectiveness >= 80 && filteredPredictions.length >= 5) {
-          badges.push({ icon: "⭐", label: "Experto", variant: "default" as const });
+          badges.push({
+            icon: "⭐",
+            label: "Experto",
+            variant: "default" as const,
+          });
         }
-        
+
         if (exactPredictions >= 3) {
-          badges.push({ icon: "🎯", label: "Preciso", variant: "secondary" as const });
+          badges.push({
+            icon: "🎯",
+            label: "Preciso",
+            variant: "secondary" as const,
+          });
         }
 
         return {
@@ -292,9 +307,9 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                               )}
                               {/* Badges especiales */}
                               {user.badges.map((badge, idx) => (
-                                <Badge 
-                                  key={idx} 
-                                  variant={badge.variant} 
+                                <Badge
+                                  key={idx}
+                                  variant={badge.variant}
                                   className="text-xs hidden md:inline-flex"
                                 >
                                   {badge.icon} {badge.label}
@@ -305,7 +320,11 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                             {user.badges.length > 0 && (
                               <div className="flex gap-1 mt-1 md:hidden">
                                 {user.badges.map((badge, idx) => (
-                                  <span key={idx} className="text-sm" title={badge.label}>
+                                  <span
+                                    key={idx}
+                                    className="text-sm"
+                                    title={badge.label}
+                                  >
                                     {badge.icon}
                                   </span>
                                 ))}
@@ -318,7 +337,8 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                             )}
                             {/* Info mobile */}
                             <div className="text-[10px] sm:text-xs text-muted-foreground sm:hidden mt-0.5">
-                              {user.predictionsCount} predicciones • {aciertos} aciertos
+                              {user.predictionsCount} predicciones • {aciertos}{" "}
+                              aciertos
                             </div>
                           </div>
                         </div>
@@ -401,11 +421,13 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                             {/* Badges explicados */}
                             {user.badges.length > 0 && (
                               <div className="bg-background rounded-lg p-3">
-                                <p className="text-xs font-semibold mb-2">Logros Desbloqueados:</p>
+                                <p className="text-xs font-semibold mb-2">
+                                  Logros Desbloqueados:
+                                </p>
                                 <div className="flex flex-wrap gap-2">
                                   {user.badges.map((badge, idx) => (
-                                    <Badge 
-                                      key={idx} 
+                                    <Badge
+                                      key={idx}
                                       variant={badge.variant}
                                       className="text-xs"
                                     >
@@ -430,64 +452,68 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                                     .map((pred, idx) => {
                                       const isExact = pred.points === 5;
                                       return (
-                                      <div
-                                        key={idx}
-                                        className={`flex flex-col items-center gap-1 p-2 bg-background rounded-lg border-2 shadow-sm ${
-                                          isExact 
-                                            ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20" 
-                                            : "border-green-500"
-                                        }`}
-                                      >
-                                        {/* Banderas como avatares */}
-                                        <div className="flex items-center gap-1">
-                                          <Image
-                                            src={
-                                              pred.match?.homeTeam?.flag ||
-                                              "/flags/tbd.png"
-                                            }
-                                            alt={
-                                              pred.match?.homeTeam?.code || ""
-                                            }
-                                            width={24}
-                                            height={24}
-                                            className="rounded-sm border border-gray-300"
-                                          />
-                                          <Image
-                                            src={
-                                              pred.match?.awayTeam?.flag ||
-                                              "/flags/tbd.png"
-                                            }
-                                            alt={
-                                              pred.match?.awayTeam?.code || ""
-                                            }
-                                            width={24}
-                                            height={24}
-                                            className="rounded-sm border border-gray-300"
-                                          />
-                                        </div>
-                                        {/* Marcador predicción */}
-                                        <div className="text-xs font-bold text-center">
-                                          {pred.homeScore}-{pred.awayScore}
-                                        </div>
-                                        {/* Marcador real */}
-                                        {pred.match?.homeScore !== null && pred.match?.homeScore !== undefined && (
-                                          <div className="text-[10px] text-muted-foreground text-center">
-                                            Real: {pred.match.homeScore}-{pred.match.awayScore}
-                                          </div>
-                                        )}
-                                        {/* Puntos */}
-                                        <Badge
-                                          variant="default"
-                                          className={`text-[10px] px-1 py-0 ${
-                                            isExact 
-                                              ? "bg-yellow-600 hover:bg-yellow-700" 
-                                              : "bg-green-600"
+                                        <div
+                                          key={idx}
+                                          className={`flex flex-col items-center gap-1 p-2 bg-background rounded-lg border-2 shadow-sm ${
+                                            isExact
+                                              ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20"
+                                              : "border-green-500"
                                           }`}
                                         >
-                                          {isExact ? "⭐" : "+"}{pred.points}
-                                        </Badge>
-                                      </div>
-                                    );
+                                          {/* Banderas como avatares */}
+                                          <div className="flex items-center gap-1">
+                                            <Image
+                                              src={
+                                                pred.match?.homeTeam?.flag ||
+                                                "/flags/tbd.png"
+                                              }
+                                              alt={
+                                                pred.match?.homeTeam?.code || ""
+                                              }
+                                              width={24}
+                                              height={24}
+                                              className="rounded-sm border border-gray-300"
+                                            />
+                                            <Image
+                                              src={
+                                                pred.match?.awayTeam?.flag ||
+                                                "/flags/tbd.png"
+                                              }
+                                              alt={
+                                                pred.match?.awayTeam?.code || ""
+                                              }
+                                              width={24}
+                                              height={24}
+                                              className="rounded-sm border border-gray-300"
+                                            />
+                                          </div>
+                                          {/* Marcador predicción */}
+                                          <div className="text-xs font-bold text-center">
+                                            {pred.homeScore}-{pred.awayScore}
+                                          </div>
+                                          {/* Marcador real */}
+                                          {pred.match?.homeScore !== null &&
+                                            pred.match?.homeScore !==
+                                              undefined && (
+                                              <div className="text-[10px] text-muted-foreground text-center">
+                                                Real: {pred.match.homeScore}-
+                                                {pred.match.awayScore}
+                                              </div>
+                                            )}
+                                          {/* Puntos */}
+                                          <Badge
+                                            variant="default"
+                                            className={`text-[10px] px-1 py-0 ${
+                                              isExact
+                                                ? "bg-yellow-600 hover:bg-yellow-700"
+                                                : "bg-green-600"
+                                            }`}
+                                          >
+                                            {isExact ? "⭐" : "+"}
+                                            {pred.points}
+                                          </Badge>
+                                        </div>
+                                      );
                                     })}
                                 </div>
                               </div>
@@ -535,11 +561,13 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                                         {pred.homeScore}-{pred.awayScore}
                                       </div>
                                       {/* Marcador real */}
-                                      {pred.match?.homeScore !== null && pred.match?.homeScore !== undefined && (
-                                        <div className="text-[10px] text-red-600 font-bold text-center">
-                                          Real: {pred.match.homeScore}-{pred.match.awayScore}
-                                        </div>
-                                      )}
+                                      {pred.match?.homeScore !== null &&
+                                        pred.match?.homeScore !== undefined && (
+                                          <div className="text-[10px] text-red-600 font-bold text-center">
+                                            Real: {pred.match.homeScore}-
+                                            {pred.match.awayScore}
+                                          </div>
+                                        )}
                                     </div>
                                   ))}
                                 </div>

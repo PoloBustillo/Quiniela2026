@@ -246,7 +246,8 @@ export function AllMatchesManager() {
       const updateData: any = { id: matchId };
 
       // Solo enviar scores si SE EDITARON (no si se tocaron otros campos)
-      const scoresWereEdited = edits.homeScore !== undefined || edits.awayScore !== undefined;
+      const scoresWereEdited =
+        edits.homeScore !== undefined || edits.awayScore !== undefined;
       if (scoresWereEdited) {
         updateData.homeScore =
           edits.homeScore !== undefined
@@ -283,14 +284,17 @@ export function AllMatchesManager() {
 
       console.log("📤 Enviando actualización knockout:", updateData);
       console.log("📝 Estado de edits:", edits);
-      console.log("📋 Match original:", { 
+      console.log("📋 Match original:", {
         id: originalMatch.id,
-        homeScore: originalMatch.homeScore, 
+        homeScore: originalMatch.homeScore,
         awayScore: originalMatch.awayScore,
-        matchDate: originalMatch.matchDate 
+        matchDate: originalMatch.matchDate,
       });
       console.log("🔍 Scores editados?", scoresWereEdited);
-      console.log("📨 JSON que se enviará:", JSON.stringify(updateData, null, 2));
+      console.log(
+        "📨 JSON que se enviará:",
+        JSON.stringify(updateData, null, 2),
+      );
 
       const response = await fetch("/api/admin/matches", {
         method: "PUT",
@@ -357,7 +361,8 @@ export function AllMatchesManager() {
       const updateData: any = { matchId };
 
       // Solo enviar scores si SE EDITARON (no si se tocaron otros campos)
-      const scoresWereEdited = updates.homeScore !== undefined || updates.awayScore !== undefined;
+      const scoresWereEdited =
+        updates.homeScore !== undefined || updates.awayScore !== undefined;
       if (scoresWereEdited) {
         updateData.homeScore =
           updates.homeScore !== undefined
@@ -375,7 +380,10 @@ export function AllMatchesManager() {
 
       console.log("📤 Enviando actualización grupo:", updateData);
       console.log("📝 Estado de updates:", updates);
-      console.log("📋 Match original:", { homeScore: originalMatch.homeScore, awayScore: originalMatch.awayScore });
+      console.log("📋 Match original:", {
+        homeScore: originalMatch.homeScore,
+        awayScore: originalMatch.awayScore,
+      });
 
       const response = await fetch("/api/admin/group-matches", {
         method: "PUT",
