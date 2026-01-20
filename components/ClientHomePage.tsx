@@ -90,33 +90,39 @@ export default function ClientHomePage({
 
   // Agrupar partidos por fecha
   const matchesByDate = useMemo(() => {
-    return matches.reduce((acc, match) => {
-      const date = new Date(match.date).toLocaleDateString("es-MX", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
+    return matches.reduce(
+      (acc, match) => {
+        const date = new Date(match.date).toLocaleDateString("es-MX", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
 
-      if (!acc[date]) {
-        acc[date] = [];
-      }
-      acc[date].push(match);
-      return acc;
-    }, {} as Record<string, Match[]>);
+        if (!acc[date]) {
+          acc[date] = [];
+        }
+        acc[date].push(match);
+        return acc;
+      },
+      {} as Record<string, Match[]>,
+    );
   }, [matches]);
 
   // Agrupar partidos por grupo
   const matchesByGroup = useMemo(() => {
-    return matches.reduce((acc, match) => {
-      const group = getGroupFromMatch(match);
+    return matches.reduce(
+      (acc, match) => {
+        const group = getGroupFromMatch(match);
 
-      if (!acc[group]) {
-        acc[group] = [];
-      }
-      acc[group].push(match);
-      return acc;
-    }, {} as Record<string, Match[]>);
+        if (!acc[group]) {
+          acc[group] = [];
+        }
+        acc[group].push(match);
+        return acc;
+      },
+      {} as Record<string, Match[]>,
+    );
   }, [matches]);
 
   const groups = useMemo(() => {
@@ -151,7 +157,7 @@ export default function ClientHomePage({
   }, [viewMode, selectedGroup, matchesByDate, matchesByGroup]);
 
   const completionPercentage = Math.round(
-    (totalPredictions / matches.length) * 100
+    (totalPredictions / matches.length) * 100,
   );
 
   return (
@@ -186,7 +192,9 @@ export default function ClientHomePage({
           <p className="text-xl sm:text-2xl md:text-3xl font-bold text-purple-600 dark:text-purple-400">
             {matches.length}
           </p>
-          <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Partidos</p>
+          <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">
+            Partidos
+          </p>
         </div>
 
         <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 p-3 sm:p-4 rounded-lg border border-yellow-500/20">
@@ -196,7 +204,9 @@ export default function ClientHomePage({
           <p className="text-xl sm:text-2xl md:text-3xl font-bold text-yellow-600 dark:text-yellow-400">
             {totalPoints}
           </p>
-          <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Puntos</p>
+          <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">
+            Puntos
+          </p>
         </div>
 
         <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 p-3 sm:p-4 rounded-lg border border-green-500/20">
@@ -206,7 +216,9 @@ export default function ClientHomePage({
           <p className="text-xl sm:text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400">
             {completionPercentage}%
           </p>
-          <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Completado</p>
+          <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">
+            Completado
+          </p>
         </div>
       </div>
 
@@ -215,7 +227,9 @@ export default function ClientHomePage({
         {/* View Mode Selection */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div className="space-y-1.5 sm:space-y-2">
-            <label className="text-xs sm:text-sm font-medium">Agrupar por:</label>
+            <label className="text-xs sm:text-sm font-medium">
+              Agrupar por:
+            </label>
             <div className="flex gap-1.5 sm:gap-2">
               <Button
                 variant={viewMode === "date" ? "default" : "outline"}
@@ -308,7 +322,9 @@ export default function ClientHomePage({
               ) : (
                 <>
                   <Trophy className="h-4 w-4 sm:h-5 sm:w-5" />
-                  <span className="text-sm sm:text-base md:text-lg">{key.startsWith("Grupo ") ? key : getPhaseDisplay(key)}</span>
+                  <span className="text-sm sm:text-base md:text-lg">
+                    {key.startsWith("Grupo ") ? key : getPhaseDisplay(key)}
+                  </span>
                 </>
               )}
             </h2>

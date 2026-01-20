@@ -49,10 +49,10 @@ export default function PredictionCard({
 }: PredictionCardProps) {
   const router = useRouter();
   const [homeScore, setHomeScore] = useState(
-    existingPrediction?.homeScore ?? 0
+    existingPrediction?.homeScore ?? 0,
   );
   const [awayScore, setAwayScore] = useState(
-    existingPrediction?.awayScore ?? 0
+    existingPrediction?.awayScore ?? 0,
   );
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(!!existingPrediction);
@@ -460,10 +460,10 @@ export default function PredictionCard({
               {isSaving
                 ? "Guardando..."
                 : saved
-                ? "✓ Guardado"
-                : isDisabled
-                ? "No Disponible"
-                : "Guardar Predicción"}
+                  ? "✓ Guardado"
+                  : isDisabled
+                    ? "No Disponible"
+                    : "Guardar Predicción"}
             </Button>
           </CardContent>
         </Card>

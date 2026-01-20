@@ -90,7 +90,7 @@ export function KnockoutMatchManager() {
   const updateMatch = async (
     matchId: string,
     homeTeamId: string,
-    awayTeamId: string
+    awayTeamId: string,
   ) => {
     try {
       const response = await fetch("/api/admin/matches", {
@@ -145,7 +145,7 @@ export function KnockoutMatchManager() {
   const updateResult = async (
     matchId: string,
     homeScore: number,
-    awayScore: number
+    awayScore: number,
   ) => {
     try {
       const response = await fetch("/api/admin/matches", {
@@ -212,7 +212,11 @@ export function KnockoutMatchManager() {
         </Select>
       </div>
 
-      <Button onClick={createMatch} size="lg" className="w-full sm:w-auto touch-manipulation active:scale-95 transition-transform">
+      <Button
+        onClick={createMatch}
+        size="lg"
+        className="w-full sm:w-auto touch-manipulation active:scale-95 transition-transform"
+      >
         <Plus className="h-5 w-5 mr-2" />
         Agregar Nuevo Partido
       </Button>
@@ -246,7 +250,9 @@ export function KnockoutMatchManager() {
                       }
                       className="text-xs"
                     >
-                      {match.status === "FINISHED" ? "✓ Finalizado" : "Pendiente"}
+                      {match.status === "FINISHED"
+                        ? "✓ Finalizado"
+                        : "Pendiente"}
                     </Badge>
                   </div>
                   <Button
@@ -282,7 +288,9 @@ export function KnockoutMatchManager() {
                                 className="object-cover rounded"
                               />
                             )}
-                            <span className="truncate">{match.homeTeam.name}</span>
+                            <span className="truncate">
+                              {match.homeTeam.name}
+                            </span>
                           </div>
                         </SelectValue>
                       </SelectTrigger>
@@ -369,13 +377,19 @@ export function KnockoutMatchManager() {
                           onChange={(e) => {
                             const homeScore = parseInt(e.target.value) || 0;
                             if (match.awayScore !== null) {
-                              updateResult(match.id, homeScore, match.awayScore);
+                              updateResult(
+                                match.id,
+                                homeScore,
+                                match.awayScore,
+                              );
                             }
                           }}
                           className="w-16 h-11 text-center text-xl font-bold touch-manipulation"
                           disabled={match.status === "FINISHED"}
                         />
-                        <span className="text-xl font-bold text-muted-foreground">-</span>
+                        <span className="text-xl font-bold text-muted-foreground">
+                          -
+                        </span>
                         <Input
                           type="number"
                           inputMode="numeric"
@@ -385,7 +399,11 @@ export function KnockoutMatchManager() {
                           onChange={(e) => {
                             const awayScore = parseInt(e.target.value) || 0;
                             if (match.homeScore !== null) {
-                              updateResult(match.id, match.homeScore, awayScore);
+                              updateResult(
+                                match.id,
+                                match.homeScore,
+                                awayScore,
+                              );
                             }
                           }}
                           className="w-16 h-11 text-center text-xl font-bold touch-manipulation"
@@ -415,7 +433,9 @@ export function KnockoutMatchManager() {
                                 className="object-cover rounded"
                               />
                             )}
-                            <span className="truncate">{match.awayTeam.name}</span>
+                            <span className="truncate">
+                              {match.awayTeam.name}
+                            </span>
                           </div>
                         </SelectValue>
                       </SelectTrigger>
@@ -449,9 +469,7 @@ export function KnockoutMatchManager() {
                       dateStyle: "medium",
                     })}
                   </div>
-                  {match.stadium && (
-                    <span>📍 {match.stadium}</span>
-                  )}
+                  {match.stadium && <span>📍 {match.stadium}</span>}
                 </div>
               </CardContent>
             </Card>

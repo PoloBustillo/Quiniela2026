@@ -134,7 +134,9 @@ export function UsersPaymentManager() {
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <p className="font-semibold text-base truncate">{user.name || "Sin nombre"}</p>
+                      <p className="font-semibold text-base truncate">
+                        {user.name || "Sin nombre"}
+                      </p>
                       {user.role === "ADMIN" && (
                         <Badge variant="destructive" className="text-xs">
                           Admin
@@ -150,7 +152,11 @@ export function UsersPaymentManager() {
                       </Badge>
                       {user.hasPaid && user.paidAt && (
                         <span className="text-xs text-green-600 font-medium">
-                          Pagado {new Date(user.paidAt).toLocaleDateString("es-MX", { month: "short", day: "numeric" })}
+                          Pagado{" "}
+                          {new Date(user.paidAt).toLocaleDateString("es-MX", {
+                            month: "short",
+                            day: "numeric",
+                          })}
                         </span>
                       )}
                     </div>

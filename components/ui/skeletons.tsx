@@ -96,7 +96,10 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
     <div className="space-y-3">
       {[...Array(rows)].map((_, i) => (
-        <div key={i} className="flex items-center gap-4 p-4 rounded-lg border animate-pulse">
+        <div
+          key={i}
+          className="flex items-center gap-4 p-4 rounded-lg border animate-pulse"
+        >
           <div className="w-10 h-10 bg-muted rounded-full"></div>
           <div className="flex-1 space-y-2">
             <div className="h-4 bg-muted rounded w-3/4"></div>
@@ -118,7 +121,10 @@ export function LeaderboardSkeleton() {
       <CardContent>
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center gap-4 p-3 rounded-lg border">
+            <div
+              key={i}
+              className="flex items-center gap-4 p-3 rounded-lg border"
+            >
               <div className="w-8 h-8 bg-muted rounded-full animate-pulse"></div>
               <div className="w-10 h-10 bg-muted rounded-full animate-pulse"></div>
               <div className="flex-1 space-y-2">
@@ -141,7 +147,10 @@ export function AdminTableSkeleton() {
   return (
     <div className="space-y-2">
       {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-        <div key={i} className="flex items-center gap-3 p-3 rounded-lg border bg-card animate-pulse">
+        <div
+          key={i}
+          className="flex items-center gap-3 p-3 rounded-lg border bg-card animate-pulse"
+        >
           <div className="w-10 h-10 bg-muted rounded-full"></div>
           <div className="flex-1 space-y-2">
             <div className="h-4 bg-muted rounded w-48"></div>

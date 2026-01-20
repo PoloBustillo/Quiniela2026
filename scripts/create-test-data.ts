@@ -44,7 +44,9 @@ async function createTestData() {
     console.log("\n📝 Creando predicciones para cada usuario...");
 
     for (const match of matchesWithScores) {
-      console.log(`\n   Partido #${match.matchId}: ${match.homeScore} - ${match.awayScore}`);
+      console.log(
+        `\n   Partido #${match.matchId}: ${match.homeScore} - ${match.awayScore}`,
+      );
 
       for (const user of createdUsers) {
         // Crear predicciones variadas para testear diferentes escenarios
@@ -81,7 +83,7 @@ async function createTestData() {
           homeScore,
           awayScore,
           match.homeScore!,
-          match.awayScore!
+          match.awayScore!,
         );
 
         const prediction = await prisma.prediction.upsert({
@@ -107,7 +109,7 @@ async function createTestData() {
         });
 
         console.log(
-          `      ${user.name}: ${prediction.homeScore}-${prediction.awayScore} = ${prediction.points} puntos`
+          `      ${user.name}: ${prediction.homeScore}-${prediction.awayScore} = ${prediction.points} puntos`,
         );
       }
     }
@@ -119,7 +121,7 @@ async function createTestData() {
 
   for (const matchId of futureMatchIds) {
     console.log(`\n   Partido #${matchId} (sin resultado aún):`);
-    
+
     for (const user of createdUsers) {
       const homeScore = Math.floor(Math.random() * 4);
       const awayScore = Math.floor(Math.random() * 4);
@@ -153,7 +155,9 @@ async function createTestData() {
   console.log("\n💡 Ahora puedes:");
   console.log("   1. Ejecutar: npx tsx scripts/test-scoring-system.ts");
   console.log("   2. Iniciar la app: npm run dev");
-  console.log("   3. Ver la tabla de posiciones en: http://localhost:3000/leaderboard");
+  console.log(
+    "   3. Ver la tabla de posiciones en: http://localhost:3000/leaderboard",
+  );
 }
 
 createTestData()

@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     console.error("Error fetching matches:", error);
     return NextResponse.json(
       { error: "Error al obtener partidos" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     console.error("Error creating match:", error);
     return NextResponse.json(
       { error: "Error al crear partido" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -109,16 +109,16 @@ export async function PUT(request: Request) {
       city,
     } = body;
 
-    console.log("🔧 API recibió actualización:", { 
-      id, 
-      homeTeamId, 
-      awayTeamId, 
-      homeScore, 
-      awayScore, 
-      status, 
-      matchDate, 
-      stadium, 
-      city 
+    console.log("🔧 API recibió actualización:", {
+      id,
+      homeTeamId,
+      awayTeamId,
+      homeScore,
+      awayScore,
+      status,
+      matchDate,
+      stadium,
+      city,
     });
 
     const match = await prisma.match.update({
@@ -161,7 +161,7 @@ export async function PUT(request: Request) {
           prediction.homeScore,
           prediction.awayScore,
           homeScore,
-          awayScore
+          awayScore,
         );
 
         await prisma.prediction.update({
@@ -171,16 +171,16 @@ export async function PUT(request: Request) {
       }
 
       console.log(
-        `✅ Actualizados puntos para ${predictions.length} predicciones del partido ${id}`
+        `✅ Actualizados puntos para ${predictions.length} predicciones del partido ${id}`,
       );
     }
 
-    console.log("✅ Partido actualizado en BD:", { 
-      id: match.id, 
-      matchDate: match.matchDate, 
+    console.log("✅ Partido actualizado en BD:", {
+      id: match.id,
+      matchDate: match.matchDate,
       stadium: match.stadium,
       homeTeam: match.homeTeam.name,
-      awayTeam: match.awayTeam.name
+      awayTeam: match.awayTeam.name,
     });
 
     return NextResponse.json(match);
@@ -188,7 +188,7 @@ export async function PUT(request: Request) {
     console.error("Error updating match:", error);
     return NextResponse.json(
       { error: "Error al actualizar partido" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -212,7 +212,7 @@ export async function DELETE(request: Request) {
     if (!id) {
       return NextResponse.json(
         { error: "ID de partido requerido" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -225,7 +225,7 @@ export async function DELETE(request: Request) {
     console.error("Error deleting match:", error);
     return NextResponse.json(
       { error: "Error al eliminar partido" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

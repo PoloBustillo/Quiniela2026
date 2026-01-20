@@ -91,7 +91,7 @@ const STADIUMS = stadiumsData.stadiums.map((s) => ({
 }));
 
 const CITIES = Array.from(
-  new Set(stadiumsData.stadiums.map((s) => s.city))
+  new Set(stadiumsData.stadiums.map((s) => s.city)),
 ).sort();
 
 export function AllMatchesManager() {
@@ -103,13 +103,19 @@ export function AllMatchesManager() {
   const [groupMatches, setGroupMatches] = useState<JsonMatch[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success",
+  ) => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
-  
+
   // Estado unificado para ediciones de knockout
   const [knockoutEdits, setKnockoutEdits] = useState<{
     [matchId: string]: {
@@ -156,9 +162,12 @@ export function AllMatchesManager() {
   const loadKnockoutMatches = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/matches?phase=${selectedPhase}&t=${Date.now()}`, {
-        cache: 'no-store',
-      });
+      const response = await fetch(
+        `/api/admin/matches?phase=${selectedPhase}&t=${Date.now()}`,
+        {
+          cache: "no-store",
+        },
+      );
       const data = await response.json();
       console.log("🔄 Partidos knockout cargados:", data.length);
       if (data.length > 0) {
@@ -176,7 +185,7 @@ export function AllMatchesManager() {
     setLoading(true);
     try {
       const response = await fetch(`/api/admin/group-matches?t=${Date.now()}`, {
-        cache: 'no-store',
+        cache: "no-store",
       });
       const data = await response.json();
       console.log("🔄 Partidos de grupo cargados:", data.length);
@@ -225,7 +234,7 @@ export function AllMatchesManager() {
     }
 
     // Obtener el partido original
-    const originalMatch = matches.find(m => m.id === matchId);
+    const originalMatch = matches.find((m) => m.id === matchId);
     if (!originalMatch) {
       showToast("Partido no encontrado", "error");
       return;
@@ -234,13 +243,19 @@ export function AllMatchesManager() {
     try {
       setLoading(true);
       const updateData: any = { id: matchId };
-      
+
       // Si se edita algún score, enviar AMBOS para no perderlos
       if (edits.homeScore !== undefined || edits.awayScore !== undefined) {
-        updateData.homeScore = edits.homeScore !== undefined ? edits.homeScore : originalMatch.homeScore;
-        updateData.awayScore = edits.awayScore !== undefined ? edits.awayScore : originalMatch.awayScore;
+        updateData.homeScore =
+          edits.homeScore !== undefined
+            ? edits.homeScore
+            : originalMatch.homeScore;
+        updateData.awayScore =
+          edits.awayScore !== undefined
+            ? edits.awayScore
+            : originalMatch.awayScore;
       }
-      
+
       // Otros campos solo si cambiaron
       if (edits.homeTeamId && edits.homeTeamId !== originalMatch.homeTeamId) {
         updateData.homeTeamId = edits.homeTeamId;
@@ -248,10 +263,16 @@ export function AllMatchesManager() {
       if (edits.awayTeamId && edits.awayTeamId !== originalMatch.awayTeamId) {
         updateData.awayTeamId = edits.awayTeamId;
       }
-      if (edits.matchDate && edits.matchDate !== originalMatch.matchDate?.toISOString()) {
+      if (
+        edits.matchDate &&
+        edits.matchDate !== originalMatch.matchDate?.toISOString()
+      ) {
         updateData.matchDate = edits.matchDate;
       }
-      if (edits.stadium !== undefined && edits.stadium !== originalMatch.stadium) {
+      if (
+        edits.stadium !== undefined &&
+        edits.stadium !== originalMatch.stadium
+      ) {
         updateData.stadium = edits.stadium;
       }
       if (edits.city !== undefined && edits.city !== originalMatch.city) {
@@ -260,9 +281,9 @@ export function AllMatchesManager() {
       if (edits.status && edits.status !== originalMatch.status) {
         updateData.status = edits.status;
       }
-      
+
       console.log("📤 Enviando actualización knockout:", updateData);
-      
+
       const response = await fetch("/api/admin/matches", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -317,7 +338,7 @@ export function AllMatchesManager() {
     }
 
     // Obtener el partido original
-    const originalMatch = groupMatches.find(m => m.id === matchId);
+    const originalMatch = groupMatches.find((m) => m.id === matchId);
     if (!originalMatch) {
       showToast("Partido no encontrado", "error");
       return;
@@ -326,19 +347,25 @@ export function AllMatchesManager() {
     try {
       setLoading(true);
       const updateData: any = { matchId };
-      
+
       // Si se edita algún score, enviar AMBOS para no perderlos
       if (updates.homeScore !== undefined || updates.awayScore !== undefined) {
-        updateData.homeScore = updates.homeScore !== undefined ? updates.homeScore : originalMatch.homeScore;
-        updateData.awayScore = updates.awayScore !== undefined ? updates.awayScore : originalMatch.awayScore;
+        updateData.homeScore =
+          updates.homeScore !== undefined
+            ? updates.homeScore
+            : originalMatch.homeScore;
+        updateData.awayScore =
+          updates.awayScore !== undefined
+            ? updates.awayScore
+            : originalMatch.awayScore;
       }
-      
+
       if (updates.matchDate && updates.matchDate !== originalMatch.date) {
         updateData.matchDate = updates.matchDate;
       }
-      
+
       console.log("📤 Enviando actualización grupo:", updateData);
-      
+
       const response = await fetch("/api/admin/group-matches", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -460,7 +487,7 @@ export function AllMatchesManager() {
                     <SelectItem key={phase.value} value={phase.value}>
                       {phase.label}
                     </SelectItem>
-                  )
+                  ),
                 )}
               </SelectContent>
             </Select>
@@ -520,19 +547,25 @@ export function AllMatchesManager() {
                       <div className="flex items-center gap-2 text-sm">
                         <Calendar className="h-4 w-4" />
                         <span className="font-medium">
-                          {new Date(match.matchDate).toLocaleDateString("es-MX", {
-                            weekday: "short",
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
+                          {new Date(match.matchDate).toLocaleDateString(
+                            "es-MX",
+                            {
+                              weekday: "short",
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )}
                         </span>
                         <Clock className="h-4 w-4 ml-2" />
                         <span className="font-medium">
-                          {new Date(match.matchDate).toLocaleTimeString("es-MX", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {new Date(match.matchDate).toLocaleTimeString(
+                            "es-MX",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
                         </span>
                       </div>
                       {match.stadium && (
@@ -664,16 +697,27 @@ export function AllMatchesManager() {
                         <div className="grid grid-cols-2 gap-2">
                           <Input
                             type="date"
-                            value={extractMexicoCityDateTime(
-                              getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)
-                            ).date}
+                            value={
+                              extractMexicoCityDateTime(
+                                getValidDate(
+                                  knockoutEdits[match.id]?.matchDate ??
+                                    match.matchDate,
+                                ),
+                              ).date
+                            }
                             onChange={(e) => {
                               if (!e.target.value) return;
                               const currentTime = extractMexicoCityDateTime(
-                                getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)
+                                getValidDate(
+                                  knockoutEdits[match.id]?.matchDate ??
+                                    match.matchDate,
+                                ),
                               ).time;
                               updateKnockoutMatch(match.id, {
-                                matchDate: fromMexicoCityTime(e.target.value, currentTime).toISOString(),
+                                matchDate: fromMexicoCityTime(
+                                  e.target.value,
+                                  currentTime,
+                                ).toISOString(),
                               });
                             }}
                             disabled={match.status === "FINISHED"}
@@ -681,16 +725,27 @@ export function AllMatchesManager() {
                           />
                           <Input
                             type="time"
-                            value={extractMexicoCityDateTime(
-                              getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)
-                            ).time}
+                            value={
+                              extractMexicoCityDateTime(
+                                getValidDate(
+                                  knockoutEdits[match.id]?.matchDate ??
+                                    match.matchDate,
+                                ),
+                              ).time
+                            }
                             onChange={(e) => {
                               if (!e.target.value) return;
                               const currentDate = extractMexicoCityDateTime(
-                                getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)
+                                getValidDate(
+                                  knockoutEdits[match.id]?.matchDate ??
+                                    match.matchDate,
+                                ),
                               ).date;
                               updateKnockoutMatch(match.id, {
-                                matchDate: fromMexicoCityTime(currentDate, e.target.value).toISOString(),
+                                matchDate: fromMexicoCityTime(
+                                  currentDate,
+                                  e.target.value,
+                                ).toISOString(),
                               });
                             }}
                             disabled={match.status === "FINISHED"}
@@ -702,7 +757,11 @@ export function AllMatchesManager() {
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Estadio</label>
                         <Select
-                          value={knockoutEdits[match.id]?.stadium ?? match.stadium ?? ""}
+                          value={
+                            knockoutEdits[match.id]?.stadium ??
+                            match.stadium ??
+                            ""
+                          }
                           onValueChange={(value) => {
                             updateKnockoutMatch(match.id, {
                               stadium: value,
@@ -727,7 +786,9 @@ export function AllMatchesManager() {
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Ciudad</label>
                         <Select
-                          value={knockoutEdits[match.id]?.city ?? match.city ?? ""}
+                          value={
+                            knockoutEdits[match.id]?.city ?? match.city ?? ""
+                          }
                           onValueChange={(value) => {
                             updateKnockoutMatch(match.id, {
                               city: value,
@@ -767,7 +828,10 @@ export function AllMatchesManager() {
                                   : (match.homeScore ?? "")
                               }
                               onChange={(e) => {
-                                const homeScore = e.target.value === "" ? null : parseInt(e.target.value);
+                                const homeScore =
+                                  e.target.value === ""
+                                    ? null
+                                    : parseInt(e.target.value);
                                 updateKnockoutMatch(match.id, {
                                   homeScore,
                                   status: "FINISHED",
@@ -786,7 +850,10 @@ export function AllMatchesManager() {
                                   : (match.awayScore ?? "")
                               }
                               onChange={(e) => {
-                                const awayScore = e.target.value === "" ? null : parseInt(e.target.value);
+                                const awayScore =
+                                  e.target.value === ""
+                                    ? null
+                                    : parseInt(e.target.value);
                                 updateKnockoutMatch(match.id, {
                                   awayScore,
                                   status: "FINISHED",
@@ -800,29 +867,32 @@ export function AllMatchesManager() {
 
                     {/* Botones de Guardar/Cancelar cambios generales - Movidos al final */}
                     {knockoutEdits[match.id] && (
-                        <div className="flex gap-2 pt-4 border-t mt-4">
-                          <Button
-                            onClick={() => {
-                              console.log("💾 Botón Guardar clickeado para:", match.id);
-                              saveKnockoutMatch(match.id);
-                            }}
-                            disabled={loading}
-                            className="flex-1"
-                            variant="default"
-                          >
-                            <Save className="w-4 h-4 mr-2" />
-                            {loading ? "Guardando..." : "Guardar Cambios"}
-                          </Button>
-                          <Button
-                            onClick={() => cancelKnockoutEdit(match.id)}
-                            disabled={loading}
-                            variant="outline"
-                            className="flex-1"
-                          >
-                            Cancelar
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex gap-2 pt-4 border-t mt-4">
+                        <Button
+                          onClick={() => {
+                            console.log(
+                              "💾 Botón Guardar clickeado para:",
+                              match.id,
+                            );
+                            saveKnockoutMatch(match.id);
+                          }}
+                          disabled={loading}
+                          className="flex-1"
+                          variant="default"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {loading ? "Guardando..." : "Guardar Cambios"}
+                        </Button>
+                        <Button
+                          onClick={() => cancelKnockoutEdit(match.id)}
+                          disabled={loading}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -893,32 +963,50 @@ export function AllMatchesManager() {
                         <div className="grid grid-cols-2 gap-2">
                           <Input
                             type="date"
-                            value={extractMexicoCityDateTime(
-                              getValidDate(groupEdits[match.id]?.matchDate ?? match.date)
-                            ).date}
+                            value={
+                              extractMexicoCityDateTime(
+                                getValidDate(
+                                  groupEdits[match.id]?.matchDate ?? match.date,
+                                ),
+                              ).date
+                            }
                             onChange={(e) => {
                               if (!e.target.value) return;
                               const currentTime = extractMexicoCityDateTime(
-                                getValidDate(groupEdits[match.id]?.matchDate ?? match.date)
+                                getValidDate(
+                                  groupEdits[match.id]?.matchDate ?? match.date,
+                                ),
                               ).time;
                               updateGroupMatch(match.id, {
-                                matchDate: fromMexicoCityTime(e.target.value, currentTime).toISOString(),
+                                matchDate: fromMexicoCityTime(
+                                  e.target.value,
+                                  currentTime,
+                                ).toISOString(),
                               });
                             }}
                             className="h-11 text-base touch-manipulation"
                           />
                           <Input
                             type="time"
-                            value={extractMexicoCityDateTime(
-                              getValidDate(groupEdits[match.id]?.matchDate ?? match.date)
-                            ).time}
+                            value={
+                              extractMexicoCityDateTime(
+                                getValidDate(
+                                  groupEdits[match.id]?.matchDate ?? match.date,
+                                ),
+                              ).time
+                            }
                             onChange={(e) => {
                               if (!e.target.value) return;
                               const currentDate = extractMexicoCityDateTime(
-                                getValidDate(groupEdits[match.id]?.matchDate ?? match.date)
+                                getValidDate(
+                                  groupEdits[match.id]?.matchDate ?? match.date,
+                                ),
                               ).date;
                               updateGroupMatch(match.id, {
-                                matchDate: fromMexicoCityTime(currentDate, e.target.value).toISOString(),
+                                matchDate: fromMexicoCityTime(
+                                  currentDate,
+                                  e.target.value,
+                                ).toISOString(),
                               });
                             }}
                             className="h-11 text-base touch-manipulation"
@@ -975,7 +1063,10 @@ export function AllMatchesManager() {
                               : (match.homeScore ?? "")
                           }
                           onChange={(e) => {
-                            const homeScore = e.target.value === "" ? null : parseInt(e.target.value);
+                            const homeScore =
+                              e.target.value === ""
+                                ? null
+                                : parseInt(e.target.value);
                             updateGroupMatch(match.id, { homeScore });
                           }}
                           className="w-20 text-center"
@@ -991,7 +1082,10 @@ export function AllMatchesManager() {
                               : (match.awayScore ?? "")
                           }
                           onChange={(e) => {
-                            const awayScore = e.target.value === "" ? null : parseInt(e.target.value);
+                            const awayScore =
+                              e.target.value === ""
+                                ? null
+                                : parseInt(e.target.value);
                             updateGroupMatch(match.id, { awayScore });
                           }}
                           className="w-20 text-center"
@@ -1001,26 +1095,26 @@ export function AllMatchesManager() {
 
                     {/* Botones de Guardar/Cancelar cambios generales - Movidos al final */}
                     {groupEdits[match.id] && (
-                        <div className="flex gap-2 pt-4 border-t mt-4">
-                          <Button
-                            onClick={() => saveGroupMatch(match.id)}
-                            disabled={loading}
-                            className="flex-1"
-                            variant="default"
-                          >
-                            <Save className="w-4 h-4 mr-2" />
-                            {loading ? "Guardando..." : "Guardar Cambios"}
-                          </Button>
-                          <Button
-                            onClick={() => cancelGroupEdit(match.id)}
-                            disabled={loading}
-                            variant="outline"
-                            className="flex-1"
-                          >
-                            Cancelar
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex gap-2 pt-4 border-t mt-4">
+                        <Button
+                          onClick={() => saveGroupMatch(match.id)}
+                          disabled={loading}
+                          className="flex-1"
+                          variant="default"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {loading ? "Guardando..." : "Guardar Cambios"}
+                        </Button>
+                        <Button
+                          onClick={() => cancelGroupEdit(match.id)}
+                          disabled={loading}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -1040,12 +1134,14 @@ export function AllMatchesManager() {
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-4 right-4 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
-          <div className={`rounded-lg shadow-lg p-4 flex items-center gap-3 min-w-[300px] ${
-            toast.type === 'success' 
-              ? 'bg-green-600 text-white' 
-              : 'bg-red-600 text-white'
-          }`}>
-            {toast.type === 'success' ? (
+          <div
+            className={`rounded-lg shadow-lg p-4 flex items-center gap-3 min-w-[300px] ${
+              toast.type === "success"
+                ? "bg-green-600 text-white"
+                : "bg-red-600 text-white"
+            }`}
+          >
+            {toast.type === "success" ? (
               <CheckCircle className="h-5 w-5 flex-shrink-0" />
             ) : (
               <XCircle className="h-5 w-5 flex-shrink-0" />

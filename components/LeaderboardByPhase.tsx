@@ -121,7 +121,9 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
     <div className="space-y-4 sm:space-y-6">
       {/* Phase Selector */}
       <div className="flex flex-col xs:flex-row xs:items-center gap-2 xs:gap-4">
-        <label className="text-xs sm:text-sm font-medium">Filtrar por fase:</label>
+        <label className="text-xs sm:text-sm font-medium">
+          Filtrar por fase:
+        </label>
         <Select value={selectedPhase} onValueChange={setSelectedPhase}>
           <SelectTrigger className="w-full xs:w-[200px] sm:w-[250px] h-9">
             <SelectValue />
@@ -149,12 +151,18 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-8 sm:w-12 px-1 sm:px-4"></TableHead>
-                <TableHead className="w-12 sm:w-16 text-center px-1 sm:px-4 text-xs sm:text-sm">Pos</TableHead>
-                <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">Participante</TableHead>
+                <TableHead className="w-12 sm:w-16 text-center px-1 sm:px-4 text-xs sm:text-sm">
+                  Pos
+                </TableHead>
+                <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">
+                  Participante
+                </TableHead>
                 <TableHead className="text-center hidden md:table-cell px-2 sm:px-4 text-xs sm:text-sm">
                   Predicciones
                 </TableHead>
-                <TableHead className="text-center px-2 sm:px-4 text-xs sm:text-sm">Puntos</TableHead>
+                <TableHead className="text-center px-2 sm:px-4 text-xs sm:text-sm">
+                  Puntos
+                </TableHead>
                 <TableHead className="text-center hidden md:table-cell px-2 sm:px-4 text-xs sm:text-sm">
                   Promedio
                 </TableHead>
@@ -239,7 +247,9 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                           )}
                           <div className="min-w-0">
                             <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                              <span className="truncate text-xs sm:text-sm md:text-base">{user.name}</span>
+                              <span className="truncate text-xs sm:text-sm md:text-base">
+                                {user.name}
+                              </span>
                               {user.isCurrentUser && (
                                 <Badge variant="default" className="text-xs">
                                   Tú
@@ -262,7 +272,9 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
 
                       {/* Predicciones (hidden on mobile) */}
                       <TableCell className="text-center hidden md:table-cell px-2 sm:px-4">
-                        <Badge variant="outline" className="text-xs">{user.predictionsCount}</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {user.predictionsCount}
+                        </Badge>
                       </TableCell>
 
                       {/* Puntos */}
@@ -281,7 +293,10 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                     {/* Fila expandida con detalles */}
                     {isExpanded && (
                       <TableRow>
-                        <TableCell colSpan={6} className="bg-muted/30 p-3 sm:p-4">
+                        <TableCell
+                          colSpan={6}
+                          className="bg-muted/30 p-3 sm:p-4"
+                        >
                           <div className="space-y-3 sm:space-y-4">
                             {/* Estadísticas resumidas */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
@@ -480,18 +495,21 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
         const currentUserIndex = leaderboard.findIndex((u) => u.isCurrentUser);
         const currentUser = leaderboard[currentUserIndex];
         if (!currentUser) return null;
-        
+
         const position = currentUserIndex + 1;
         const pointsToTop3 = Math.max(
           0,
-          (leaderboard[2]?.points || 0) - currentUser.points + 1
+          (leaderboard[2]?.points || 0) - currentUser.points + 1,
         );
-        
+
         let positionIcon = null;
-        if (position === 1) positionIcon = <Trophy className="h-5 w-5 text-yellow-500" />;
-        else if (position === 2) positionIcon = <Medal className="h-5 w-5 text-gray-400" />;
-        else if (position === 3) positionIcon = <Award className="h-5 w-5 text-amber-600" />;
-        
+        if (position === 1)
+          positionIcon = <Trophy className="h-5 w-5 text-yellow-500" />;
+        else if (position === 2)
+          positionIcon = <Medal className="h-5 w-5 text-gray-400" />;
+        else if (position === 3)
+          positionIcon = <Award className="h-5 w-5 text-amber-600" />;
+
         return (
           <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t-4 border-primary shadow-2xl backdrop-blur-sm bg-card/95">
             <div className="container mx-auto px-4 py-3 max-w-7xl">
@@ -510,7 +528,7 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                     <p className="text-sm font-semibold">{currentUser.name}</p>
                   </div>
                 </div>
-                
+
                 {/* Puntos */}
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">Puntos</p>
@@ -518,7 +536,7 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                     {currentUser.points}
                   </p>
                 </div>
-                
+
                 {/* Indicador de distancia al podio */}
                 {position > 3 && (
                   <div className="text-right">

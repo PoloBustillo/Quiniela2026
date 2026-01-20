@@ -44,7 +44,10 @@ export default function Loading() {
         {/* Filters Skeleton */}
         <div className="flex gap-2 overflow-x-auto pb-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-9 bg-muted rounded-full w-24 flex-shrink-0 animate-pulse"></div>
+            <div
+              key={i}
+              className="h-9 bg-muted rounded-full w-24 flex-shrink-0 animate-pulse"
+            ></div>
           ))}
         </div>
 

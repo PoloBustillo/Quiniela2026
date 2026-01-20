@@ -41,16 +41,24 @@ async function testScoringSystem() {
   });
 
   console.log(`⚽ Partidos en DB con resultados: ${dbMatches.length}`);
-  console.log(`⚽ Partidos de grupo con resultados: ${groupMatchScores.length}\n`);
+  console.log(
+    `⚽ Partidos de grupo con resultados: ${groupMatchScores.length}\n`,
+  );
 
   if (dbMatches.length === 0 && groupMatchScores.length === 0) {
     console.log("⚠️  No hay partidos con resultados registrados");
-    console.log("💡 Sugerencia: Agrega resultados a algunos partidos desde el panel de admin\n");
+    console.log(
+      "💡 Sugerencia: Agrega resultados a algunos partidos desde el panel de admin\n",
+    );
   } else {
     // 3. Calcular puntos para cada partido de DB
     for (const match of dbMatches) {
-      console.log(`\n📊 Partido: ${match.homeTeam.name} ${match.homeScore} - ${match.awayScore} ${match.awayTeam.name}`);
-      console.log(`📅 Fecha: ${match.matchDate.toLocaleString("es-MX", { timeZone: "America/Mexico_City" })}`);
+      console.log(
+        `\n📊 Partido: ${match.homeTeam.name} ${match.homeScore} - ${match.awayScore} ${match.awayTeam.name}`,
+      );
+      console.log(
+        `📅 Fecha: ${match.matchDate.toLocaleString("es-MX", { timeZone: "America/Mexico_City" })}`,
+      );
       console.log(`📍 ${match.stadium}, ${match.city}\n`);
 
       // Buscar predicciones para este partido
@@ -70,19 +78,21 @@ async function testScoringSystem() {
           prediction.homeScore,
           prediction.awayScore,
           match.homeScore!,
-          match.awayScore!
+          match.awayScore!,
         );
 
         console.log(
-          `  👤 ${prediction.user.name}: ${prediction.homeScore}-${prediction.awayScore} → ${points} puntos ${points !== prediction.points ? `(guardado: ${prediction.points})` : "✓"}`
+          `  👤 ${prediction.user.name}: ${prediction.homeScore}-${prediction.awayScore} → ${points} puntos ${points !== prediction.points ? `(guardado: ${prediction.points})` : "✓"}`,
         );
       }
     }
 
     // También mostrar partidos de grupo
     for (const score of groupMatchScores) {
-      console.log(`\n📊 Partido de grupo #${score.matchId}: ${score.homeScore} - ${score.awayScore}`);
-      
+      console.log(
+        `\n📊 Partido de grupo #${score.matchId}: ${score.homeScore} - ${score.awayScore}`,
+      );
+
       const predictions = await prisma.prediction.findMany({
         where: { matchId: String(score.matchId) },
         include: { user: true },
@@ -95,11 +105,11 @@ async function testScoringSystem() {
             prediction.homeScore,
             prediction.awayScore,
             score.homeScore!,
-            score.awayScore!
+            score.awayScore!,
           );
 
           console.log(
-            `  👤 ${prediction.user.name}: ${prediction.homeScore}-${prediction.awayScore} → ${points} puntos ${points !== prediction.points ? `(guardado: ${prediction.points})` : "✓"}`
+            `  👤 ${prediction.user.name}: ${prediction.homeScore}-${prediction.awayScore} → ${points} puntos ${points !== prediction.points ? `(guardado: ${prediction.points})` : "✓"}`,
           );
         }
       }
@@ -129,7 +139,9 @@ async function testScoringSystem() {
     });
 
     const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "  ";
-    console.log(`${medal} ${i + 1}. ${user?.name?.padEnd(30)} ${entry._sum.points || 0} puntos`);
+    console.log(
+      `${medal} ${i + 1}. ${user?.name?.padEnd(30)} ${entry._sum.points || 0} puntos`,
+    );
   }
 
   // 5. Verificar horarios
