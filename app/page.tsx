@@ -148,10 +148,5 @@ export default async function HomePage() {
     {} as Record<number, { homeScore: number; awayScore: number }>,
   );
 
-  return (
-    <ClientHomePage
-      matches={allMatches}
-      predictionMap={predictionMap}
-    />
-  );
+  return <ClientHomePage matches={allMatches} predictionMap={predictionMap} />;
 }

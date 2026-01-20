@@ -95,8 +95,9 @@ export default async function RulesPage() {
                   Nota Importante
                 </p>
                 <p className="text-sm text-blue-800 dark:text-blue-200 mt-1">
-                  Los marcadores a predecir son <strong>sin tiempo extra ni penales</strong>. 
-                  Solo cuenta el resultado al final de los 90 minutos de juego regular.
+                  Los marcadores a predecir son{" "}
+                  <strong>sin tiempo extra ni penales</strong>. Solo cuenta el
+                  resultado al final de los 90 minutos de juego regular.
                 </p>
               </div>
             </div>

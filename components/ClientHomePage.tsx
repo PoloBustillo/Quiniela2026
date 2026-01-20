@@ -4,12 +4,7 @@ import { useState, useMemo } from "react";
 import PredictionCard from "@/components/PredictionCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  LayoutGrid,
-  List,
-  Calendar,
-  Trophy,
-} from "lucide-react";
+import { LayoutGrid, List, Calendar, Trophy } from "lucide-react";
 
 interface Match {
   id: number;
@@ -149,8 +144,6 @@ export default function ClientHomePage({
     }
   }, [viewMode, selectedGroup, matchesByDate, matchesByGroup]);
 
-
-
   return (
     <div className="container max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-6 md:py-8">
       <div className="mb-4 sm:mb-6">
@@ -161,8 +154,6 @@ export default function ClientHomePage({
           Ingresa tus predicciones para cada partido del Mundial 2026
         </p>
       </div>
-
-
 
       {/* Controls */}
       <div className="bg-card border rounded-lg p-2 sm:p-4 mb-4 sm:mb-6 space-y-2 sm:space-y-4">
