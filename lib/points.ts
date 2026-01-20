@@ -13,14 +13,20 @@ export function calculatePoints(
   actualHome: number,
   actualAway: number,
 ): number {
+  // Convertir explícitamente a números para evitar problemas de tipo
+  const predHome = Number(predictedHome);
+  const predAway = Number(predictedAway);
+  const actHome = Number(actualHome);
+  const actAway = Number(actualAway);
+
   // Resultado exacto
-  if (predictedHome === actualHome && predictedAway === actualAway) {
+  if (predHome === actHome && predAway === actAway) {
     return 5;
   }
 
   // Diferencias de goles
-  const predictedDiff = predictedHome - predictedAway;
-  const actualDiff = actualHome - actualAway;
+  const predictedDiff = predHome - predAway;
+  const actualDiff = actHome - actAway;
 
   // Empate acertado
   if (predictedDiff === 0 && actualDiff === 0) {

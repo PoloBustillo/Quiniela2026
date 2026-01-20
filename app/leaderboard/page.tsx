@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import LeaderboardByPhase from "@/components/LeaderboardByPhase";
+import matchesData from "@/data/matches.json";
 
 export default async function LeaderboardPage() {
   const session = await getServerSession(authOptions);
@@ -33,8 +34,8 @@ export default async function LeaderboardPage() {
     },
   });
 
-  // Obtener información de todos los partidos con equipos
-  const matches = await prisma.match.findMany({
+  // Obtener información de partidos knockout (de la BD)
+  const knockoutMatches = await prisma.match.findMany({
     include: {
       homeTeam: {
         select: {
@@ -53,8 +54,18 @@ export default async function LeaderboardPage() {
     },
   });
 
-  // Crear un mapa de partidos para acceso rápido
-  const matchesMap = matches.reduce(
+  // Obtener scores de partidos de grupo (de la BD)
+  const groupScores = await prisma.groupMatchScore.findMany();
+  const groupScoresMap = groupScores.reduce((acc, score) => {
+    acc[score.matchId] = {
+      homeScore: score.homeScore,
+      awayScore: score.awayScore,
+    };
+    return acc;
+  }, {} as Record<number, { homeScore: number | null; awayScore: number | null }>);
+
+  // Crear un mapa de partidos knockout para acceso rápido
+  const matchesMap = knockoutMatches.reduce(
     (acc, match) => {
       acc[match.id] = {
         homeTeam: match.homeTeam,
@@ -66,6 +77,25 @@ export default async function LeaderboardPage() {
     },
     {} as Record<string, any>,
   );
+
+  // Agregar partidos de grupo al mapa
+  matchesData.matches.forEach((match: any) => {
+    const score = groupScoresMap[match.id];
+    matchesMap[`match_${match.id}`] = {
+      homeTeam: {
+        name: match.homeTeam.name,
+        code: match.homeTeam.code,
+        flag: match.homeTeam.flag,
+      },
+      awayTeam: {
+        name: match.awayTeam.name,
+        code: match.awayTeam.code,
+        flag: match.awayTeam.flag,
+      },
+      homeScore: score?.homeScore ?? null,
+      awayScore: score?.awayScore ?? null,
+    };
+  });
 
   // También obtener estadísticas generales para debug
   const totalUsers = await prisma.user.count();

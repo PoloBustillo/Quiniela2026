@@ -105,6 +105,40 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
           (p) => p.points === 0,
         );
 
+        // Calcular estadísticas para badges
+        // 1. Racha actual (predicciones consecutivas con puntos)
+        let currentStreak = 0;
+        for (let i = filteredPredictions.length - 1; i >= 0; i--) {
+          if (filteredPredictions[i].points > 0) {
+            currentStreak++;
+          } else {
+            break;
+          }
+        }
+
+        // 2. Efectividad (% de aciertos)
+        const effectiveness = filteredPredictions.length > 0 
+          ? (scoredPredictions.length / filteredPredictions.length) * 100 
+          : 0;
+
+        // 3. Predicciones exactas (asumiendo que el máximo de puntos es 5)
+        const exactPredictions = filteredPredictions.filter((p) => p.points === 5).length;
+
+        // Determinar badges
+        const badges = [];
+        
+        if (currentStreak >= 3) {
+          badges.push({ icon: "🔥", label: "En racha", variant: "destructive" as const });
+        }
+        
+        if (effectiveness >= 80 && filteredPredictions.length >= 5) {
+          badges.push({ icon: "⭐", label: "Experto", variant: "default" as const });
+        }
+        
+        if (exactPredictions >= 3) {
+          badges.push({ icon: "🎯", label: "Preciso", variant: "secondary" as const });
+        }
+
         return {
           ...user,
           points: totalPoints,
@@ -112,6 +146,10 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
           scoredPredictions,
           unscoredPredictions,
           filteredPredictions,
+          currentStreak,
+          effectiveness,
+          exactPredictions,
+          badges,
         };
       })
       .sort((a, b) => b.points - a.points);
@@ -157,24 +195,21 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                 <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">
                   Participante
                 </TableHead>
-                <TableHead className="text-center hidden md:table-cell px-2 sm:px-4 text-xs sm:text-sm">
+                <TableHead className="text-center hidden sm:table-cell px-2 sm:px-4 text-xs sm:text-sm">
                   Predicciones
                 </TableHead>
                 <TableHead className="text-center px-2 sm:px-4 text-xs sm:text-sm">
                   Puntos
                 </TableHead>
-                <TableHead className="text-center hidden md:table-cell px-2 sm:px-4 text-xs sm:text-sm">
-                  Promedio
+                <TableHead className="text-center hidden lg:table-cell px-2 sm:px-4 text-xs sm:text-sm">
+                  Aciertos
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {leaderboard.map((user, index) => {
                 const position = index + 1;
-                const avgPoints =
-                  user.predictionsCount > 0
-                    ? (user.points / user.predictionsCount).toFixed(2)
-                    : "0.00";
+                const aciertos = user.scoredPredictions.length;
                 const isExpanded = expandedUsers.has(user.id);
 
                 let positionIcon = null;
@@ -245,7 +280,7 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                               {user.name[0]}
                             </div>
                           )}
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                               <span className="truncate text-xs sm:text-sm md:text-base">
                                 {user.name}
@@ -255,23 +290,42 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                                   Tú
                                 </Badge>
                               )}
+                              {/* Badges especiales */}
+                              {user.badges.map((badge, idx) => (
+                                <Badge 
+                                  key={idx} 
+                                  variant={badge.variant} 
+                                  className="text-xs hidden md:inline-flex"
+                                >
+                                  {badge.icon} {badge.label}
+                                </Badge>
+                              ))}
                             </div>
+                            {/* Badges en mobile - solo iconos */}
+                            {user.badges.length > 0 && (
+                              <div className="flex gap-1 mt-1 md:hidden">
+                                {user.badges.map((badge, idx) => (
+                                  <span key={idx} className="text-sm" title={badge.label}>
+                                    {badge.icon}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             {user.email && (
                               <div className="text-[10px] sm:text-xs text-muted-foreground truncate hidden md:block">
                                 {user.email}
                               </div>
                             )}
                             {/* Info mobile */}
-                            <div className="text-[10px] sm:text-xs text-muted-foreground md:hidden mt-0.5">
-                              {user.predictionsCount} predicciones • Promedio:{" "}
-                              {avgPoints}
+                            <div className="text-[10px] sm:text-xs text-muted-foreground sm:hidden mt-0.5">
+                              {user.predictionsCount} predicciones • {aciertos} aciertos
                             </div>
                           </div>
                         </div>
                       </TableCell>
 
-                      {/* Predicciones (hidden on mobile) */}
-                      <TableCell className="text-center hidden md:table-cell px-2 sm:px-4">
+                      {/* Predicciones (hidden on small mobile) */}
+                      <TableCell className="text-center hidden sm:table-cell px-2 sm:px-4">
                         <Badge variant="outline" className="text-xs">
                           {user.predictionsCount}
                         </Badge>
@@ -284,28 +338,30 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                         </span>
                       </TableCell>
 
-                      {/* Promedio (hidden on mobile) */}
-                      <TableCell className="text-center text-muted-foreground hidden md:table-cell px-2 sm:px-4 text-sm">
-                        {avgPoints}
+                      {/* Aciertos (hidden on mobile) */}
+                      <TableCell className="text-center hidden lg:table-cell px-2 sm:px-4">
+                        <Badge variant="secondary" className="text-xs">
+                          {aciertos} / {user.predictionsCount}
+                        </Badge>
                       </TableCell>
                     </TableRow>
 
                     {/* Fila expandida con detalles */}
                     {isExpanded && (
-                      <TableRow>
+                      <TableRow key={`${user.id}-details`}>
                         <TableCell
                           colSpan={6}
                           className="bg-muted/30 p-3 sm:p-4"
                         >
                           <div className="space-y-3 sm:space-y-4">
                             {/* Estadísticas resumidas */}
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
                               <div className="text-center p-2 sm:p-3 bg-background rounded-lg">
                                 <p className="text-xl sm:text-2xl font-bold text-primary">
                                   {user.points}
                                 </p>
                                 <p className="text-[10px] sm:text-xs text-muted-foreground">
-                                  Puntos Totales
+                                  Puntos
                                 </p>
                               </div>
                               <div className="text-center p-2 sm:p-3 bg-background rounded-lg">
@@ -313,26 +369,52 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                                   {user.scoredPredictions.length}
                                 </p>
                                 <p className="text-[10px] sm:text-xs text-muted-foreground">
-                                  Acertadas
+                                  Aciertos
+                                </p>
+                              </div>
+                              <div className="text-center p-2 sm:p-3 bg-background rounded-lg">
+                                <p className="text-xl sm:text-2xl font-bold text-orange-600">
+                                  {user.effectiveness.toFixed(0)}%
+                                </p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground">
+                                  Efectividad
+                                </p>
+                              </div>
+                              <div className="text-center p-2 sm:p-3 bg-background rounded-lg">
+                                <p className="text-xl sm:text-2xl font-bold text-purple-600">
+                                  {user.exactPredictions}
+                                </p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground">
+                                  Exactos
                                 </p>
                               </div>
                               <div className="text-center p-2 sm:p-3 bg-background rounded-lg">
                                 <p className="text-xl sm:text-2xl font-bold text-red-600">
-                                  {user.unscoredPredictions.length}
+                                  {user.currentStreak}
                                 </p>
                                 <p className="text-[10px] sm:text-xs text-muted-foreground">
-                                  Falladas
-                                </p>
-                              </div>
-                              <div className="text-center p-2 sm:p-3 bg-background rounded-lg">
-                                <p className="text-xl sm:text-2xl font-bold text-blue-600">
-                                  {avgPoints}
-                                </p>
-                                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                                  Promedio
+                                  Racha
                                 </p>
                               </div>
                             </div>
+
+                            {/* Badges explicados */}
+                            {user.badges.length > 0 && (
+                              <div className="bg-background rounded-lg p-3">
+                                <p className="text-xs font-semibold mb-2">Logros Desbloqueados:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {user.badges.map((badge, idx) => (
+                                    <Badge 
+                                      key={idx} 
+                                      variant={badge.variant}
+                                      className="text-xs"
+                                    >
+                                      {badge.icon} {badge.label}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
 
                             {/* Lista de predicciones con puntos */}
                             {user.scoredPredictions.length > 0 && (
@@ -345,10 +427,16 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-64 overflow-y-auto">
                                   {user.scoredPredictions
                                     .sort((a, b) => b.points - a.points)
-                                    .map((pred, idx) => (
+                                    .map((pred, idx) => {
+                                      const isExact = pred.points === 5;
+                                      return (
                                       <div
                                         key={idx}
-                                        className="flex flex-col items-center gap-1 p-2 bg-background rounded-lg border-2 border-green-500 shadow-sm"
+                                        className={`flex flex-col items-center gap-1 p-2 bg-background rounded-lg border-2 shadow-sm ${
+                                          isExact 
+                                            ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20" 
+                                            : "border-green-500"
+                                        }`}
                                       >
                                         {/* Banderas como avatares */}
                                         <div className="flex items-center gap-1">
@@ -377,19 +465,30 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                                             className="rounded-sm border border-gray-300"
                                           />
                                         </div>
-                                        {/* Marcador */}
+                                        {/* Marcador predicción */}
                                         <div className="text-xs font-bold text-center">
                                           {pred.homeScore}-{pred.awayScore}
                                         </div>
+                                        {/* Marcador real */}
+                                        {pred.match?.homeScore !== null && pred.match?.homeScore !== undefined && (
+                                          <div className="text-[10px] text-muted-foreground text-center">
+                                            Real: {pred.match.homeScore}-{pred.match.awayScore}
+                                          </div>
+                                        )}
                                         {/* Puntos */}
                                         <Badge
                                           variant="default"
-                                          className="bg-green-600 text-[10px] px-1 py-0"
+                                          className={`text-[10px] px-1 py-0 ${
+                                            isExact 
+                                              ? "bg-yellow-600 hover:bg-yellow-700" 
+                                              : "bg-green-600"
+                                          }`}
                                         >
-                                          +{pred.points}
+                                          {isExact ? "⭐" : "+"}{pred.points}
                                         </Badge>
                                       </div>
-                                    ))}
+                                    );
+                                    })}
                                 </div>
                               </div>
                             )}
@@ -431,10 +530,16 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                                           className="rounded-sm border border-gray-300"
                                         />
                                       </div>
-                                      {/* Marcador */}
+                                      {/* Marcador predicción */}
                                       <div className="text-xs font-mono text-muted-foreground text-center">
                                         {pred.homeScore}-{pred.awayScore}
                                       </div>
+                                      {/* Marcador real */}
+                                      {pred.match?.homeScore !== null && pred.match?.homeScore !== undefined && (
+                                        <div className="text-[10px] text-red-600 font-bold text-center">
+                                          Real: {pred.match.homeScore}-{pred.match.awayScore}
+                                        </div>
+                                      )}
                                     </div>
                                   ))}
                                 </div>

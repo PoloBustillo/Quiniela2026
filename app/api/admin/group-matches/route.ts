@@ -25,16 +25,51 @@ export async function GET(request: Request) {
       acc[score.matchId] = {
         homeScore: score.homeScore,
         awayScore: score.awayScore,
+        matchDate: score.matchDate, // Fecha personalizada si existe
       };
       return acc;
-    }, {} as Record<number, { homeScore: number | null; awayScore: number | null }>);
+    }, {} as Record<number, { homeScore: number | null; awayScore: number | null; matchDate: Date | null }>);
 
     // Combinar datos del JSON con marcadores de la BD
-    const matchesWithScores = matchesData.matches.map((match: any) => ({
-      ...match,
-      homeScore: scoresMap[match.id]?.homeScore ?? null,
-      awayScore: scoresMap[match.id]?.awayScore ?? null,
-    }));
+    const matchesWithScores = matchesData.matches.map((match: any) => {
+      const score = scoresMap[match.id];
+      let dateToUse = match.date;
+      
+      // Si hay una fecha personalizada en BD, convertirla al formato del JSON
+      if (score?.matchDate) {
+        // Formatear como "YYYY-MM-DD HH:MM:SS-06" (formato México)
+        const year = score.matchDate.toLocaleString('en-US', { 
+          timeZone: 'America/Mexico_City', 
+          year: 'numeric' 
+        });
+        const month = score.matchDate.toLocaleString('en-US', { 
+          timeZone: 'America/Mexico_City', 
+          month: '2-digit' 
+        });
+        const day = score.matchDate.toLocaleString('en-US', { 
+          timeZone: 'America/Mexico_City', 
+          day: '2-digit' 
+        });
+        const hour = score.matchDate.toLocaleString('en-US', { 
+          timeZone: 'America/Mexico_City', 
+          hour: '2-digit', 
+          hour12: false 
+        }).padStart(2, '0');
+        const minute = score.matchDate.toLocaleString('en-US', { 
+          timeZone: 'America/Mexico_City', 
+          minute: '2-digit' 
+        });
+        
+        dateToUse = `${year}-${month}-${day} ${hour}:${minute}:00-06`;
+      }
+      
+      return {
+        ...match,
+        date: dateToUse,
+        homeScore: score?.homeScore ?? null,
+        awayScore: score?.awayScore ?? null,
+      };
+    });
 
     return NextResponse.json(matchesWithScores);
   } catch (error) {
@@ -63,6 +98,8 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { matchId, homeScore, awayScore, matchDate } = body;
 
+    console.log("🔧 API group-matches recibió:", { matchId, homeScore, awayScore, matchDate });
+
     // Verificar que el partido existe en el JSON
     const match = matchesData.matches.find((m: any) => m.id === matchId);
 
@@ -73,19 +110,27 @@ export async function PUT(request: Request) {
       );
     }
 
+    // Preparar datos de actualización
+    const updateData: any = {};
+    if (homeScore !== undefined) updateData.homeScore = homeScore;
+    if (awayScore !== undefined) updateData.awayScore = awayScore;
+    if (matchDate !== undefined) updateData.matchDate = matchDate ? new Date(matchDate) : null;
+
+    const createData: any = {
+      matchId: matchId,
+      homeScore: homeScore ?? null,
+      awayScore: awayScore ?? null,
+    };
+    if (matchDate !== undefined) createData.matchDate = matchDate ? new Date(matchDate) : null;
+
     // Actualizar o crear el marcador en la base de datos
     const updatedScore = await prisma.groupMatchScore.upsert({
       where: { matchId: matchId },
-      update: {
-        homeScore: homeScore ?? null,
-        awayScore: awayScore ?? null,
-      },
-      create: {
-        matchId: matchId,
-        homeScore: homeScore ?? null,
-        awayScore: awayScore ?? null,
-      },
+      update: updateData,
+      create: createData,
     });
+
+    console.log("✅ GroupMatchScore actualizado:", updatedScore);
 
     // Si se actualizaron los marcadores, calcular puntos para todas las predicciones
     if (homeScore !== undefined && awayScore !== undefined) {
@@ -115,11 +160,10 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Nota: matchDate no se puede actualizar en el JSON en producción
-    // Se mantiene solo en desarrollo local si es necesario
-
+    // Retornar el partido con los datos actualizados
     return NextResponse.json({
       ...match,
+      date: updatedScore.matchDate ? updatedScore.matchDate.toISOString() : match.date,
       homeScore: updatedScore.homeScore,
       awayScore: updatedScore.awayScore,
     });

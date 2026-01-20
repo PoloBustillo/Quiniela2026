@@ -115,11 +115,12 @@ model Prediction {
 }
 
 model GroupMatchScore {
-    id        String   @id @default(cuid())
-    matchId   Int      @unique // ID del partido en matches.json
+    id        String    @id @default(cuid())
+    matchId   Int       @unique // ID del partido en matches.json
     homeScore Int?
     awayScore Int?
-    updatedAt DateTime @updatedAt
+    matchDate DateTime? // Fecha/hora personalizada (anula la del JSON)
+    updatedAt DateTime  @updatedAt
 
     @@index([matchId])
 }
