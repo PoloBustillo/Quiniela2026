@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { BookOpen, Info, Trophy, Award } from "lucide-react";
+import { BookOpen, Info, Trophy } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -57,21 +57,21 @@ export default async function RulesPage() {
 
             <div className="border rounded-lg p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-semibold">Diferencia de Goles</span>
+                <span className="font-semibold">Ganador Correcto</span>
                 <Badge className="bg-blue-600">3 puntos</Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                Aciertas ganador y diferencia (ej: predices 2-0, sale 3-1)
+                Aciertas el ganador pero no el marcador exacto
               </p>
             </div>
 
             <div className="border rounded-lg p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-semibold">Ganador</span>
+                <span className="font-semibold">Empate Acertado</span>
                 <Badge className="bg-yellow-600">1 punto</Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                Solo aciertas quién gana (cualquier marcador)
+                Aciertas que fue empate (cualquier marcador)
               </p>
             </div>
 
@@ -85,92 +85,20 @@ export default async function RulesPage() {
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Reglas Generales */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Info className="h-5 w-5 text-primary" />
-            Reglas Generales
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex gap-3">
-            <div className="text-2xl">1️⃣</div>
-            <div>
-              <p className="font-semibold">Fecha Límite</p>
-              <p className="text-sm text-muted-foreground">
-                Las predicciones deben hacerse antes del inicio de cada partido
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <div className="text-2xl">2️⃣</div>
-            <div>
-              <p className="font-semibold">Fase de Grupos</p>
-              <p className="text-sm text-muted-foreground">
-                Se pueden pronosticar empates. Sistema de puntos estándar.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <div className="text-2xl">3️⃣</div>
-            <div>
-              <p className="font-semibold">Fase Eliminatoria</p>
-              <p className="text-sm text-muted-foreground">
-                Los empates se definen por penales. Si predices empate en 90 min
-                y aciertas, ganas puntos extra.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <div className="text-2xl">4️⃣</div>
-            <div>
-              <p className="font-semibold">Tabla de Posiciones</p>
-              <p className="text-sm text-muted-foreground">
-                Se actualiza automáticamente después de cada partido
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Premios */}
-      <Card className="border-primary">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-primary" />
-            Premios
-          </CardTitle>
-          <CardDescription>¿Qué ganas al participar?</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-3 p-3 bg-primary/10 rounded-lg">
-            <div className="text-3xl">🥇</div>
-            <div>
-              <p className="font-semibold text-lg">1er Lugar</p>
-              <p className="text-sm text-muted-foreground">Premio a definir</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-            <div className="text-3xl">🥈</div>
-            <div>
-              <p className="font-semibold text-lg">2do Lugar</p>
-              <p className="text-sm text-muted-foreground">Premio a definir</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-            <div className="text-3xl">🥉</div>
-            <div>
-              <p className="font-semibold text-lg">3er Lugar</p>
-              <p className="text-sm text-muted-foreground">Premio a definir</p>
+          {/* Nota importante */}
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 rounded-r-lg">
+            <div className="flex gap-3">
+              <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-sm text-blue-900 dark:text-blue-100">
+                  Nota Importante
+                </p>
+                <p className="text-sm text-blue-800 dark:text-blue-200 mt-1">
+                  Los marcadores a predecir son <strong>sin tiempo extra ni penales</strong>. 
+                  Solo cuenta el resultado al final de los 90 minutos de juego regular.
+                </p>
+              </div>
             </div>
           </div>
         </CardContent>

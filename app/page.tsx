@@ -148,15 +148,10 @@ export default async function HomePage() {
     {} as Record<number, { homeScore: number; awayScore: number }>,
   );
 
-  const totalPredictions = predictions.length;
-  const totalPoints = predictions.reduce((sum, p) => sum + p.points, 0);
-
   return (
     <ClientHomePage
       matches={allMatches}
       predictionMap={predictionMap}
-      totalPredictions={totalPredictions}
-      totalPoints={totalPoints}
     />
   );
 }

@@ -157,12 +157,12 @@ export default function PredictionCard({
                 <p className="text-xs sm:text-sm font-medium truncate text-right">
                   {translateCountry(match.homeTeam.name)}
                 </p>
-                <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
+                <div className="relative w-6 h-6 sm:w-10 sm:h-10 flex-shrink-0">
                   <Image
                     src={match.homeTeam.flag}
                     alt={match.homeTeam.name}
                     fill
-                    className="object-cover rounded-md"
+                    className="object-contain rounded-sm"
                     unoptimized
                   />
                 </div>
@@ -175,7 +175,7 @@ export default function PredictionCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 sm:h-10 sm:w-10 touch-manipulation active:scale-95 transition-transform"
+                    className="hidden sm:flex h-10 w-10 touch-manipulation active:scale-95 transition-transform"
                     onClick={() => decrementScore("home")}
                     disabled={isDisabled || isSaving || homeScore === 0}
                   >
@@ -192,12 +192,12 @@ export default function PredictionCard({
                       handleInputChange("home", e.target.value)
                     }
                     disabled={isDisabled || isSaving}
-                    className="w-11 sm:w-14 h-9 sm:h-10 text-center text-lg sm:text-xl font-bold px-0.5 touch-manipulation"
+                    className="w-10 sm:w-14 h-9 sm:h-10 text-center text-lg sm:text-xl font-bold px-0.5 touch-manipulation"
                   />
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 sm:h-10 sm:w-10 touch-manipulation active:scale-95 transition-transform"
+                    className="hidden sm:flex h-10 w-10 touch-manipulation active:scale-95 transition-transform"
                     onClick={() => incrementScore("home")}
                     disabled={isDisabled || isSaving || homeScore === 20}
                   >
@@ -206,7 +206,7 @@ export default function PredictionCard({
                 </div>
 
                 {/* VS Separator */}
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium px-1">
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium px-0.5 sm:px-1">
                   -
                 </span>
 
@@ -215,7 +215,7 @@ export default function PredictionCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 sm:h-10 sm:w-10 touch-manipulation active:scale-95 transition-transform"
+                    className="hidden sm:flex h-10 w-10 touch-manipulation active:scale-95 transition-transform"
                     onClick={() => decrementScore("away")}
                     disabled={isDisabled || isSaving || awayScore === 0}
                   >
@@ -232,12 +232,12 @@ export default function PredictionCard({
                       handleInputChange("away", e.target.value)
                     }
                     disabled={isDisabled || isSaving}
-                    className="w-11 sm:w-14 h-9 sm:h-10 text-center text-lg sm:text-xl font-bold px-0.5 touch-manipulation"
+                    className="w-10 sm:w-14 h-9 sm:h-10 text-center text-lg sm:text-xl font-bold px-0.5 touch-manipulation"
                   />
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 sm:h-10 sm:w-10 touch-manipulation active:scale-95 transition-transform"
+                    className="hidden sm:flex h-10 w-10 touch-manipulation active:scale-95 transition-transform"
                     onClick={() => incrementScore("away")}
                     disabled={isDisabled || isSaving || awayScore === 20}
                   >
@@ -248,12 +248,12 @@ export default function PredictionCard({
 
               {/* Away Team - Bandera y Nombre */}
               <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
-                <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
+                <div className="relative w-6 h-6 sm:w-10 sm:h-10 flex-shrink-0">
                   <Image
                     src={match.awayTeam.flag}
                     alt={match.awayTeam.name}
                     fill
-                    className="object-cover rounded-md"
+                    className="object-contain rounded-sm"
                     unoptimized
                   />
                 </div>
