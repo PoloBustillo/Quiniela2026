@@ -109,6 +109,18 @@ export async function PUT(request: Request) {
       city,
     } = body;
 
+    console.log("🔧 API recibió actualización:", { 
+      id, 
+      homeTeamId, 
+      awayTeamId, 
+      homeScore, 
+      awayScore, 
+      status, 
+      matchDate, 
+      stadium, 
+      city 
+    });
+
     const match = await prisma.match.update({
       where: { id },
       data: {
@@ -162,6 +174,14 @@ export async function PUT(request: Request) {
         `✅ Actualizados puntos para ${predictions.length} predicciones del partido ${id}`
       );
     }
+
+    console.log("✅ Partido actualizado en BD:", { 
+      id: match.id, 
+      matchDate: match.matchDate, 
+      stadium: match.stadium,
+      homeTeam: match.homeTeam.name,
+      awayTeam: match.awayTeam.name
+    });
 
     return NextResponse.json(match);
   } catch (error) {

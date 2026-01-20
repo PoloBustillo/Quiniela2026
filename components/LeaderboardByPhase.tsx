@@ -190,9 +190,9 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                       key={user.id}
                       className={`${
                         user.isCurrentUser
-                          ? "bg-primary/10 ring-2 ring-primary font-semibold"
+                          ? "bg-primary/10 border-l-4 border-primary font-semibold shadow-sm"
                           : positionColor
-                      } cursor-pointer hover:bg-muted/50 transition-colors`}
+                      } cursor-pointer hover:bg-muted/50 transition-all touch-manipulation active:scale-[0.99]`}
                       onClick={() => toggleUserExpand(user.id)}
                     >
                       {/* Botón Expand/Collapse */}
@@ -437,9 +437,9 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
         </CardContent>
       </Card>
 
-      {/* Resumen de tu posición si no estás en el top 3 */}
+      {/* Resumen de tu posición - Desktop (si no estás en el top 3) */}
       {leaderboard.findIndex((u) => u.isCurrentUser) > 2 && (
-        <Card className="border-primary">
+        <Card className="border-primary hidden md:block">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -474,6 +474,66 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Sticky Footer - Mobile: Tu posición actual */}
+      {(() => {
+        const currentUserIndex = leaderboard.findIndex((u) => u.isCurrentUser);
+        const currentUser = leaderboard[currentUserIndex];
+        if (!currentUser) return null;
+        
+        const position = currentUserIndex + 1;
+        const pointsToTop3 = Math.max(
+          0,
+          (leaderboard[2]?.points || 0) - currentUser.points + 1
+        );
+        
+        let positionIcon = null;
+        if (position === 1) positionIcon = <Trophy className="h-5 w-5 text-yellow-500" />;
+        else if (position === 2) positionIcon = <Medal className="h-5 w-5 text-gray-400" />;
+        else if (position === 3) positionIcon = <Award className="h-5 w-5 text-amber-600" />;
+        
+        return (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t-4 border-primary shadow-2xl backdrop-blur-sm bg-card/95">
+            <div className="container mx-auto px-4 py-3 max-w-7xl">
+              <div className="flex items-center justify-between gap-3">
+                {/* Posición */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 border-2 border-primary">
+                    {positionIcon || (
+                      <span className="text-xl font-bold text-primary">
+                        {position}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Tu posición</p>
+                    <p className="text-sm font-semibold">{currentUser.name}</p>
+                  </div>
+                </div>
+                
+                {/* Puntos */}
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Puntos</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {currentUser.points}
+                  </p>
+                </div>
+                
+                {/* Indicador de distancia al podio */}
+                {position > 3 && (
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Al podio</p>
+                    <p className="text-sm font-bold text-yellow-500 flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3" />
+                      {pointsToTop3}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

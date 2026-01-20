@@ -18,7 +18,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Trophy, Calendar, Save, Plus, Trash2, Edit2 } from "lucide-react";
+import {
+  Trophy,
+  Calendar,
+  Save,
+  Plus,
+  Trash2,
+  Edit2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Loader2,
+  MapPin,
+  Users,
+  Hash,
+} from "lucide-react";
 import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PointsRulesManager } from "./PointsRulesManager";
@@ -89,13 +103,15 @@ export function AllMatchesManager() {
   const [groupMatches, setGroupMatches] = useState<JsonMatch[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(false);
-  const [editingMatch, setEditingMatch] = useState<string | null>(null);
-  const [editingScores, setEditingScores] = useState<{
-    [key: string]: { homeScore: number | null; awayScore: number | null };
-  }>({});
+  const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
 
-  // Estado temporal para ediciones de knockout
-  const [pendingKnockoutEdits, setPendingKnockoutEdits] = useState<{
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+  
+  // Estado unificado para ediciones de knockout
+  const [knockoutEdits, setKnockoutEdits] = useState<{
     [matchId: string]: {
       homeTeamId?: string;
       awayTeamId?: string;
@@ -108,14 +124,12 @@ export function AllMatchesManager() {
     };
   }>({});
 
-  // Estado temporal para ediciones de grupos
-  const [pendingGroupEdits, setPendingGroupEdits] = useState<{
+  // Estado unificado para ediciones de grupos
+  const [groupEdits, setGroupEdits] = useState<{
     [matchId: number]: {
-      homeScore?: number;
-      awayScore?: number;
-      date?: string;
-      stadium?: string;
-      city?: string;
+      homeScore?: number | null;
+      awayScore?: number | null;
+      matchDate?: string;
     };
   }>({});
 
@@ -142,8 +156,14 @@ export function AllMatchesManager() {
   const loadKnockoutMatches = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/matches?phase=${selectedPhase}`);
+      const response = await fetch(`/api/admin/matches?phase=${selectedPhase}&t=${Date.now()}`, {
+        cache: 'no-store',
+      });
       const data = await response.json();
+      console.log("🔄 Partidos knockout cargados:", data.length);
+      if (data.length > 0) {
+        console.log("📋 Ejemplo de partido knockout:", data[0]);
+      }
       setMatches(data);
     } catch (error) {
       console.error("Error loading matches:", error);
@@ -155,8 +175,14 @@ export function AllMatchesManager() {
   const loadGroupMatches = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/admin/group-matches");
+      const response = await fetch(`/api/admin/group-matches?t=${Date.now()}`, {
+        cache: 'no-store',
+      });
       const data = await response.json();
+      console.log("🔄 Partidos de grupo cargados:", data.length);
+      if (data.length > 0) {
+        console.log("📋 Ejemplo de partido grupo:", data[0]);
+      }
       setGroupMatches(data);
     } catch (error) {
       console.error("Error loading group matches:", error);
@@ -165,21 +191,23 @@ export function AllMatchesManager() {
     }
   };
 
-  // Actualizar estado temporal de knockout
-  const updateKnockoutMatchTemp = (
-    matchId: string,
-    updates: {
-      homeTeamId?: string;
-      awayTeamId?: string;
-      homeScore?: number | null;
-      awayScore?: number | null;
-      matchDate?: string;
-      stadium?: string;
-      city?: string;
-      status?: string;
+  // Helper: obtener fecha válida de forma segura
+  const getValidDate = (dateValue: string | undefined | null): Date => {
+    if (!dateValue) {
+      console.warn("No date value provided");
+      return new Date();
     }
-  ) => {
-    setPendingKnockoutEdits((prev) => ({
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) {
+      console.error("Invalid date string:", dateValue);
+      return new Date();
+    }
+    return date;
+  };
+
+  // Actualizar knockout match
+  const updateKnockoutMatch = (matchId: string, updates: any) => {
+    setKnockoutEdits((prev) => ({
       ...prev,
       [matchId]: {
         ...prev[matchId],
@@ -188,76 +216,90 @@ export function AllMatchesManager() {
     }));
   };
 
-  // Guardar cambios de knockout
+  // Guardar knockout match
   const saveKnockoutMatch = async (matchId: string) => {
-    const updates = pendingKnockoutEdits[matchId];
-    if (!updates) {
-      alert("No hay cambios pendientes");
+    const edits = knockoutEdits[matchId];
+    if (!edits) {
+      showToast("No hay cambios pendientes", "error");
+      return;
+    }
+
+    // Obtener el partido original
+    const originalMatch = matches.find(m => m.id === matchId);
+    if (!originalMatch) {
+      showToast("Partido no encontrado", "error");
       return;
     }
 
     try {
       setLoading(true);
+      const updateData: any = { id: matchId };
+      
+      // Si se edita algún score, enviar AMBOS para no perderlos
+      if (edits.homeScore !== undefined || edits.awayScore !== undefined) {
+        updateData.homeScore = edits.homeScore !== undefined ? edits.homeScore : originalMatch.homeScore;
+        updateData.awayScore = edits.awayScore !== undefined ? edits.awayScore : originalMatch.awayScore;
+      }
+      
+      // Otros campos solo si cambiaron
+      if (edits.homeTeamId && edits.homeTeamId !== originalMatch.homeTeamId) {
+        updateData.homeTeamId = edits.homeTeamId;
+      }
+      if (edits.awayTeamId && edits.awayTeamId !== originalMatch.awayTeamId) {
+        updateData.awayTeamId = edits.awayTeamId;
+      }
+      if (edits.matchDate && edits.matchDate !== originalMatch.matchDate?.toISOString()) {
+        updateData.matchDate = edits.matchDate;
+      }
+      if (edits.stadium !== undefined && edits.stadium !== originalMatch.stadium) {
+        updateData.stadium = edits.stadium;
+      }
+      if (edits.city !== undefined && edits.city !== originalMatch.city) {
+        updateData.city = edits.city;
+      }
+      if (edits.status && edits.status !== originalMatch.status) {
+        updateData.status = edits.status;
+      }
+      
+      console.log("📤 Enviando actualización knockout:", updateData);
+      
       const response = await fetch("/api/admin/matches", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: matchId,
-          ...updates,
-        }),
+        body: JSON.stringify(updateData),
       });
 
-      if (response.ok) {
-        await loadKnockoutMatches();
-        setEditingMatch(null);
-        setEditingScores((prev) => {
-          const newScores = { ...prev };
-          delete newScores[matchId];
-          return newScores;
-        });
-        setPendingKnockoutEdits((prev) => {
-          const newEdits = { ...prev };
-          delete newEdits[matchId];
-          return newEdits;
-        });
-        alert("✅ Partido actualizado correctamente");
-      } else {
-        throw new Error("Error en la respuesta");
+      if (!response.ok) {
+        throw new Error("Error al actualizar");
       }
+
+      await loadKnockoutMatches();
+      setKnockoutEdits((prev) => {
+        const newEdits = { ...prev };
+        delete newEdits[matchId];
+        return newEdits;
+      });
+      showToast("Partido actualizado", "success");
     } catch (error) {
-      console.error("Error updating match:", error);
-      alert("❌ Error al actualizar el partido");
+      console.error(error);
+      showToast("Error al actualizar", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  // Cancelar cambios de knockout
+  // Cancelar edición knockout
   const cancelKnockoutEdit = (matchId: string) => {
-    setPendingKnockoutEdits((prev) => {
+    setKnockoutEdits((prev) => {
       const newEdits = { ...prev };
       delete newEdits[matchId];
       return newEdits;
     });
-    setEditingScores((prev) => {
-      const newScores = { ...prev };
-      delete newScores[matchId];
-      return newScores;
-    });
   };
 
   // Actualizar estado temporal de grupos
-  const updateGroupMatchTemp = (
-    matchId: number,
-    updates: {
-      homeScore?: number;
-      awayScore?: number;
-      date?: string;
-      stadium?: string;
-      city?: string;
-    }
-  ) => {
-    setPendingGroupEdits((prev) => ({
+  const updateGroupMatch = (matchId: number, updates: any) => {
+    setGroupEdits((prev) => ({
       ...prev,
       [matchId]: {
         ...prev[matchId],
@@ -268,45 +310,58 @@ export function AllMatchesManager() {
 
   // Guardar cambios de grupo
   const saveGroupMatch = async (matchId: number) => {
-    const updates = pendingGroupEdits[matchId];
+    const updates = groupEdits[matchId];
     if (!updates) {
-      alert("No hay cambios pendientes");
+      showToast("No hay cambios pendientes", "error");
+      return;
+    }
+
+    // Obtener el partido original
+    const originalMatch = groupMatches.find(m => m.id === matchId);
+    if (!originalMatch) {
+      showToast("Partido no encontrado", "error");
       return;
     }
 
     try {
       setLoading(true);
+      const updateData: any = { matchId };
+      
+      // Si se edita algún score, enviar AMBOS para no perderlos
+      if (updates.homeScore !== undefined || updates.awayScore !== undefined) {
+        updateData.homeScore = updates.homeScore !== undefined ? updates.homeScore : originalMatch.homeScore;
+        updateData.awayScore = updates.awayScore !== undefined ? updates.awayScore : originalMatch.awayScore;
+      }
+      
+      if (updates.matchDate && updates.matchDate !== originalMatch.date) {
+        updateData.matchDate = updates.matchDate;
+      }
+      
+      console.log("📤 Enviando actualización grupo:", updateData);
+      
       const response = await fetch("/api/admin/group-matches", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          matchId,
-          homeScore: updates.homeScore,
-          awayScore: updates.awayScore,
-          matchDate: updates.date,
-        }),
+        body: JSON.stringify(updateData),
       });
+
+      const result = await response.json();
+      console.log("📡 Respuesta del servidor (grupo):", result);
 
       if (response.ok) {
         await loadGroupMatches();
-        setEditingMatch(null);
-        setEditingScores((prev) => {
-          const newScores = { ...prev };
-          delete newScores[String(matchId)];
-          return newScores;
-        });
-        setPendingGroupEdits((prev) => {
+        setGroupEdits((prev) => {
           const newEdits = { ...prev };
           delete newEdits[matchId];
           return newEdits;
         });
-        alert("✅ Partido actualizado correctamente");
+        showToast("Partido actualizado correctamente", "success");
       } else {
         throw new Error("Error en la respuesta");
       }
     } catch (error) {
       console.error("Error updating group match:", error);
-      alert("❌ Error al actualizar el partido");
+      showToast("Error al actualizar el partido", "error");
     } finally {
       setLoading(false);
     }
@@ -314,7 +369,7 @@ export function AllMatchesManager() {
 
   // Cancelar cambios de grupo
   const cancelGroupEdit = (matchId: number) => {
-    setPendingGroupEdits((prev) => {
+    setGroupEdits((prev) => {
       const newEdits = { ...prev };
       delete newEdits[matchId];
       return newEdits;
@@ -461,12 +516,31 @@ export function AllMatchesManager() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <CardDescription className="flex items-center gap-2 text-xs">
-                      <Calendar className="h-3 w-3" />
-                      {new Date(match.matchDate).toLocaleDateString("es-MX", {
-                        dateStyle: "full",
-                      })}
-                      {match.stadium && ` • ${match.stadium}`}
+                    <CardDescription className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="h-4 w-4" />
+                        <span className="font-medium">
+                          {new Date(match.matchDate).toLocaleDateString("es-MX", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                        <Clock className="h-4 w-4 ml-2" />
+                        <span className="font-medium">
+                          {new Date(match.matchDate).toLocaleTimeString("es-MX", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      {match.stadium && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <MapPin className="h-3 w-3" />
+                          {match.stadium}
+                        </div>
+                      )}
                     </CardDescription>
                   </CardHeader>
 
@@ -479,14 +553,14 @@ export function AllMatchesManager() {
                         </label>
                         <Select
                           value={
-                            pendingKnockoutEdits[match.id]?.homeTeamId ||
+                            knockoutEdits[match.id]?.homeTeamId ||
                             match.homeTeam.id
                           }
-                          onValueChange={(value) =>
-                            updateKnockoutMatchTemp(match.id, {
+                          onValueChange={(value) => {
+                            updateKnockoutMatch(match.id, {
                               homeTeamId: value,
-                            })
-                          }
+                            });
+                          }}
                           disabled={match.status === "FINISHED"}
                         >
                           <SelectTrigger>
@@ -532,14 +606,14 @@ export function AllMatchesManager() {
                         </label>
                         <Select
                           value={
-                            pendingKnockoutEdits[match.id]?.awayTeamId ||
+                            knockoutEdits[match.id]?.awayTeamId ||
                             match.awayTeam.id
                           }
-                          onValueChange={(value) =>
-                            updateKnockoutMatchTemp(match.id, {
+                          onValueChange={(value) => {
+                            updateKnockoutMatch(match.id, {
                               awayTeamId: value,
-                            })
-                          }
+                            });
+                          }}
                           disabled={match.status === "FINISHED"}
                         >
                           <SelectTrigger>
@@ -583,75 +657,44 @@ export function AllMatchesManager() {
                     {/* Fecha, Estadio y Ciudad */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
                           Fecha y Hora (México)
                         </label>
                         <div className="grid grid-cols-2 gap-2">
                           <Input
                             type="date"
-                            value={
-                              pendingKnockoutEdits[match.id]?.matchDate
-                                ? extractMexicoCityDateTime(
-                                    new Date(
-                                      pendingKnockoutEdits[match.id].matchDate!
-                                    )
-                                  ).date
-                                : extractMexicoCityDateTime(
-                                    new Date(match.matchDate)
-                                  ).date
-                            }
+                            value={extractMexicoCityDateTime(
+                              getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)
+                            ).date}
                             onChange={(e) => {
-                              const currentTime = pendingKnockoutEdits[match.id]
-                                ?.matchDate
-                                ? extractMexicoCityDateTime(
-                                    new Date(
-                                      pendingKnockoutEdits[match.id].matchDate!
-                                    )
-                                  ).time
-                                : extractMexicoCityDateTime(
-                                    new Date(match.matchDate)
-                                  ).time;
-                              updateKnockoutMatchTemp(match.id, {
-                                matchDate: fromMexicoCityTime(
-                                  e.target.value,
-                                  currentTime
-                                ).toISOString(),
+                              if (!e.target.value) return;
+                              const currentTime = extractMexicoCityDateTime(
+                                getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)
+                              ).time;
+                              updateKnockoutMatch(match.id, {
+                                matchDate: fromMexicoCityTime(e.target.value, currentTime).toISOString(),
                               });
                             }}
                             disabled={match.status === "FINISHED"}
+                            className="h-11 text-base touch-manipulation"
                           />
                           <Input
                             type="time"
-                            value={
-                              pendingKnockoutEdits[match.id]?.matchDate
-                                ? extractMexicoCityDateTime(
-                                    new Date(
-                                      pendingKnockoutEdits[match.id].matchDate!
-                                    )
-                                  ).time
-                                : extractMexicoCityDateTime(
-                                    new Date(match.matchDate)
-                                  ).time
-                            }
+                            value={extractMexicoCityDateTime(
+                              getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)
+                            ).time}
                             onChange={(e) => {
-                              const currentDate = pendingKnockoutEdits[match.id]
-                                ?.matchDate
-                                ? extractMexicoCityDateTime(
-                                    new Date(
-                                      pendingKnockoutEdits[match.id].matchDate!
-                                    )
-                                  ).date
-                                : extractMexicoCityDateTime(
-                                    new Date(match.matchDate)
-                                  ).date;
-                              updateKnockoutMatchTemp(match.id, {
-                                matchDate: fromMexicoCityTime(
-                                  currentDate,
-                                  e.target.value
-                                ).toISOString(),
+                              if (!e.target.value) return;
+                              const currentDate = extractMexicoCityDateTime(
+                                getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)
+                              ).date;
+                              updateKnockoutMatch(match.id, {
+                                matchDate: fromMexicoCityTime(currentDate, e.target.value).toISOString(),
                               });
                             }}
                             disabled={match.status === "FINISHED"}
+                            className="h-11 text-base touch-manipulation"
                           />
                         </div>
                       </div>
@@ -659,14 +702,9 @@ export function AllMatchesManager() {
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Estadio</label>
                         <Select
-                          value={
-                            pendingKnockoutEdits[match.id]?.stadium !==
-                            undefined
-                              ? pendingKnockoutEdits[match.id].stadium || ""
-                              : match.stadium || ""
-                          }
+                          value={knockoutEdits[match.id]?.stadium ?? match.stadium ?? ""}
                           onValueChange={(value) => {
-                            updateKnockoutMatchTemp(match.id, {
+                            updateKnockoutMatch(match.id, {
                               stadium: value,
                             });
                           }}
@@ -689,13 +727,9 @@ export function AllMatchesManager() {
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Ciudad</label>
                         <Select
-                          value={
-                            pendingKnockoutEdits[match.id]?.city !== undefined
-                              ? pendingKnockoutEdits[match.id].city || ""
-                              : match.city || ""
-                          }
+                          value={knockoutEdits[match.id]?.city ?? match.city ?? ""}
                           onValueChange={(value) => {
-                            updateKnockoutMatchTemp(match.id, {
+                            updateKnockoutMatch(match.id, {
                               city: value,
                             });
                           }}
@@ -715,12 +749,63 @@ export function AllMatchesManager() {
                       </div>
                     </div>
 
-                    {/* Botones de Guardar/Cancelar cambios generales */}
-                    {pendingKnockoutEdits[match.id] &&
-                      !editingScores[match.id] && (
-                        <div className="flex gap-2 pt-3 border-t">
+                    {/* Marcadores */}
+                    {match.homeTeam.code !== "TBD" &&
+                      match.awayTeam.code !== "TBD" && (
+                        <div className="border-t pt-4">
+                          <label className="text-sm font-medium mb-2 block">
+                            Resultado Final
+                          </label>
+                          <div className="flex items-center gap-4">
+                            <Input
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              value={
+                                knockoutEdits[match.id]?.homeScore !== undefined
+                                  ? (knockoutEdits[match.id].homeScore ?? "")
+                                  : (match.homeScore ?? "")
+                              }
+                              onChange={(e) => {
+                                const homeScore = e.target.value === "" ? null : parseInt(e.target.value);
+                                updateKnockoutMatch(match.id, {
+                                  homeScore,
+                                  status: "FINISHED",
+                                });
+                              }}
+                              className="w-20 text-center"
+                            />
+                            <span className="text-2xl font-bold">-</span>
+                            <Input
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              value={
+                                knockoutEdits[match.id]?.awayScore !== undefined
+                                  ? (knockoutEdits[match.id].awayScore ?? "")
+                                  : (match.awayScore ?? "")
+                              }
+                              onChange={(e) => {
+                                const awayScore = e.target.value === "" ? null : parseInt(e.target.value);
+                                updateKnockoutMatch(match.id, {
+                                  awayScore,
+                                  status: "FINISHED",
+                                });
+                              }}
+                              className="w-20 text-center"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                    {/* Botones de Guardar/Cancelar cambios generales - Movidos al final */}
+                    {knockoutEdits[match.id] && (
+                        <div className="flex gap-2 pt-4 border-t mt-4">
                           <Button
-                            onClick={() => saveKnockoutMatch(match.id)}
+                            onClick={() => {
+                              console.log("💾 Botón Guardar clickeado para:", match.id);
+                              saveKnockoutMatch(match.id);
+                            }}
                             disabled={loading}
                             className="flex-1"
                             variant="default"
@@ -736,98 +821,6 @@ export function AllMatchesManager() {
                           >
                             Cancelar
                           </Button>
-                        </div>
-                      )}
-
-                    {/* Marcadores */}
-                    {match.homeTeam.code !== "TBD" &&
-                      match.awayTeam.code !== "TBD" && (
-                        <div className="border-t pt-4">
-                          <label className="text-sm font-medium mb-2 block">
-                            Resultado Final
-                          </label>
-                          <div className="flex items-center gap-4">
-                            <Input
-                              type="number"
-                              min="0"
-                              placeholder="0"
-                              value={
-                                editingScores[match.id]?.homeScore !== undefined
-                                  ? editingScores[match.id].homeScore ?? ""
-                                  : match.homeScore ?? ""
-                              }
-                              onChange={(e) => {
-                                const homeScore =
-                                  e.target.value === ""
-                                    ? null
-                                    : parseInt(e.target.value);
-                                setEditingScores((prev) => ({
-                                  ...prev,
-                                  [match.id]: {
-                                    homeScore,
-                                    awayScore:
-                                      prev[match.id]?.awayScore !== undefined
-                                        ? prev[match.id].awayScore
-                                        : match.awayScore,
-                                  },
-                                }));
-                              }}
-                              className="w-20 text-center"
-                            />
-                            <span className="text-2xl font-bold">-</span>
-                            <Input
-                              type="number"
-                              min="0"
-                              placeholder="0"
-                              value={
-                                editingScores[match.id]?.awayScore !== undefined
-                                  ? editingScores[match.id].awayScore ?? ""
-                                  : match.awayScore ?? ""
-                              }
-                              onChange={(e) => {
-                                const awayScore =
-                                  e.target.value === ""
-                                    ? null
-                                    : parseInt(e.target.value);
-                                setEditingScores((prev) => ({
-                                  ...prev,
-                                  [match.id]: {
-                                    homeScore:
-                                      prev[match.id]?.homeScore !== undefined
-                                        ? prev[match.id].homeScore
-                                        : match.homeScore,
-                                    awayScore,
-                                  },
-                                }));
-                              }}
-                              className="w-20 text-center"
-                            />
-                          </div>
-                          {editingScores[match.id] && (
-                            <Button
-                              onClick={async () => {
-                                // Agregar marcadores al estado pendiente
-                                updateKnockoutMatchTemp(match.id, {
-                                  homeScore: editingScores[match.id].homeScore,
-                                  awayScore: editingScores[match.id].awayScore,
-                                  status: "FINISHED",
-                                });
-                                // Guardar todos los cambios pendientes
-                                await saveKnockoutMatch(match.id);
-                                // Limpiar el estado de edición de marcadores
-                                setEditingScores((prev) => {
-                                  const next = { ...prev };
-                                  delete next[match.id];
-                                  return next;
-                                });
-                              }}
-                              disabled={loading}
-                              className="mt-2 w-full"
-                            >
-                              <Save className="w-4 h-4 mr-2" />
-                              {loading ? "Guardando..." : "Guardar Marcadores"}
-                            </Button>
-                          )}
                         </div>
                       )}
                   </CardContent>
@@ -861,12 +854,31 @@ export function AllMatchesManager() {
                       </CardTitle>
                       <Badge variant="secondary">Partido {match.id}</Badge>
                     </div>
-                    <CardDescription className="flex items-center gap-2 text-xs">
-                      <Calendar className="h-3 w-3" />
-                      {new Date(match.date).toLocaleDateString("es-MX", {
-                        dateStyle: "full",
-                      })}
-                      {match.stadium && ` • ${match.stadium}`}
+                    <CardDescription className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="h-4 w-4" />
+                        <span className="font-medium">
+                          {new Date(match.date).toLocaleDateString("es-MX", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                        <Clock className="h-4 w-4 ml-2" />
+                        <span className="font-medium">
+                          {new Date(match.date).toLocaleTimeString("es-MX", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      {match.stadium && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <MapPin className="h-3 w-3" />
+                          {match.stadium}
+                        </div>
+                      )}
                     </CardDescription>
                   </CardHeader>
 
@@ -874,65 +886,42 @@ export function AllMatchesManager() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Fecha */}
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
                           Fecha y Hora (México)
                         </label>
                         <div className="grid grid-cols-2 gap-2">
                           <Input
                             type="date"
-                            value={
-                              pendingGroupEdits[match.id]?.date
-                                ? extractMexicoCityDateTime(
-                                    new Date(pendingGroupEdits[match.id].date!)
-                                  ).date
-                                : extractMexicoCityDateTime(
-                                    new Date(match.date)
-                                  ).date
-                            }
+                            value={extractMexicoCityDateTime(
+                              getValidDate(groupEdits[match.id]?.matchDate ?? match.date)
+                            ).date}
                             onChange={(e) => {
-                              const currentTime = pendingGroupEdits[match.id]
-                                ?.date
-                                ? extractMexicoCityDateTime(
-                                    new Date(pendingGroupEdits[match.id].date!)
-                                  ).time
-                                : extractMexicoCityDateTime(
-                                    new Date(match.date)
-                                  ).time;
-                              updateGroupMatchTemp(match.id, {
-                                date: fromMexicoCityTime(
-                                  e.target.value,
-                                  currentTime
-                                ).toISOString(),
+                              if (!e.target.value) return;
+                              const currentTime = extractMexicoCityDateTime(
+                                getValidDate(groupEdits[match.id]?.matchDate ?? match.date)
+                              ).time;
+                              updateGroupMatch(match.id, {
+                                matchDate: fromMexicoCityTime(e.target.value, currentTime).toISOString(),
                               });
                             }}
+                            className="h-11 text-base touch-manipulation"
                           />
                           <Input
                             type="time"
-                            value={
-                              pendingGroupEdits[match.id]?.date
-                                ? extractMexicoCityDateTime(
-                                    new Date(pendingGroupEdits[match.id].date!)
-                                  ).time
-                                : extractMexicoCityDateTime(
-                                    new Date(match.date)
-                                  ).time
-                            }
+                            value={extractMexicoCityDateTime(
+                              getValidDate(groupEdits[match.id]?.matchDate ?? match.date)
+                            ).time}
                             onChange={(e) => {
-                              const currentDate = pendingGroupEdits[match.id]
-                                ?.date
-                                ? extractMexicoCityDateTime(
-                                    new Date(pendingGroupEdits[match.id].date!)
-                                  ).date
-                                : extractMexicoCityDateTime(
-                                    new Date(match.date)
-                                  ).date;
-                              updateGroupMatchTemp(match.id, {
-                                date: fromMexicoCityTime(
-                                  currentDate,
-                                  e.target.value
-                                ).toISOString(),
+                              if (!e.target.value) return;
+                              const currentDate = extractMexicoCityDateTime(
+                                getValidDate(groupEdits[match.id]?.matchDate ?? match.date)
+                              ).date;
+                              updateGroupMatch(match.id, {
+                                matchDate: fromMexicoCityTime(currentDate, e.target.value).toISOString(),
                               });
                             }}
+                            className="h-11 text-base touch-manipulation"
                           />
                         </div>
                       </div>
@@ -970,10 +959,49 @@ export function AllMatchesManager() {
                       </div>
                     </div>
 
-                    {/* Botones de Guardar/Cancelar cambios generales */}
-                    {pendingGroupEdits[match.id] &&
-                      !editingScores[match.id] && (
-                        <div className="flex gap-2 pt-3 border-t">
+                    {/* Marcadores */}
+                    <div className="border-t pt-4">
+                      <label className="text-sm font-medium mb-2 block">
+                        Resultado Final
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={
+                            groupEdits[match.id]?.homeScore !== undefined
+                              ? (groupEdits[match.id].homeScore ?? "")
+                              : (match.homeScore ?? "")
+                          }
+                          onChange={(e) => {
+                            const homeScore = e.target.value === "" ? null : parseInt(e.target.value);
+                            updateGroupMatch(match.id, { homeScore });
+                          }}
+                          className="w-20 text-center"
+                        />
+                        <span className="text-2xl font-bold">-</span>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={
+                            groupEdits[match.id]?.awayScore !== undefined
+                              ? (groupEdits[match.id].awayScore ?? "")
+                              : (match.awayScore ?? "")
+                          }
+                          onChange={(e) => {
+                            const awayScore = e.target.value === "" ? null : parseInt(e.target.value);
+                            updateGroupMatch(match.id, { awayScore });
+                          }}
+                          className="w-20 text-center"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Botones de Guardar/Cancelar cambios generales - Movidos al final */}
+                    {groupEdits[match.id] && (
+                        <div className="flex gap-2 pt-4 border-t mt-4">
                           <Button
                             onClick={() => saveGroupMatch(match.id)}
                             disabled={loading}
@@ -993,94 +1021,6 @@ export function AllMatchesManager() {
                           </Button>
                         </div>
                       )}
-
-                    {/* Marcadores */}
-                    <div className="border-t pt-4">
-                      <label className="text-sm font-medium mb-2 block">
-                        Resultado Final
-                      </label>
-                      <div className="flex items-center gap-4">
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={
-                            editingScores[match.id]?.homeScore !== undefined
-                              ? editingScores[match.id].homeScore ?? ""
-                              : match.homeScore ?? ""
-                          }
-                          onChange={(e) => {
-                            const homeScore =
-                              e.target.value === ""
-                                ? null
-                                : parseInt(e.target.value);
-                            setEditingScores((prev) => ({
-                              ...prev,
-                              [match.id]: {
-                                homeScore,
-                                awayScore:
-                                  prev[match.id]?.awayScore !== undefined
-                                    ? prev[match.id].awayScore
-                                    : match.awayScore ?? null,
-                              },
-                            }));
-                          }}
-                          className="w-20 text-center"
-                        />
-                        <span className="text-2xl font-bold">-</span>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={
-                            editingScores[match.id]?.awayScore !== undefined
-                              ? editingScores[match.id].awayScore ?? ""
-                              : match.awayScore ?? ""
-                          }
-                          onChange={(e) => {
-                            const awayScore =
-                              e.target.value === ""
-                                ? null
-                                : parseInt(e.target.value);
-                            setEditingScores((prev) => ({
-                              ...prev,
-                              [match.id]: {
-                                homeScore:
-                                  prev[match.id]?.homeScore !== undefined
-                                    ? prev[match.id].homeScore
-                                    : match.homeScore ?? null,
-                                awayScore,
-                              },
-                            }));
-                          }}
-                          className="w-20 text-center"
-                        />
-                      </div>
-                      {editingScores[match.id] && (
-                        <Button
-                          onClick={async () => {
-                            // Agregar marcadores al estado pendiente
-                            updateGroupMatchTemp(match.id, {
-                              homeScore: editingScores[match.id].homeScore ?? 0,
-                              awayScore: editingScores[match.id].awayScore ?? 0,
-                            });
-                            // Guardar todos los cambios pendientes
-                            await saveGroupMatch(match.id);
-                            // Limpiar el estado de edición de marcadores
-                            setEditingScores((prev) => {
-                              const next = { ...prev };
-                              delete next[match.id];
-                              return next;
-                            });
-                          }}
-                          disabled={loading}
-                          className="mt-2 w-full"
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          {loading ? "Guardando..." : "Guardar Marcadores"}
-                        </Button>
-                      )}
-                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -1096,6 +1036,24 @@ export function AllMatchesManager() {
           <UsersPaymentManager />
         </TabsContent>
       </Tabs>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-4 right-4 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className={`rounded-lg shadow-lg p-4 flex items-center gap-3 min-w-[300px] ${
+            toast.type === 'success' 
+              ? 'bg-green-600 text-white' 
+              : 'bg-red-600 text-white'
+          }`}>
+            {toast.type === 'success' ? (
+              <CheckCircle className="h-5 w-5 flex-shrink-0" />
+            ) : (
+              <XCircle className="h-5 w-5 flex-shrink-0" />
+            )}
+            <span className="font-medium">{toast.message}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

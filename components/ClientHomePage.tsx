@@ -85,7 +85,7 @@ export default function ClientHomePage({
   totalPoints,
 }: ClientHomePageProps) {
   const [viewMode, setViewMode] = useState<"date" | "group">("date");
-  const [displayMode, setDisplayMode] = useState<"cards" | "list">("cards");
+  const [displayMode, setDisplayMode] = useState<"cards" | "list">("list");
   const [selectedGroup, setSelectedGroup] = useState<string>("all");
 
   // Agrupar partidos por fecha

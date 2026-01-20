@@ -106,79 +106,76 @@ export function UsersPaymentManager() {
         </div>
 
         {loading ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Cargando usuarios...</p>
-          </div>
+          <AdminTableSkeleton />
         ) : (
           <div className="space-y-2 max-h-[600px] overflow-y-auto">
             {users.map((user) => (
               <div
                 key={user.id}
-                className={`flex items-center justify-between p-4 rounded-lg border ${
+                className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
                   user.hasPaid
-                    ? "bg-green-500/5 border-green-500/20"
-                    : "bg-card"
+                    ? "bg-green-500/5 border-green-500/30 shadow-sm"
+                    : "bg-card border-border hover:border-primary/30"
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   {user.image ? (
                     <Image
                       src={user.image}
                       alt={user.name || "User"}
-                      width={40}
-                      height={40}
-                      className="rounded-full"
+                      width={48}
+                      height={48}
+                      className="rounded-full flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                      <Users className="h-5 w-5 text-muted-foreground" />
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                      <Users className="h-6 w-6 text-muted-foreground" />
                     </div>
                   )}
-                  <div>
-                    <p className="font-medium">{user.name || "Sin nombre"}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {user.email}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs">
-                        {user._count.predictions} predicciones
-                      </Badge>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <p className="font-semibold text-base truncate">{user.name || "Sin nombre"}</p>
                       {user.role === "ADMIN" && (
                         <Badge variant="destructive" className="text-xs">
                           Admin
                         </Badge>
                       )}
                     </div>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {user.email}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <Badge variant="outline" className="text-xs">
+                        {user._count.predictions} predicciones
+                      </Badge>
+                      {user.hasPaid && user.paidAt && (
+                        <span className="text-xs text-green-600 font-medium">
+                          Pagado {new Date(user.paidAt).toLocaleDateString("es-MX", { month: "short", day: "numeric" })}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {user.hasPaid && user.paidAt && (
-                    <div className="text-right mr-2">
-                      <p className="text-xs text-muted-foreground">Pagado:</p>
-                      <p className="text-xs font-medium">
-                        {new Date(user.paidAt).toLocaleDateString("es-MX")}
-                      </p>
-                    </div>
-                  )}
+                <div className="flex items-center gap-3 flex-shrink-0">
                   <Button
                     variant={user.hasPaid ? "outline" : "default"}
-                    size="sm"
+                    size="default"
                     onClick={() => togglePayment(user.id, user.hasPaid)}
                     className={
                       user.hasPaid
-                        ? "bg-green-500/10 hover:bg-green-500/20 text-green-600 border-green-500/20"
-                        : ""
+                        ? "bg-green-500/10 hover:bg-green-500/20 text-green-600 border-green-500/20 min-h-[44px] min-w-[140px] touch-manipulation active:scale-95 transition-transform font-semibold"
+                        : "min-h-[44px] min-w-[140px] touch-manipulation active:scale-95 transition-transform font-semibold"
                     }
                   >
                     {user.hasPaid ? (
                       <>
-                        <CheckCircle className="h-4 w-4 mr-1" />
+                        <CheckCircle2 className="h-5 w-5 mr-2" />
                         Pagado
                       </>
                     ) : (
                       <>
-                        <DollarSign className="h-4 w-4 mr-1" />
+                        <DollarSign className="h-5 w-5 mr-2" />
                         Marcar Pagado
                       </>
                     )}

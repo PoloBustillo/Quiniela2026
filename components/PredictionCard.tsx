@@ -175,14 +175,16 @@ export default function PredictionCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 sm:h-7 sm:w-7"
+                    className="h-9 w-9 sm:h-10 sm:w-10 touch-manipulation active:scale-95 transition-transform"
                     onClick={() => decrementScore("home")}
                     disabled={isDisabled || isSaving || homeScore === 0}
                   >
-                    <Minus className="h-3 w-3" />
+                    <Minus className="h-4 w-4" />
                   </Button>
                   <Input
                     type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     min="0"
                     max="20"
                     value={homeScore}
@@ -190,21 +192,21 @@ export default function PredictionCard({
                       handleInputChange("home", e.target.value)
                     }
                     disabled={isDisabled || isSaving}
-                    className="w-9 sm:w-11 h-7 sm:h-8 text-center text-sm sm:text-base font-bold px-0.5"
+                    className="w-11 sm:w-14 h-9 sm:h-10 text-center text-lg sm:text-xl font-bold px-0.5 touch-manipulation"
                   />
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 sm:h-7 sm:w-7"
+                    className="h-9 w-9 sm:h-10 sm:w-10 touch-manipulation active:scale-95 transition-transform"
                     onClick={() => incrementScore("home")}
                     disabled={isDisabled || isSaving || homeScore === 20}
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-4 w-4" />
                   </Button>
                 </div>
 
                 {/* VS Separator */}
-                <span className="text-[10px] sm:text-xs text-muted-foreground font-medium px-0.5 sm:px-1">
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium px-1">
                   -
                 </span>
 
@@ -213,14 +215,16 @@ export default function PredictionCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 sm:h-7 sm:w-7"
+                    className="h-9 w-9 sm:h-10 sm:w-10 touch-manipulation active:scale-95 transition-transform"
                     onClick={() => decrementScore("away")}
                     disabled={isDisabled || isSaving || awayScore === 0}
                   >
-                    <Minus className="h-3 w-3" />
+                    <Minus className="h-4 w-4" />
                   </Button>
                   <Input
                     type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     min="0"
                     max="20"
                     value={awayScore}
@@ -228,16 +232,16 @@ export default function PredictionCard({
                       handleInputChange("away", e.target.value)
                     }
                     disabled={isDisabled || isSaving}
-                    className="w-9 sm:w-11 h-7 sm:h-8 text-center text-sm sm:text-base font-bold px-0.5"
+                    className="w-11 sm:w-14 h-9 sm:h-10 text-center text-lg sm:text-xl font-bold px-0.5 touch-manipulation"
                   />
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 sm:h-7 sm:w-7"
+                    className="h-9 w-9 sm:h-10 sm:w-10 touch-manipulation active:scale-95 transition-transform"
                     onClick={() => incrementScore("away")}
                     disabled={isDisabled || isSaving || awayScore === 20}
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -263,7 +267,7 @@ export default function PredictionCard({
                 onClick={handleSave}
                 disabled={isDisabled || isSaving}
                 size="sm"
-                className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm flex-shrink-0"
+                className="h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm flex-shrink-0 touch-manipulation active:scale-95 transition-transform"
                 variant={saved ? "outline" : "default"}
               >
                 {saved ? "✓" : "G"}
@@ -341,14 +345,16 @@ export default function PredictionCard({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-7 w-7 sm:h-8 sm:w-8"
+                    className="h-11 w-11 sm:h-12 sm:w-12 touch-manipulation active:scale-95 transition-transform"
                     onClick={() => decrementScore("home")}
                     disabled={isDisabled || isSaving || homeScore === 0}
                   >
-                    <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
                   </Button>
                   <Input
                     type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     min="0"
                     max="20"
                     value={homeScore}
@@ -356,16 +362,16 @@ export default function PredictionCard({
                       handleInputChange("home", e.target.value)
                     }
                     disabled={isDisabled || isSaving}
-                    className="w-12 sm:w-16 h-8 sm:h-10 text-center text-base sm:text-xl font-bold px-1"
+                    className="w-14 sm:w-20 h-11 sm:h-12 text-center text-2xl sm:text-3xl font-bold px-1 touch-manipulation"
                   />
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-7 w-7 sm:h-8 sm:w-8"
+                    className="h-11 w-11 sm:h-12 sm:w-12 touch-manipulation active:scale-95 transition-transform"
                     onClick={() => incrementScore("home")}
                     disabled={isDisabled || isSaving || homeScore === 20}
                   >
-                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
                   </Button>
                 </div>
               </div>
@@ -399,14 +405,16 @@ export default function PredictionCard({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-7 w-7 sm:h-8 sm:w-8"
+                    className="h-11 w-11 sm:h-12 sm:w-12 touch-manipulation active:scale-95 transition-transform"
                     onClick={() => decrementScore("away")}
                     disabled={isDisabled || isSaving || awayScore === 0}
                   >
-                    <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
                   </Button>
                   <Input
                     type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     min="0"
                     max="20"
                     value={awayScore}
@@ -414,16 +422,16 @@ export default function PredictionCard({
                       handleInputChange("away", e.target.value)
                     }
                     disabled={isDisabled || isSaving}
-                    className="w-12 sm:w-16 h-8 sm:h-10 text-center text-base sm:text-xl font-bold px-1"
+                    className="w-14 sm:w-20 h-11 sm:h-12 text-center text-2xl sm:text-3xl font-bold px-1 touch-manipulation"
                   />
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-7 w-7 sm:h-8 sm:w-8"
+                    className="h-11 w-11 sm:h-12 sm:w-12 touch-manipulation active:scale-95 transition-transform"
                     onClick={() => incrementScore("away")}
                     disabled={isDisabled || isSaving || awayScore === 20}
                   >
-                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
                   </Button>
                 </div>
               </div>
@@ -446,7 +454,7 @@ export default function PredictionCard({
             <Button
               onClick={handleSave}
               disabled={isDisabled || isSaving}
-              className="w-full h-9 sm:h-10 text-sm sm:text-base"
+              className="w-full h-11 sm:h-12 text-sm sm:text-base font-semibold touch-manipulation active:scale-[0.98] transition-transform"
               variant={saved ? "outline" : "default"}
             >
               {isSaving

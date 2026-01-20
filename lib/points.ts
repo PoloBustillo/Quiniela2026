@@ -85,32 +85,52 @@ export function extractMexicoCityDateTime(date: Date): {
   date: string;
   time: string;
 } {
-  const year = date.toLocaleString("en-US", {
-    timeZone: "America/Mexico_City",
-    year: "numeric",
-  });
-  const month = date.toLocaleString("en-US", {
-    timeZone: "America/Mexico_City",
-    month: "2-digit",
-  });
-  const day = date.toLocaleString("en-US", {
-    timeZone: "America/Mexico_City",
-    day: "2-digit",
-  });
-  const hour = date.toLocaleString("en-US", {
-    timeZone: "America/Mexico_City",
-    hour: "2-digit",
-    hour12: false,
-  });
-  const minute = date.toLocaleString("en-US", {
-    timeZone: "America/Mexico_City",
-    minute: "2-digit",
-  });
+  // Validar que el date sea válido
+  if (!date || isNaN(date.getTime())) {
+    console.error("Invalid date passed to extractMexicoCityDateTime:", date);
+    return { date: "", time: "" };
+  }
 
-  return {
-    date: `${year}-${month}-${day}`,
-    time: `${hour}:${minute}`,
-  };
+  try {
+    // Obtener componentes individuales
+    const year = date.toLocaleString("en-US", {
+      timeZone: "America/Mexico_City",
+      year: "numeric",
+    });
+    
+    const month = date.toLocaleString("en-US", {
+      timeZone: "America/Mexico_City",
+      month: "2-digit",
+    });
+    
+    const day = date.toLocaleString("en-US", {
+      timeZone: "America/Mexico_City",
+      day: "2-digit",
+    });
+    
+    const hour = date.toLocaleString("en-US", {
+      timeZone: "America/Mexico_City",
+      hour: "2-digit",
+      hour12: false,
+    });
+    
+    const minute = date.toLocaleString("en-US", {
+      timeZone: "America/Mexico_City",
+      minute: "2-digit",
+    });
+
+    // Formatear para inputs HTML (YYYY-MM-DD y HH:MM)
+    const dateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    const timeStr = `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
+
+    return {
+      date: dateStr,
+      time: timeStr,
+    };
+  } catch (error) {
+    console.error("Error in extractMexicoCityDateTime:", error, date);
+    return { date: "", time: "" };
+  }
 }
 
 /**
@@ -118,7 +138,21 @@ export function extractMexicoCityDateTime(date: Date): {
  * Para guardar desde el admin panel
  */
 export function fromMexicoCityTime(dateStr: string, timeStr: string): Date {
+  // Validar inputs
+  if (!dateStr || !timeStr) {
+    console.error("Invalid date/time:", { dateStr, timeStr });
+    return new Date(); // Retornar fecha actual como fallback
+  }
+  
   // Crear string en formato ISO con offset de México (UTC-6)
   const isoString = `${dateStr}T${timeStr}:00-06:00`;
-  return new Date(isoString);
+  const date = new Date(isoString);
+  
+  // Validar que la fecha sea válida
+  if (isNaN(date.getTime())) {
+    console.error("Invalid date created:", { dateStr, timeStr, isoString });
+    return new Date(); // Retornar fecha actual como fallback
+  }
+  
+  return date;
 }

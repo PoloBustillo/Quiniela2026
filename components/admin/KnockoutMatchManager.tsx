@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { MatchesGridSkeleton } from "@/components/ui/skeletons";
 import { Trophy, Calendar, Save, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 
@@ -211,15 +212,13 @@ export function KnockoutMatchManager() {
         </Select>
       </div>
 
-      <Button onClick={createMatch} className="w-full sm:w-auto">
-        <Plus className="h-4 w-4 mr-2" />
-        Agregar Partido
+      <Button onClick={createMatch} size="lg" className="w-full sm:w-auto touch-manipulation active:scale-95 transition-transform">
+        <Plus className="h-5 w-5 mr-2" />
+        Agregar Nuevo Partido
       </Button>
 
       {loading ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">Cargando partidos...</p>
-        </div>
+        <MatchesGridSkeleton count={4} />
       ) : matches.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -231,47 +230,39 @@ export function KnockoutMatchManager() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="space-y-3">
           {matches.map((match) => (
-            <Card key={match.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <CardTitle className="text-lg">
+            <Card key={match.id} className="overflow-hidden">
+              <CardContent className="p-4">
+                {/* Header compacto */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
                       {PHASES.find((p) => p.value === match.phase)?.label}
-                    </CardTitle>
+                    </Badge>
                     <Badge
                       variant={
                         match.status === "FINISHED" ? "default" : "secondary"
                       }
+                      className="text-xs"
                     >
-                      {match.status === "FINISHED" ? "Finalizado" : "Pendiente"}
+                      {match.status === "FINISHED" ? "✓ Finalizado" : "Pendiente"}
                     </Badge>
                   </div>
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     onClick={() => deleteMatch(match.id)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-                <CardDescription className="flex items-center gap-2 text-xs">
-                  <Calendar className="h-3 w-3" />
-                  {new Date(match.matchDate).toLocaleDateString("es-MX", {
-                    dateStyle: "full",
-                  })}
-                  {match.stadium && ` • ${match.stadium}`}
-                </CardDescription>
-              </CardHeader>
 
-              <CardContent className="space-y-4">
-                {/* Selección de equipos */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Equipos y resultado en una fila */}
+                <div className="flex items-center gap-3">
                   {/* Equipo Local */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Equipo Local</label>
+                  <div className="flex-1">
                     <Select
                       value={match.homeTeam.id}
                       onValueChange={(value) =>
@@ -279,19 +270,19 @@ export function KnockoutMatchManager() {
                       }
                       disabled={match.status === "FINISHED"}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-11 touch-manipulation">
                         <SelectValue>
                           <div className="flex items-center gap-2">
                             {match.homeTeam.flag && (
                               <Image
                                 src={match.homeTeam.flag}
                                 alt={match.homeTeam.name}
-                                width={20}
-                                height={15}
-                                className="object-cover"
+                                width={24}
+                                height={18}
+                                className="object-cover rounded"
                               />
                             )}
-                            <span>{match.homeTeam.name}</span>
+                            <span className="truncate">{match.homeTeam.name}</span>
                           </div>
                         </SelectValue>
                       </SelectTrigger>
@@ -352,9 +343,93 @@ export function KnockoutMatchManager() {
                                 <Image
                                   src={team.flag}
                                   alt={team.name}
-                                  width={20}
-                                  height={15}
-                                  className="object-cover"
+                                  width={24}
+                                  height={18}
+                                  className="object-cover rounded"
+                                />
+                              )}
+                              <span>{team.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Marcadores */}
+                  {match.homeTeam.code !== "TBD" &&
+                    match.awayTeam.code !== "TBD" && (
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          placeholder="0"
+                          value={match.homeScore ?? ""}
+                          onChange={(e) => {
+                            const homeScore = parseInt(e.target.value) || 0;
+                            if (match.awayScore !== null) {
+                              updateResult(match.id, homeScore, match.awayScore);
+                            }
+                          }}
+                          className="w-16 h-11 text-center text-xl font-bold touch-manipulation"
+                          disabled={match.status === "FINISHED"}
+                        />
+                        <span className="text-xl font-bold text-muted-foreground">-</span>
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          placeholder="0"
+                          value={match.awayScore ?? ""}
+                          onChange={(e) => {
+                            const awayScore = parseInt(e.target.value) || 0;
+                            if (match.homeScore !== null) {
+                              updateResult(match.id, match.homeScore, awayScore);
+                            }
+                          }}
+                          className="w-16 h-11 text-center text-xl font-bold touch-manipulation"
+                          disabled={match.status === "FINISHED"}
+                        />
+                      </div>
+                    )}
+
+                  {/* Equipo Visitante */}
+                  <div className="flex-1">
+                    <Select
+                      value={match.awayTeam.id}
+                      onValueChange={(value) =>
+                        updateMatch(match.id, match.homeTeam.id, value)
+                      }
+                      disabled={match.status === "FINISHED"}
+                    >
+                      <SelectTrigger className="h-11 touch-manipulation">
+                        <SelectValue>
+                          <div className="flex items-center gap-2">
+                            {match.awayTeam.flag && (
+                              <Image
+                                src={match.awayTeam.flag}
+                                alt={match.awayTeam.name}
+                                width={24}
+                                height={18}
+                                className="object-cover rounded"
+                              />
+                            )}
+                            <span className="truncate">{match.awayTeam.name}</span>
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teams.map((team) => (
+                          <SelectItem key={team.id} value={team.id}>
+                            <div className="flex items-center gap-2">
+                              {team.flag && (
+                                <Image
+                                  src={team.flag}
+                                  alt={team.name}
+                                  width={24}
+                                  height={18}
+                                  className="object-cover rounded"
                                 />
                               )}
                               <span>{team.name}</span>
@@ -366,69 +441,18 @@ export function KnockoutMatchManager() {
                   </div>
                 </div>
 
-                {/* Resultado (si el partido está programado) */}
-                {match.homeTeam.code !== "TBD" &&
-                  match.awayTeam.code !== "TBD" && (
-                    <div className="border-t pt-4">
-                      <label className="text-sm font-medium mb-2 block">
-                        Resultado Final
-                      </label>
-                      <div className="flex items-center gap-4">
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={match.homeScore ?? ""}
-                          onChange={(e) => {
-                            const homeScore = parseInt(e.target.value) || 0;
-                            if (match.awayScore !== null) {
-                              updateResult(
-                                match.id,
-                                homeScore,
-                                match.awayScore
-                              );
-                            }
-                          }}
-                          className="w-20 text-center"
-                          disabled={match.status === "FINISHED"}
-                        />
-                        <span className="text-2xl font-bold">-</span>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={match.awayScore ?? ""}
-                          onChange={(e) => {
-                            const awayScore = parseInt(e.target.value) || 0;
-                            if (match.homeScore !== null) {
-                              updateResult(
-                                match.id,
-                                match.homeScore,
-                                awayScore
-                              );
-                            }
-                          }}
-                          className="w-20 text-center"
-                          disabled={match.status === "FINISHED"}
-                        />
-                        {match.status !== "FINISHED" && (
-                          <Button
-                            size="sm"
-                            onClick={() =>
-                              updateResult(
-                                match.id,
-                                match.homeScore ?? 0,
-                                match.awayScore ?? 0
-                              )
-                            }
-                          >
-                            <Save className="h-4 w-4 mr-2" />
-                            Guardar
-                          </Button>
-                        )}
-                      </div>
-                    </div>
+                {/* Info adicional */}
+                <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(match.matchDate).toLocaleDateString("es-MX", {
+                      dateStyle: "medium",
+                    })}
+                  </div>
+                  {match.stadium && (
+                    <span>📍 {match.stadium}</span>
                   )}
+                </div>
               </CardContent>
             </Card>
           ))}
