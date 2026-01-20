@@ -10,7 +10,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, DollarSign, CheckCircle, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Users,
+  DollarSign,
+  CheckCircle,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import Image from "next/image";
 import { AdminTableSkeleton } from "@/components/ui/skeletons";
 
