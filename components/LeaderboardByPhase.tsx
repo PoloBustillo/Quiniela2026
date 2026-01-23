@@ -37,6 +37,7 @@ interface UserWithPoints {
   name: string;
   email: string | null;
   image: string | null;
+  hasPaid: boolean;
   isCurrentUser: boolean;
   predictions: {
     matchId: string;
@@ -303,6 +304,11 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                               {user.isCurrentUser && (
                                 <Badge variant="default" className="text-xs">
                                   Tú
+                                </Badge>
+                              )}
+                              {!user.hasPaid && (
+                                <Badge variant="destructive" className="text-xs">
+                                  No pagado
                                 </Badge>
                               )}
                               {/* Badges especiales */}

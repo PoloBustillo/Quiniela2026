@@ -16,11 +16,8 @@ export default async function LeaderboardPage() {
     redirect("/auth/signin");
   }
 
-  // Obtener todos los usuarios que han pagado con sus predicciones
+  // Obtener todos los usuarios con sus predicciones
   const users = await prisma.user.findMany({
-    where: {
-      hasPaid: true, // Solo usuarios que han pagado
-    },
     include: {
       predictions: {
         select: {
@@ -114,6 +111,7 @@ export default async function LeaderboardPage() {
     name: user.name || "Usuario",
     email: user.email,
     image: user.image,
+    hasPaid: user.hasPaid,
     isCurrentUser: user.id === session.user?.id,
     predictions: user.predictions.map((pred) => ({
       ...pred,

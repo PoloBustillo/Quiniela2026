@@ -170,26 +170,27 @@ export function UsersPaymentManager() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                   <Button
                     variant={user.hasPaid ? "outline" : "default"}
                     size="default"
                     onClick={() => togglePayment(user.id, user.hasPaid)}
                     className={
                       user.hasPaid
-                        ? "bg-green-500/10 hover:bg-green-500/20 text-green-600 border-green-500/20 min-h-[44px] min-w-[140px] touch-manipulation active:scale-95 transition-transform font-semibold"
-                        : "min-h-[44px] min-w-[140px] touch-manipulation active:scale-95 transition-transform font-semibold"
+                        ? "bg-green-500/10 hover:bg-green-500/20 text-green-600 border-green-500/20 h-9 sm:h-10 px-3 sm:px-4 touch-manipulation active:scale-95 transition-transform font-semibold"
+                        : "h-9 sm:h-10 px-3 sm:px-4 touch-manipulation active:scale-95 transition-transform font-semibold"
                     }
                   >
                     {user.hasPaid ? (
                       <>
-                        <CheckCircle2 className="h-5 w-5 mr-2" />
-                        Pagado
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                        <span className="hidden sm:inline">Pagado</span>
                       </>
                     ) : (
                       <>
-                        <DollarSign className="h-5 w-5 mr-2" />
-                        Marcar Pagado
+                        <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                        <span className="hidden xs:inline">Marcar</span>
+                        <span className="hidden sm:inline ml-1">Pagado</span>
                       </>
                     )}
                   </Button>
