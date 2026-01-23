@@ -307,7 +307,10 @@ export default function LeaderboardByPhase({ users }: LeaderboardByPhaseProps) {
                                 </Badge>
                               )}
                               {!user.hasPaid && (
-                                <Badge variant="destructive" className="text-xs">
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
                                   No pagado
                                 </Badge>
                               )}
