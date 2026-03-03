@@ -41,19 +41,26 @@ model Session {
 }
 
 model User {
-    id            String       @id @default(cuid())
-    name          String?
-    email         String?      @unique
-    emailVerified DateTime?
-    image         String?
-    role          UserRole     @default(USER)
-    hasPaid       Boolean      @default(false) // Si el usuario ha pagado
-    paidAt        DateTime? // Fecha de pago
-    createdAt     DateTime     @default(now())
-    updatedAt     DateTime     @updatedAt
-    accounts      Account[]
-    sessions      Session[]
-    predictions   Prediction[]
+    id                String       @id @default(cuid())
+    name              String?
+    email             String?      @unique
+    emailVerified     DateTime?
+    image             String?
+    role              UserRole     @default(USER)
+    hasPaid           Boolean      @default(false) // Legacy: si el usuario ha pagado alguna fase
+    paidAt            DateTime? // Legacy: fecha de primer pago
+    // Pagos por fase (100 cada una)
+    paidGroupStage    Boolean      @default(false) // Fase de grupos (100)
+    paidGroupStageAt  DateTime? // Fecha de pago fase de grupos
+    paidKnockout      Boolean      @default(false) // 32avos + 16avos (100)
+    paidKnockoutAt    DateTime? // Fecha de pago fase eliminatoria temprana
+    paidFinals        Boolean      @default(false) // QF + SF + 3ro + Final (100)
+    paidFinalsAt      DateTime? // Fecha de pago fases finales
+    createdAt         DateTime     @default(now())
+    updatedAt         DateTime     @updatedAt
+    accounts          Account[]
+    sessions          Session[]
+    predictions       Prediction[]
 }
 
 model VerificationToken {

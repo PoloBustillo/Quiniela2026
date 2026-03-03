@@ -25,15 +25,27 @@ export async function POST(req: NextRequest) {
     }
 
     // Verificar si el partido ya empezó y obtener la fase
+    // SIEMPRE usar tiempo del SERVIDOR — nunca confiar en el cliente
     let matchDate: Date | null = null;
     let matchPhase: string | null = null;
 
-    // Buscar en partidos de fase de grupos (JSON)
+    // Buscar en partidos de fase de grupos (JSON + override de BD)
     if (matchId < 1000) {
       const jsonMatch = matchesData.matches.find((m: any) => m.id === matchId);
       if (jsonMatch) {
-        matchDate = parseMatchDate(jsonMatch.date);
         matchPhase = "GROUP_STAGE";
+
+        // Checar si hay fecha personalizada en BD (tiene prioridad)
+        const dbOverride = await prisma.groupMatchScore.findUnique({
+          where: { matchId: matchId },
+          select: { matchDate: true },
+        });
+
+        if (dbOverride?.matchDate) {
+          matchDate = dbOverride.matchDate;
+        } else {
+          matchDate = parseMatchDate(jsonMatch.date);
+        }
       }
     } else {
       // Buscar en partidos de eliminatorias (DB)
@@ -49,10 +61,11 @@ export async function POST(req: NextRequest) {
     }
 
     // VALIDACIÓN EN SERVIDOR: Si el partido ya empezó, rechazar la predicción
+    // El tiempo es el del servidor — cambiar el reloj local no tiene efecto
     if (matchDate && isPredictionClosed(matchDate)) {
       return NextResponse.json(
         {
-          error: "No puedes hacer predicciones para partidos que ya empezaron",
+          error: "Este partido ya empezó. Las predicciones se cierran al iniciar el partido (hora del servidor).",
         },
         { status: 400 }
       );

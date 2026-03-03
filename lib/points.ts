@@ -3,8 +3,7 @@
  *
  * Sistema de puntos:
  * - 5 puntos: Resultado exacto (marcador correcto)
- * - 3 puntos: Ganador correcto (sin marcador exacto)
- * - 1 punto: Empate acertado
+ * - 3 puntos: Ganador correcto (sin marcador exacto) O empate acertado
  * - 0 puntos: Predicción incorrecta
  */
 export function calculatePoints(
@@ -28,9 +27,9 @@ export function calculatePoints(
   const predictedDiff = predHome - predAway;
   const actualDiff = actHome - actAway;
 
-  // Empate acertado
+  // Empate acertado (ambos predicen empate)
   if (predictedDiff === 0 && actualDiff === 0) {
-    return 1;
+    return 3;
   }
 
   // Ganador correcto

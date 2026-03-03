@@ -26,6 +26,12 @@ export async function GET(request: Request) {
         role: true,
         hasPaid: true,
         paidAt: true,
+        paidGroupStage: true,
+        paidGroupStageAt: true,
+        paidKnockout: true,
+        paidKnockoutAt: true,
+        paidFinals: true,
+        paidFinalsAt: true,
         createdAt: true,
         _count: {
           select: {
@@ -63,14 +69,30 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { userId, hasPaid } = body;
+    const { userId, hasPaid, phase } = body;
+
+    // Si se especifica una fase, actualizar esa fase específica
+    // Si no, actualizar el campo legacy hasPaid
+    let updateData: any = {};
+
+    if (phase === "groupStage") {
+      updateData.paidGroupStage = hasPaid;
+      updateData.paidGroupStageAt = hasPaid ? new Date() : null;
+    } else if (phase === "knockout") {
+      updateData.paidKnockout = hasPaid;
+      updateData.paidKnockoutAt = hasPaid ? new Date() : null;
+    } else if (phase === "finals") {
+      updateData.paidFinals = hasPaid;
+      updateData.paidFinalsAt = hasPaid ? new Date() : null;
+    } else {
+      // Legacy: actualizar hasPaid
+      updateData.hasPaid = hasPaid;
+      updateData.paidAt = hasPaid ? new Date() : null;
+    }
 
     const user = await prisma.user.update({
       where: { id: userId },
-      data: {
-        hasPaid,
-        paidAt: hasPaid ? new Date() : null,
-      },
+      data: updateData,
     });
 
     return NextResponse.json(user);

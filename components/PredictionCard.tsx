@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { Minus, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
   translateCountry,
   translateCity,
@@ -59,7 +59,24 @@ export default function PredictionCard({
   const [error, setError] = useState<string | null>(null);
 
   const matchDate = new Date(match.date);
-  const isPast = matchDate < new Date();
+
+  // Server-time offset (anti-cheat): fetch once per card mount.
+  // Prevents users from changing their system clock to unlock closed matches.
+  // The server validates independently — this just keeps the UI honest.
+  const [serverOffset, setServerOffset] = useState(0); // ms
+  useEffect(() => {
+    fetch("/api/server-time", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        const offset = new Date(d.serverTime).getTime() - Date.now();
+        setServerOffset(offset);
+      })
+      .catch(() => {
+        // Silently ignore; server-side validation is the real gate.
+      });
+  }, []);
+
+  const isPast = matchDate < new Date(Date.now() + serverOffset);
 
   // Verificar si algún equipo es TBD (Por Definir)
   const isTBD = match.homeTeam.code === "TBD" || match.awayTeam.code === "TBD";
@@ -141,333 +158,193 @@ export default function PredictionCard({
     }
   };
 
-  return (
-    <>
-      {compact ? (
-        // Modo Compacto - Layout horizontal para lista
-        <Card
-          className={`overflow-hidden hover:shadow-md transition-all ${
-            saved ? "border-green-500/50 bg-green-500/5" : ""
-          }`}
-        >
-          <CardContent className="p-2 sm:p-3">
-            <div className="flex items-center gap-2 sm:gap-3">
-              {/* Home Team - Nombre y Bandera */}
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 justify-end">
-                <p className="text-xs sm:text-sm font-medium truncate text-right">
-                  {translateCountry(match.homeTeam.name)}
-                </p>
-                <div className="relative w-6 h-6 sm:w-10 sm:h-10 flex-shrink-0">
-                  <Image
-                    src={match.homeTeam.flag}
-                    alt={match.homeTeam.name}
-                    fill
-                    className="object-contain rounded-sm"
-                    unoptimized
-                  />
-                </div>
-              </div>
+  // ── Shared score stepper ────────────────────────────────────────────────────
+  const ScoreControl = ({ team, value }: { team: "home" | "away"; value: number }) => (
+    <div className="flex items-center">
+      <button
+        type="button"
+        onClick={() => decrementScore(team)}
+        disabled={isDisabled || isSaving || value === 0}
+        className="h-9 w-9 flex items-center justify-center rounded-l-lg border border-border bg-background active:bg-muted disabled:opacity-30 transition-colors touch-manipulation select-none"
+      >
+        <Minus className="h-3.5 w-3.5" />
+      </button>
+      <Input
+        type="number"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        min="0"
+        max="20"
+        value={value}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          handleInputChange(team, e.target.value)
+        }
+        disabled={isDisabled || isSaving}
+        className="w-10 h-9 text-center text-base font-bold px-0 rounded-none border-x-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+      />
+      <button
+        type="button"
+        onClick={() => incrementScore(team)}
+        disabled={isDisabled || isSaving || value === 20}
+        className="h-9 w-9 flex items-center justify-center rounded-r-lg border border-border bg-background active:bg-muted disabled:opacity-30 transition-colors touch-manipulation select-none"
+      >
+        <Plus className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
 
-              {/* Scores Section - Centrado */}
-              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                {/* Home Score */}
-                <div className="flex items-center gap-0.5">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hidden sm:flex h-10 w-10 touch-manipulation active:scale-95 transition-transform"
-                    onClick={() => decrementScore("home")}
-                    disabled={isDisabled || isSaving || homeScore === 0}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    min="0"
-                    max="20"
-                    value={homeScore}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange("home", e.target.value)
-                    }
-                    disabled={isDisabled || isSaving}
-                    className="w-10 sm:w-14 h-9 sm:h-10 text-center text-lg sm:text-xl font-bold px-0.5 touch-manipulation"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hidden sm:flex h-10 w-10 touch-manipulation active:scale-95 transition-transform"
-                    onClick={() => incrementScore("home")}
-                    disabled={isDisabled || isSaving || homeScore === 20}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {/* VS Separator */}
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium px-0.5 sm:px-1">
-                  -
-                </span>
-
-                {/* Away Score */}
-                <div className="flex items-center gap-0.5">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hidden sm:flex h-10 w-10 touch-manipulation active:scale-95 transition-transform"
-                    onClick={() => decrementScore("away")}
-                    disabled={isDisabled || isSaving || awayScore === 0}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    min="0"
-                    max="20"
-                    value={awayScore}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange("away", e.target.value)
-                    }
-                    disabled={isDisabled || isSaving}
-                    className="w-10 sm:w-14 h-9 sm:h-10 text-center text-lg sm:text-xl font-bold px-0.5 touch-manipulation"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hidden sm:flex h-10 w-10 touch-manipulation active:scale-95 transition-transform"
-                    onClick={() => incrementScore("away")}
-                    disabled={isDisabled || isSaving || awayScore === 20}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Away Team - Bandera y Nombre */}
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
-                <div className="relative w-6 h-6 sm:w-10 sm:h-10 flex-shrink-0">
-                  <Image
-                    src={match.awayTeam.flag}
-                    alt={match.awayTeam.name}
-                    fill
-                    className="object-contain rounded-sm"
-                    unoptimized
-                  />
-                </div>
-                <p className="text-xs sm:text-sm font-medium truncate text-left">
-                  {translateCountry(match.awayTeam.name)}
-                </p>
-              </div>
-
-              {/* Save Button - Compacto */}
-              <Button
-                onClick={handleSave}
-                disabled={isDisabled || isSaving}
-                size="sm"
-                className="h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm flex-shrink-0 touch-manipulation active:scale-95 transition-transform"
-                variant={saved ? "outline" : "default"}
-              >
-                {saved ? "✓" : "G"}
-              </Button>
-            </div>
-
-            {/* Info adicional en una segunda línea */}
-            <div className="flex items-center justify-between mt-1.5 text-[10px] sm:text-xs text-muted-foreground">
-              <span>{match.group ? `Grupo ${match.group}` : match.stage}</span>
-              <span>
-                {matchDate.toLocaleDateString("es-MX", {
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  timeZone: "America/Mexico_City",
-                })}
-              </span>
-            </div>
-
-            {/* Error message */}
-            {error && (
-              <div className="mt-2 text-xs text-destructive text-center">
-                {error}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        // Modo Normal - Layout vertical para grid
-        <Card
-          className={`overflow-hidden hover:shadow-lg transition-all ${
-            saved ? "border-green-500/50 bg-green-500/5" : ""
-          }`}
-        >
-          <CardContent className="p-3 sm:p-4 md:p-6">
-            {/* Match Header */}
-            <div className="mb-3 sm:mb-4">
-              <p className="text-xs text-muted-foreground mb-1">
-                {match.group ? `Grupo ${match.group}` : match.stage}
+  // ── COMPACT (list) mode ─────────────────────────────────────────────────────
+  if (compact) {
+    return (
+      <Card
+        className={cn(
+          "overflow-hidden transition-all",
+          !isPast && saved && "border-green-500/50 bg-green-500/5",
+          isPast && "opacity-70"
+        )}
+      >
+        <CardContent className="px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            {/* Home team */}
+            <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
+              <p className="text-xs font-medium truncate text-right leading-tight">
+                {translateCountry(match.homeTeam.name)}
               </p>
-              <p className="text-xs sm:text-sm font-medium">
-                {matchDate.toLocaleDateString("es-MX", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  timeZone: "America/Mexico_City",
-                })}
+              <div className="w-7 h-5 flex-shrink-0 relative">
+                <Image src={match.homeTeam.flag} alt={match.homeTeam.name} fill
+                  className="object-contain" unoptimized />
+              </div>
+            </div>
+
+            {/* Score controls */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <ScoreControl team="home" value={homeScore} />
+              <span className="text-muted-foreground font-bold text-xs w-3 text-center select-none">–</span>
+              <ScoreControl team="away" value={awayScore} />
+            </div>
+
+            {/* Away team */}
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              <div className="w-7 h-5 flex-shrink-0 relative">
+                <Image src={match.awayTeam.flag} alt={match.awayTeam.name} fill
+                  className="object-contain" unoptimized />
+              </div>
+              <p className="text-xs font-medium truncate leading-tight">
+                {translateCountry(match.awayTeam.name)}
               </p>
             </div>
 
-            {/* Teams and Prediction Inputs */}
-            <div className="space-y-3 sm:space-y-4 mb-4">
-              {/* Home Team */}
-              <div className="flex items-center justify-between gap-2 sm:gap-4">
-                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                  <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
-                    <Image
-                      src={match.homeTeam.flag}
-                      alt={match.homeTeam.name}
-                      fill
-                      className="object-cover rounded-md"
-                      unoptimized
-                    />
-                  </div>
-                  <p className="text-sm sm:text-base font-medium text-left truncate">
-                    {translateCountry(match.homeTeam.name)}
-                  </p>
-                </div>
-
-                {/* Home Score Control */}
-                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-11 w-11 sm:h-12 sm:w-12 touch-manipulation active:scale-95 transition-transform"
-                    onClick={() => decrementScore("home")}
-                    disabled={isDisabled || isSaving || homeScore === 0}
-                  >
-                    <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
-                  </Button>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    min="0"
-                    max="20"
-                    value={homeScore}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange("home", e.target.value)
-                    }
-                    disabled={isDisabled || isSaving}
-                    className="w-14 sm:w-20 h-11 sm:h-12 text-center text-2xl sm:text-3xl font-bold px-1 touch-manipulation"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-11 w-11 sm:h-12 sm:w-12 touch-manipulation active:scale-95 transition-transform"
-                    onClick={() => incrementScore("home")}
-                    disabled={isDisabled || isSaving || homeScore === 20}
-                  >
-                    <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Separator */}
-              <div className="flex items-center justify-center">
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium">
-                  VS
-                </span>
-              </div>
-
-              {/* Away Team */}
-              <div className="flex items-center justify-between gap-2 sm:gap-4">
-                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                  <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
-                    <Image
-                      src={match.awayTeam.flag}
-                      alt={match.awayTeam.name}
-                      fill
-                      className="object-cover rounded-md"
-                      unoptimized
-                    />
-                  </div>
-                  <p className="text-sm sm:text-base font-medium text-left truncate">
-                    {translateCountry(match.awayTeam.name)}
-                  </p>
-                </div>
-
-                {/* Away Score Control */}
-                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-11 w-11 sm:h-12 sm:w-12 touch-manipulation active:scale-95 transition-transform"
-                    onClick={() => decrementScore("away")}
-                    disabled={isDisabled || isSaving || awayScore === 0}
-                  >
-                    <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
-                  </Button>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    min="0"
-                    max="20"
-                    value={awayScore}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange("away", e.target.value)
-                    }
-                    disabled={isDisabled || isSaving}
-                    className="w-14 sm:w-20 h-11 sm:h-12 text-center text-2xl sm:text-3xl font-bold px-1 touch-manipulation"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-11 w-11 sm:h-12 sm:w-12 touch-manipulation active:scale-95 transition-transform"
-                    onClick={() => incrementScore("away")}
-                    disabled={isDisabled || isSaving || awayScore === 20}
-                  >
-                    <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Stadium Info */}
-            <p className="text-xs text-muted-foreground text-center mb-3 sm:mb-4 line-clamp-2">
-              {translateStadium(match.stadium)} • {translateCity(match.city)},{" "}
-              {translateCountry(match.country)}
-            </p>
-
-            {/* Error message */}
-            {error && (
-              <div className="mb-3 text-xs text-destructive text-center bg-destructive/10 p-2 rounded">
-                {error}
-              </div>
-            )}
-
-            {/* Save Button */}
-            <Button
+            {/* Save button */}
+            <button
+              type="button"
               onClick={handleSave}
               disabled={isDisabled || isSaving}
-              className="w-full h-11 sm:h-12 text-sm sm:text-base font-semibold touch-manipulation active:scale-[0.98] transition-transform"
-              variant={saved ? "outline" : "default"}
+              className={cn(
+                "flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center transition-colors touch-manipulation font-bold text-sm select-none border",
+                isPast
+                  ? "bg-muted text-muted-foreground cursor-not-allowed border-transparent"
+                  : saved
+                    ? "bg-green-500/10 text-green-600 border-green-500/40"
+                    : "bg-primary text-primary-foreground border-transparent active:opacity-80"
+              )}
             >
-              {isSaving
-                ? "Guardando..."
-                : saved
-                  ? "✓ Guardado"
-                  : isDisabled
-                    ? "No Disponible"
-                    : "Guardar Predicción"}
-            </Button>
-          </CardContent>
-        </Card>
+              {isSaving ? (
+                <span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin block" />
+              ) : isPast ? "🔒" : saved ? "✓" : "↑"}
+            </button>
+          </div>
+
+          {/* Meta row */}
+          <div className="flex items-center justify-between mt-1.5 text-[10px] text-muted-foreground gap-2">
+            <span className="truncate">
+              {match.group ? `Grupo ${match.group}` : match.stage} · {translateCity(match.city)}
+            </span>
+            <span className="flex-shrink-0">
+              {matchDate.toLocaleDateString("es-MX", {
+                month: "short", day: "numeric", timeZone: "America/Mexico_City",
+              })}{" "}
+              {matchDate.toLocaleTimeString("es-MX", {
+                hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City",
+              })}
+            </span>
+          </div>
+          {error && <p className="mt-1 text-[11px] text-destructive">{error}</p>}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // ── CARD mode (desktop grid) ────────────────────────────────────────────────
+  return (
+    <Card
+      className={cn(
+        "overflow-hidden hover:shadow-lg transition-all",
+        saved && "border-green-500/50 bg-green-500/5"
       )}
-    </>
+    >
+      <CardContent className="p-4 md:p-6">
+        <div className="mb-4">
+          <p className="text-xs text-muted-foreground">
+            {match.group ? `Grupo ${match.group}` : match.stage}
+          </p>
+          <p className="text-xs font-medium mt-0.5">
+            {matchDate.toLocaleDateString("es-MX", {
+              weekday: "short", month: "short", day: "numeric",
+              hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City",
+            })}
+          </p>
+        </div>
+
+        <div className="space-y-3 mb-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="relative w-10 h-10 flex-shrink-0">
+                <Image src={match.homeTeam.flag} alt={match.homeTeam.name} fill
+                  className="object-cover rounded-md" unoptimized />
+              </div>
+              <p className="text-sm font-medium truncate">{translateCountry(match.homeTeam.name)}</p>
+            </div>
+            <ScoreControl team="home" value={homeScore} />
+          </div>
+          <div className="text-center text-xs text-muted-foreground font-medium">VS</div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="relative w-10 h-10 flex-shrink-0">
+                <Image src={match.awayTeam.flag} alt={match.awayTeam.name} fill
+                  className="object-cover rounded-md" unoptimized />
+              </div>
+              <p className="text-sm font-medium truncate">{translateCountry(match.awayTeam.name)}</p>
+            </div>
+            <ScoreControl team="away" value={awayScore} />
+          </div>
+        </div>
+
+        <p className="text-xs text-muted-foreground text-center mb-4 line-clamp-1">
+          {translateStadium(match.stadium)} · {translateCity(match.city)}
+        </p>
+
+        {error && (
+          <div className="mb-3 text-xs text-destructive text-center bg-destructive/10 p-2 rounded">
+            {error}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={isDisabled || isSaving}
+          className={cn(
+            "w-full h-11 rounded-lg text-sm font-semibold touch-manipulation transition-colors active:opacity-80 border",
+            isPast
+              ? "bg-muted text-muted-foreground cursor-not-allowed border-transparent"
+              : saved
+                ? "bg-green-500/10 text-green-700 border-green-500/40"
+                : "bg-primary text-primary-foreground border-transparent"
+          )}
+        >
+          {isSaving ? "Guardando..." : isPast ? "🔒 Cerrado" : saved ? "✓ Guardado" : "Guardar Prediccion"}
+        </button>
+      </CardContent>
+    </Card>
   );
 }
