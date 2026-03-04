@@ -48,12 +48,36 @@ export default async function LeaderboardPage() {
   });
   const totalPredictions = await prisma.prediction.count();
 
+  // Fetch finished group-stage match IDs (scored in GroupMatchScore)
+  const finishedGroupScores = await prisma.groupMatchScore.findMany({
+    where: { homeScore: { not: null }, awayScore: { not: null } },
+    select: { matchId: true },
+  });
+  const finishedMatchIds = finishedGroupScores.map((s) => `match_${s.matchId}`);
+
+  // Also include finished knockout matches
+  const finishedKnockoutMatches = await prisma.match.findMany({
+    where: { status: "FINISHED" },
+    select: { id: true },
+  });
+  // Knockout matchIds in Prediction are stored as "match_<numeric>" but the
+  // Match table uses cuid. Pass cuid ids too so the component can match by
+  // pred.matchId when it falls through the group-stage format.
+  const finishedMatchIdSet = [
+    ...finishedMatchIds,
+    ...finishedKnockoutMatches.map((m) => m.id),
+  ];
+
   const usersWithPoints = users.map((user) => ({
     id: user.id,
     name: user.name || "Usuario",
     email: user.email,
     image: user.image,
     isCurrentUser: user.id === session.user?.id,
+    hasPaid: user.hasPaid,
+    paidGroupStage: user.paidGroupStage,
+    paidKnockout: user.paidKnockout,
+    paidFinals: user.paidFinals,
     predictions: user.predictions,
   }));
 
@@ -117,7 +141,12 @@ export default async function LeaderboardPage() {
           </CardContent>
         </Card>
       ) : (
-        <LeaderboardByPhase users={usersWithPoints} matchMap={matchMap} currentUserId={session.user?.id ?? ""} />
+        <LeaderboardByPhase
+          users={usersWithPoints}
+          matchMap={matchMap}
+          currentUserId={session.user?.id ?? ""}
+          finishedMatchIds={finishedMatchIdSet}
+        />
       )}
     </div>
   );

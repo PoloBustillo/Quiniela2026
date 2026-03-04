@@ -94,13 +94,23 @@ const CITIES = Array.from(
   new Set(stadiumsData.stadiums.map((s) => s.city)),
 ).sort();
 
+const EARLY_KO_PHASES = PHASES.filter((p) =>
+  ["ROUND_OF_32"].includes(p.value)
+);
+const FINALS_PHASES = PHASES.filter((p) =>
+  ["ROUND_OF_16", "QUARTER_FINAL", "SEMI_FINAL", "THIRD_PLACE", "FINAL"].includes(p.value)
+);
+
 export function AllMatchesManager() {
   const [selectedTab, setSelectedTab] = useState<
-    "knockout" | "group" | "rules" | "users"
-  >("knockout");
-  const [selectedPhase, setSelectedPhase] = useState("ROUND_OF_16");
+    "group" | "early_ko" | "finals" | "rules" | "users"
+  >("group");
+  const [selectedPhase, setSelectedPhase] = useState("ROUND_OF_32");
+  const [selectedGroup, setSelectedGroup] = useState("A");
   const [matches, setMatches] = useState<Match[]>([]);
   const [groupMatches, setGroupMatches] = useState<JsonMatch[]>([]);
+
+  const GROUP_LETTERS = ["A","B","C","D","E","F","G","H","I","J","K","L"];
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{
@@ -141,9 +151,9 @@ export function AllMatchesManager() {
 
   useEffect(() => {
     loadTeams();
-    if (selectedTab === "knockout") {
+    if (selectedTab === "early_ko" || selectedTab === "finals") {
       loadKnockoutMatches();
-    } else {
+    } else if (selectedTab === "group") {
       loadGroupMatches();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -473,22 +483,28 @@ export function AllMatchesManager() {
     <div className="space-y-6">
       <Tabs
         value={selectedTab}
-        onValueChange={(v) => setSelectedTab(v as "knockout" | "group")}
+        onValueChange={(v) => {
+          const tab = v as "group" | "early_ko" | "finals" | "rules" | "users";
+          setSelectedTab(tab);
+          if (tab === "early_ko") setSelectedPhase("ROUND_OF_32");
+          if (tab === "finals") setSelectedPhase("ROUND_OF_16");
+        }}
       >
-        <TabsList className="grid w-full max-w-2xl grid-cols-4">
-          <TabsTrigger value="knockout">Eliminatorias</TabsTrigger>
-          <TabsTrigger value="group">Grupos</TabsTrigger>
+        <TabsList className="grid w-full max-w-3xl grid-cols-5">
+          <TabsTrigger value="group">1. Grupos</TabsTrigger>
+          <TabsTrigger value="early_ko">2. 32avos</TabsTrigger>
+          <TabsTrigger value="finals">3. Finales</TabsTrigger>
           <TabsTrigger value="rules">Reglas</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="knockout" className="space-y-4 mt-6">
+        {/* ── TORNEO 2: 32avos + 16avos ───────────────────────── */}
+        <TabsContent value="early_ko" className="space-y-4 mt-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h2 className="text-2xl font-bold">Partidos Eliminatorios</h2>
+              <h2 className="text-2xl font-bold">Torneo 2 · 32avos de Final</h2>
               <p className="text-muted-foreground">
-                Selecciona equipos, cambia fechas y escribe marcadores. Presiona
-                el botón &ldquo;Guardar&rdquo; para aplicar cambios.
+                Selecciona equipos, cambia fechas y escribe marcadores.
               </p>
             </div>
             <Select value={selectedPhase} onValueChange={setSelectedPhase}>
@@ -496,13 +512,11 @@ export function AllMatchesManager() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {PHASES.filter((p) => p.value !== "GROUP_STAGE").map(
-                  (phase) => (
-                    <SelectItem key={phase.value} value={phase.value}>
-                      {phase.label}
-                    </SelectItem>
-                  ),
-                )}
+                {EARLY_KO_PHASES.map((phase) => (
+                  <SelectItem key={phase.value} value={phase.value}>
+                    {phase.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -521,8 +535,218 @@ export function AllMatchesManager() {
               <CardContent className="py-12 text-center">
                 <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
-                  No hay partidos en esta fase. Haz clic en &quot;Agregar
-                  Partido&quot; para crear uno.
+                  No hay partidos en esta fase. Haz clic en &quot;Agregar Partido&quot; para crear uno.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {matches.map((match) => (
+                <Card key={match.id}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <CardTitle className="text-lg">
+                          {PHASES.find((p) => p.value === match.phase)?.label}
+                        </CardTitle>
+                        <Badge
+                          variant={
+                            match.status === "FINISHED"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {match.status === "FINISHED"
+                            ? "Finalizado"
+                            : "Pendiente"}
+                        </Badge>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteKnockoutMatch(match.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <CardDescription className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="h-4 w-4" />
+                        <span className="font-medium">
+                          {new Date(match.matchDate).toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+                        </span>
+                        <Clock className="h-4 w-4 ml-2" />
+                        <span className="font-medium">
+                          {new Date(match.matchDate).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      {match.stadium && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <MapPin className="h-3 w-3" />
+                          {match.stadium}
+                        </div>
+                      )}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Equipo Local</label>
+                        <Select
+                          value={knockoutEdits[match.id]?.homeTeamId || match.homeTeam.id}
+                          onValueChange={(value) => updateKnockoutMatch(match.id, { homeTeamId: value })}
+                          disabled={match.status === "FINISHED"}
+                        >
+                          <SelectTrigger>
+                            <SelectValue>
+                              <div className="flex items-center gap-2">
+                                {match.homeTeam.flag && <Image src={match.homeTeam.flag} alt={match.homeTeam.name} width={20} height={15} className="object-cover" />}
+                                <span>{match.homeTeam.name}</span>
+                              </div>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {teams.map((team) => (
+                              <SelectItem key={team.id} value={team.id}>
+                                <div className="flex items-center gap-2">
+                                  {team.flag && <Image src={team.flag} alt={team.name} width={20} height={15} className="object-cover" />}
+                                  <span>{team.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Equipo Visitante</label>
+                        <Select
+                          value={knockoutEdits[match.id]?.awayTeamId || match.awayTeam.id}
+                          onValueChange={(value) => updateKnockoutMatch(match.id, { awayTeamId: value })}
+                          disabled={match.status === "FINISHED"}
+                        >
+                          <SelectTrigger>
+                            <SelectValue>
+                              <div className="flex items-center gap-2">
+                                {match.awayTeam.flag && <Image src={match.awayTeam.flag} alt={match.awayTeam.name} width={20} height={15} className="object-cover" />}
+                                <span>{match.awayTeam.name}</span>
+                              </div>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {teams.map((team) => (
+                              <SelectItem key={team.id} value={team.id}>
+                                <div className="flex items-center gap-2">
+                                  {team.flag && <Image src={team.flag} alt={team.name} width={20} height={15} className="object-cover" />}
+                                  <span>{team.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <Clock className="w-4 h-4" />Fecha y Hora (México)
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input type="date"
+                            value={extractMexicoCityDateTime(getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)).date}
+                            onChange={(e) => { if (!e.target.value) return; const t = extractMexicoCityDateTime(getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)).time; updateKnockoutMatch(match.id, { matchDate: fromMexicoCityTime(e.target.value, t).toISOString() }); }}
+                            disabled={match.status === "FINISHED"} className="h-11 text-base touch-manipulation" />
+                          <Input type="time"
+                            value={extractMexicoCityDateTime(getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)).time}
+                            onChange={(e) => { if (!e.target.value) return; const d = extractMexicoCityDateTime(getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)).date; updateKnockoutMatch(match.id, { matchDate: fromMexicoCityTime(d, e.target.value).toISOString() }); }}
+                            disabled={match.status === "FINISHED"} className="h-11 text-base touch-manipulation" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Estadio</label>
+                        <Select value={knockoutEdits[match.id]?.stadium ?? match.stadium ?? ""} onValueChange={(v) => updateKnockoutMatch(match.id, { stadium: v })} disabled={match.status === "FINISHED"}>
+                          <SelectTrigger><SelectValue placeholder="Selecciona un estadio" /></SelectTrigger>
+                          <SelectContent>{STADIUMS.map((s) => <SelectItem key={s.id} value={s.name}>{s.name} ({s.city}, {s.country})</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Ciudad</label>
+                        <Select value={knockoutEdits[match.id]?.city ?? match.city ?? ""} onValueChange={(v) => updateKnockoutMatch(match.id, { city: v })} disabled={match.status === "FINISHED"}>
+                          <SelectTrigger><SelectValue placeholder="Selecciona una ciudad" /></SelectTrigger>
+                          <SelectContent>{CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    {match.homeTeam.code !== "TBD" && match.awayTeam.code !== "TBD" && (
+                      <div className="border-t pt-4">
+                        <label className="text-sm font-medium mb-2 block">Resultado Final</label>
+                        <div className="flex items-center gap-4">
+                          <Input type="number" min="0" placeholder="0"
+                            value={knockoutEdits[match.id]?.homeScore !== undefined ? (knockoutEdits[match.id].homeScore ?? "") : (match.homeScore ?? "")}
+                            onChange={(e) => updateKnockoutMatch(match.id, { homeScore: e.target.value === "" ? null : parseInt(e.target.value), status: "FINISHED" })}
+                            className="w-20 text-center" />
+                          <span className="text-2xl font-bold">-</span>
+                          <Input type="number" min="0" placeholder="0"
+                            value={knockoutEdits[match.id]?.awayScore !== undefined ? (knockoutEdits[match.id].awayScore ?? "") : (match.awayScore ?? "")}
+                            onChange={(e) => updateKnockoutMatch(match.id, { awayScore: e.target.value === "" ? null : parseInt(e.target.value), status: "FINISHED" })}
+                            className="w-20 text-center" />
+                        </div>
+                      </div>
+                    )}
+                    {knockoutEdits[match.id] && (
+                      <div className="flex gap-2 pt-4 border-t mt-4">
+                        <Button onClick={() => saveKnockoutMatch(match.id)} disabled={loading} className="flex-1" variant="default">
+                          <Save className="w-4 h-4 mr-2" />{loading ? "Guardando..." : "Guardar Cambios"}
+                        </Button>
+                        <Button onClick={() => cancelKnockoutEdit(match.id)} disabled={loading} variant="outline" className="flex-1">Cancelar</Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ── TORNEO 3: Cuartos → Final ────────────────────────── */}
+        <TabsContent value="finals" className="space-y-4 mt-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-2xl font-bold">Torneo 3 · Fases Finales</h2>
+              <p className="text-muted-foreground">
+                8vos, Cuartos de Final, Semifinales, 3er Lugar y Final.
+              </p>
+            </div>
+            <Select value={selectedPhase} onValueChange={setSelectedPhase}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FINALS_PHASES.map((phase) => (
+                  <SelectItem key={phase.value} value={phase.value}>
+                    {phase.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button onClick={createKnockoutMatch} className="w-full sm:w-auto">
+            <Plus className="h-4 w-4 mr-2" />
+            Agregar Partido
+          </Button>
+
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Cargando partidos...</p>
+            </div>
+          ) : matches.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  No hay partidos en esta fase. Haz clic en &quot;Agregar Partido&quot; para crear uno.
                 </p>
               </CardContent>
             </Card>
@@ -915,12 +1139,49 @@ export function AllMatchesManager() {
         </TabsContent>
 
         <TabsContent value="group" className="space-y-4 mt-6">
-          <div>
-            <h2 className="text-2xl font-bold">Partidos de Fase de Grupos</h2>
-            <p className="text-muted-foreground">
-              Escribe los marcadores y presiona &ldquo;Guardar Marcadores&rdquo;
-              para actualizar cada partido. También puedes cambiar las fechas.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-bold">Fase de Grupos</h2>
+              <p className="text-muted-foreground text-sm">
+                Selecciona el grupo para ver y editar sus partidos.
+              </p>
+            </div>
+            {/* Group progress summary */}
+            <div className="text-sm text-muted-foreground">
+              {groupMatches.filter(m => m.group === selectedGroup && m.homeScore != null && m.awayScore != null).length}
+              /{groupMatches.filter(m => m.group === selectedGroup).length} jugados
+            </div>
+          </div>
+
+          {/* Group selector */}
+          <div className="flex gap-1.5 flex-wrap">
+            {GROUP_LETTERS.map((g) => {
+              const total = groupMatches.filter(m => m.group === g).length;
+              const scored = groupMatches.filter(m => m.group === g && m.homeScore != null && m.awayScore != null).length;
+              const allDone = total > 0 && scored === total;
+              const someDone = scored > 0 && scored < total;
+              return (
+                <button
+                  key={g}
+                  onClick={() => setSelectedGroup(g)}
+                  className={[
+                    "relative px-3 py-1.5 rounded-lg text-sm font-semibold border transition-colors",
+                    selectedGroup === g
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : allDone
+                        ? "border-green-500/50 text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950"
+                        : someDone
+                          ? "border-yellow-500/50 text-yellow-700 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-950"
+                          : "border-border text-muted-foreground hover:text-foreground hover:bg-muted",
+                  ].join(" ")}
+                >
+                  {g}
+                  {allDone && selectedGroup !== g && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500" />
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {loading ? (
@@ -929,14 +1190,24 @@ export function AllMatchesManager() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {groupMatches.map((match) => (
+              {groupMatches.filter(m => m.group === selectedGroup).map((match) => (
                 <Card key={match.id}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        Grupo {match.group}
+                      <CardTitle className="text-base">
+                        Partido {match.id} · Grupo {match.group}
                       </CardTitle>
-                      <Badge variant="secondary">Partido {match.id}</Badge>
+                      <Badge
+                        variant={
+                          match.homeScore != null && match.awayScore != null
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
+                        {match.homeScore != null && match.awayScore != null
+                          ? `${match.homeScore}–${match.awayScore} ✓`
+                          : "Pendiente"}
+                      </Badge>
                     </div>
                     <CardDescription className="space-y-1">
                       <div className="flex items-center gap-2 text-sm">

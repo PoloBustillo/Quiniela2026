@@ -39,6 +39,10 @@ interface UserWithPoints {
   email: string | null;
   image: string | null;
   isCurrentUser: boolean;
+  hasPaid: boolean;
+  paidGroupStage: boolean;
+  paidKnockout: boolean;
+  paidFinals: boolean;
   predictions: Prediction[];
 }
 
@@ -46,17 +50,49 @@ interface LeaderboardByPhaseProps {
   users: UserWithPoints[];
   matchMap: Record<string, MatchInfo>;
   currentUserId: string;
+  finishedMatchIds: string[];
 }
 
-const PHASES = [
-  { value: "ALL", label: "Todo" },
-  { value: "GROUP_STAGE", label: "Grupos" },
-  { value: "ROUND_OF_32", label: "32avos" },
-  { value: "ROUND_OF_16", label: "16avos" },
-  { value: "QUARTER_FINAL", label: "Cuartos" },
-  { value: "SEMI_FINAL", label: "Semis" },
-  { value: "FINAL", label: "Final" },
+/** The 3 torneos + "All" */
+const TORNEOS = [
+  { value: "ALL",  label: "Todo" },
+  { value: "T1",   label: "1. Grupos" },
+  { value: "T2",   label: "2. 32avos" },
+  { value: "T3",   label: "3. Finales" },
 ];
+
+/** Which raw phases belong to each torneo */
+const TORNEO_PHASES: Record<string, string[]> = {
+  T1: ["GROUP_STAGE"],
+  T2: ["ROUND_OF_32"],
+  T3: ["ROUND_OF_16", "QUARTER_FINAL", "SEMI_FINAL", "THIRD_PLACE", "FINAL"],
+};
+
+/** Which payment flag a user needs to appear in a given torneo tab */
+const TORNEO_TIER: Record<string, (u: UserWithPoints) => boolean> = {
+  ALL: () => true,
+  T1:  (u) => u.hasPaid || u.paidGroupStage,
+  T2:  (u) => u.hasPaid || u.paidKnockout,
+  T3:  (u) => u.hasPaid || u.paidFinals,
+};
+
+const PHASE_LABELS: Record<string, string> = {
+  GROUP_STAGE:   "Fase de Grupos",
+  ROUND_OF_32:   "32avos de Final",
+  ROUND_OF_16:   "16avos (Octavos)",
+  QUARTER_FINAL: "Cuartos de Final",
+  SEMI_FINAL:    "Semifinal",
+  THIRD_PLACE:   "3er Lugar",
+  FINAL:         "Final",
+};
+
+const TORNEO_LABELS: Record<string, string> = {
+  T1: "Torneo 1 · Grupos",
+  T2: "Torneo 2 · 32avos",
+  T3: "Torneo 3 · Finales",
+};
+
+const PHASE_ORDER = ["GROUP_STAGE","ROUND_OF_32","ROUND_OF_16","QUARTER_FINAL","SEMI_FINAL","THIRD_PLACE","FINAL"];
 
 const MEDAL = ["🥇", "🥈", "🥉"];
 
@@ -64,45 +100,59 @@ export default function LeaderboardByPhase({
   users,
   matchMap,
   currentUserId,
+  finishedMatchIds,
 }: LeaderboardByPhaseProps) {
-  const [selectedPhase, setSelectedPhase] = useState("ALL");
+  const [selectedTorneo, setSelectedTorneo] = useState("ALL");
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
 
+  const finishedSet = useMemo(() => new Set(finishedMatchIds), [finishedMatchIds]);
+
   const leaderboard = useMemo(() => {
+    const tierCheck = TORNEO_TIER[selectedTorneo] ?? (() => true);
+    const phasesForTorneo = TORNEO_PHASES[selectedTorneo] ?? [];
     return users
+      .filter(tierCheck)
       .map((user) => {
         const preds =
-          selectedPhase === "ALL"
+          selectedTorneo === "ALL"
             ? user.predictions
-            : user.predictions.filter((p) => p.phase === selectedPhase);
+            : user.predictions.filter(
+                (p) => p.phase && phasesForTorneo.includes(p.phase)
+              );
         const points = preds.reduce((s, p) => s + p.points, 0);
         const exact = preds.filter((p) => p.points === 5).length;
         const correct = preds.filter((p) => p.points === 3).length;
-        const wrong = preds.filter((p) => p.points === 0).length;
-        return { ...user, points, preds, exact, correct, wrong };
+        // Only count wrong predictions for *completed* matches
+        const wrong = preds.filter(
+          (p) => p.points === 0 && finishedSet.has(p.matchId)
+        ).length;
+        const pending = preds.filter(
+          (p) => p.points === 0 && !finishedSet.has(p.matchId)
+        ).length;
+        return { ...user, points, preds, exact, correct, wrong, pending };
       })
       .sort((a, b) => b.points - a.points);
-  }, [users, selectedPhase]);
+  }, [users, selectedTorneo, finishedSet]);
 
   const myEntry = leaderboard.find((u) => u.id === currentUserId);
   const myRank = leaderboard.findIndex((u) => u.id === currentUserId) + 1;
 
   return (
     <div className="space-y-3">
-      {/* Phase filter — horizontal scroll */}
+      {/* Torneo filter */}
       <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-1">
-        {PHASES.map((ph) => (
+        {TORNEOS.map((t) => (
           <button
-            key={ph.value}
-            onClick={() => setSelectedPhase(ph.value)}
+            key={t.value}
+            onClick={() => { setSelectedTorneo(t.value); setExpandedUser(null); }}
             className={cn(
               "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap",
-              selectedPhase === ph.value
+              selectedTorneo === t.value
                 ? "bg-primary text-primary-foreground border-primary"
                 : "border-border text-muted-foreground hover:text-foreground"
             )}
           >
-            {ph.label}
+            {t.label}
           </button>
         ))}
       </div>
@@ -126,7 +176,7 @@ export default function LeaderboardByPhase({
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold truncate">{myEntry.name}</p>
               <p className="text-xs text-muted-foreground">
-                {myEntry.exact}✓✓ · {myEntry.correct}✓ · {myEntry.wrong}✗
+                {myEntry.exact}✓✓ · {myEntry.correct}✓ · {myEntry.wrong}✗{myEntry.pending > 0 ? ` · ${myEntry.pending}⏳` : ""}
               </p>
             </div>
             <span className="text-xl font-black text-primary">
@@ -200,6 +250,9 @@ export default function LeaderboardByPhase({
                       {user.correct}✓
                     </span>
                     <span className="text-red-500">{user.wrong}✗</span>
+                    {user.pending > 0 && (
+                      <span className="text-muted-foreground">{user.pending}⏳</span>
+                    )}
                     <span>{user.preds.length}p</span>
                   </div>
                 </div>
@@ -240,73 +293,102 @@ export default function LeaderboardByPhase({
                     </div>
                   </div>
 
-                  {/* Predictions list */}
+                  {/* Predictions list — grouped by phase */}
                   {user.preds.length > 0 ? (
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         Predicciones
                       </p>
-                      <div className="space-y-1 max-h-64 overflow-y-auto">
-                        {user.preds
-                          .sort((a, b) => b.points - a.points)
-                          .map((pred) => {
-                            const numId = pred.matchId.replace("match_", "");
-                            const match = matchMap[numId];
-                            return (
-                              <div
-                                key={pred.matchId}
-                                className={cn(
-                                  "flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs border",
-                                  pred.points === 5 && "border-green-500/30 bg-green-500/5",
-                                  pred.points === 3 && "border-blue-500/30 bg-blue-500/5",
-                                  pred.points === 0 && "border-border bg-background"
-                                )}
-                              >
-                                {/* Result icon */}
-                                {pred.points === 5 ? (
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
-                                ) : pred.points === 3 ? (
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
-                                ) : (
-                                  <XCircle className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                )}
+                      {(() => {
+                        // Group predictions by phase, keep phase order
+                        const grouped: Record<string, Prediction[]> = {};
+                        for (const p of user.preds) {
+                          const ph = p.phase ?? "GROUP_STAGE";
+                          if (!grouped[ph]) grouped[ph] = [];
+                          grouped[ph].push(p);
+                        }
+                        const phases = PHASE_ORDER.filter((ph) => grouped[ph]?.length);
+                        return phases.map((ph) => (
+                          <div key={ph} className="space-y-1">
+                            {selectedTorneo === "ALL" && (
+                              <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest pt-1">
+                                {PHASE_LABELS[ph] ?? ph}
+                              </p>
+                            )}
+                            <div className="space-y-1 max-h-64 overflow-y-auto">
+                              {grouped[ph]
+                                .sort((a, b) => {
+                                  const na = parseInt(a.matchId.replace("match_", ""), 10);
+                                  const nb = parseInt(b.matchId.replace("match_", ""), 10);
+                                  return na - nb;
+                                })
+                                .map((pred) => {
+                                  const numId = pred.matchId.replace("match_", "");
+                                  const match = matchMap[numId];
+                                  const isFinished = finishedSet.has(pred.matchId);
+                                  const isPending = !isFinished && pred.points === 0;
+                                  return (
+                                    <div
+                                      key={pred.matchId}
+                                      className={cn(
+                                        "flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs border",
+                                        pred.points === 5 && "border-green-500/30 bg-green-500/5",
+                                        pred.points === 3 && "border-blue-500/30 bg-blue-500/5",
+                                        isFinished && pred.points === 0 && "border-red-300/30 bg-red-500/5",
+                                        isPending && "border-border bg-background opacity-70"
+                                      )}
+                                    >
+                                      {/* Result icon */}
+                                      {pred.points === 5 ? (
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                                      ) : pred.points === 3 ? (
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                                      ) : isFinished ? (
+                                        <XCircle className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
+                                      ) : (
+                                        <span className="h-3.5 w-3.5 flex-shrink-0 text-center text-[10px] leading-none">⏳</span>
+                                      )}
 
-                                {/* Teams */}
-                                <span className="flex-1 truncate text-muted-foreground">
-                                  {match ? (
-                                    <>
-                                      {translateCountry(match.home)}{" "}
-                                      <span className="text-foreground font-mono font-semibold">
-                                        {pred.homeScore}–{pred.awayScore}
-                                      </span>{" "}
-                                      {translateCountry(match.away)}
-                                    </>
-                                  ) : (
-                                    <span className="font-mono font-semibold">
-                                      {pred.homeScore}–{pred.awayScore}
-                                    </span>
-                                  )}
-                                </span>
+                                      {/* Teams */}
+                                      <span className="flex-1 truncate text-muted-foreground">
+                                        {match ? (
+                                          <>
+                                            {translateCountry(match.home)}{" "}
+                                            <span className="text-foreground font-mono font-semibold">
+                                              {pred.homeScore}–{pred.awayScore}
+                                            </span>{" "}
+                                            {translateCountry(match.away)}
+                                          </>
+                                        ) : (
+                                          <span className="font-mono font-semibold">
+                                            {pred.homeScore}–{pred.awayScore}
+                                          </span>
+                                        )}
+                                      </span>
 
-                                {/* Points badge */}
-                                <span
-                                  className={cn(
-                                    "font-bold flex-shrink-0",
-                                    pred.points === 5 && "text-green-600",
-                                    pred.points === 3 && "text-blue-600",
-                                    pred.points === 0 && "text-muted-foreground"
-                                  )}
-                                >
-                                  {pred.points > 0 ? `+${pred.points}` : "0"}
-                                </span>
-                              </div>
-                            );
-                          })}
-                      </div>
+                                      {/* Points badge */}
+                                      <span
+                                        className={cn(
+                                          "font-bold flex-shrink-0",
+                                          pred.points === 5 && "text-green-600",
+                                          pred.points === 3 && "text-blue-600",
+                                          isFinished && pred.points === 0 && "text-red-400",
+                                          isPending && "text-muted-foreground"
+                                        )}
+                                      >
+                                        {pred.points > 0 ? `+${pred.points}` : isPending ? "—" : "0"}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                          </div>
+                        ));
+                      })()}
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground text-center py-2">
-                      Sin predicciones en esta fase
+                      Sin predicciones{selectedTorneo !== "ALL" ? ` en ${TORNEO_LABELS[selectedTorneo] ?? selectedTorneo}` : ""}
                     </p>
                   )}
                 </div>
