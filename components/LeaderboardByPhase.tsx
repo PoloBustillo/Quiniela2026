@@ -55,10 +55,10 @@ interface LeaderboardByPhaseProps {
 
 /** The 3 torneos + "All" */
 const TORNEOS = [
-  { value: "ALL",  label: "Todo" },
-  { value: "T1",   label: "1. Grupos" },
-  { value: "T2",   label: "2. 32avos" },
-  { value: "T3",   label: "3. Finales" },
+  { value: "ALL", label: "Todo" },
+  { value: "T1", label: "1. Grupos" },
+  { value: "T2", label: "2. 32avos" },
+  { value: "T3", label: "3. Finales" },
 ];
 
 /** Which raw phases belong to each torneo */
@@ -71,19 +71,19 @@ const TORNEO_PHASES: Record<string, string[]> = {
 /** Which payment flag a user needs to appear in a given torneo tab */
 const TORNEO_TIER: Record<string, (u: UserWithPoints) => boolean> = {
   ALL: () => true,
-  T1:  (u) => u.hasPaid || u.paidGroupStage,
-  T2:  (u) => u.hasPaid || u.paidKnockout,
-  T3:  (u) => u.hasPaid || u.paidFinals,
+  T1: (u) => u.hasPaid || u.paidGroupStage,
+  T2: (u) => u.hasPaid || u.paidKnockout,
+  T3: (u) => u.hasPaid || u.paidFinals,
 };
 
 const PHASE_LABELS: Record<string, string> = {
-  GROUP_STAGE:   "Fase de Grupos",
-  ROUND_OF_32:   "32avos de Final",
-  ROUND_OF_16:   "16avos (Octavos)",
+  GROUP_STAGE: "Fase de Grupos",
+  ROUND_OF_32: "32avos de Final",
+  ROUND_OF_16: "16avos (Octavos)",
   QUARTER_FINAL: "Cuartos de Final",
-  SEMI_FINAL:    "Semifinal",
-  THIRD_PLACE:   "3er Lugar",
-  FINAL:         "Final",
+  SEMI_FINAL: "Semifinal",
+  THIRD_PLACE: "3er Lugar",
+  FINAL: "Final",
 };
 
 const TORNEO_LABELS: Record<string, string> = {
@@ -92,7 +92,15 @@ const TORNEO_LABELS: Record<string, string> = {
   T3: "Torneo 3 · Finales",
 };
 
-const PHASE_ORDER = ["GROUP_STAGE","ROUND_OF_32","ROUND_OF_16","QUARTER_FINAL","SEMI_FINAL","THIRD_PLACE","FINAL"];
+const PHASE_ORDER = [
+  "GROUP_STAGE",
+  "ROUND_OF_32",
+  "ROUND_OF_16",
+  "QUARTER_FINAL",
+  "SEMI_FINAL",
+  "THIRD_PLACE",
+  "FINAL",
+];
 
 const MEDAL = ["🥇", "🥈", "🥉"];
 
@@ -105,7 +113,10 @@ export default function LeaderboardByPhase({
   const [selectedTorneo, setSelectedTorneo] = useState("ALL");
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
 
-  const finishedSet = useMemo(() => new Set(finishedMatchIds), [finishedMatchIds]);
+  const finishedSet = useMemo(
+    () => new Set(finishedMatchIds),
+    [finishedMatchIds],
+  );
 
   const leaderboard = useMemo(() => {
     const tierCheck = TORNEO_TIER[selectedTorneo] ?? (() => true);
@@ -117,17 +128,17 @@ export default function LeaderboardByPhase({
           selectedTorneo === "ALL"
             ? user.predictions
             : user.predictions.filter(
-                (p) => p.phase && phasesForTorneo.includes(p.phase)
+                (p) => p.phase && phasesForTorneo.includes(p.phase),
               );
         const points = preds.reduce((s, p) => s + p.points, 0);
         const exact = preds.filter((p) => p.points === 5).length;
         const correct = preds.filter((p) => p.points === 3).length;
         // Only count wrong predictions for *completed* matches
         const wrong = preds.filter(
-          (p) => p.points === 0 && finishedSet.has(p.matchId)
+          (p) => p.points === 0 && finishedSet.has(p.matchId),
         ).length;
         const pending = preds.filter(
-          (p) => p.points === 0 && !finishedSet.has(p.matchId)
+          (p) => p.points === 0 && !finishedSet.has(p.matchId),
         ).length;
         return { ...user, points, preds, exact, correct, wrong, pending };
       })
@@ -144,12 +155,15 @@ export default function LeaderboardByPhase({
         {TORNEOS.map((t) => (
           <button
             key={t.value}
-            onClick={() => { setSelectedTorneo(t.value); setExpandedUser(null); }}
+            onClick={() => {
+              setSelectedTorneo(t.value);
+              setExpandedUser(null);
+            }}
             className={cn(
               "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap",
               selectedTorneo === t.value
                 ? "bg-primary text-primary-foreground border-primary"
-                : "border-border text-muted-foreground hover:text-foreground"
+                : "border-border text-muted-foreground hover:text-foreground",
             )}
           >
             {t.label}
@@ -176,7 +190,8 @@ export default function LeaderboardByPhase({
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold truncate">{myEntry.name}</p>
               <p className="text-xs text-muted-foreground">
-                {myEntry.exact}✓✓ · {myEntry.correct}✓ · {myEntry.wrong}✗{myEntry.pending > 0 ? ` · ${myEntry.pending}⏳` : ""}
+                {myEntry.exact}✓✓ · {myEntry.correct}✓ · {myEntry.wrong}✗
+                {myEntry.pending > 0 ? ` · ${myEntry.pending}⏳` : ""}
               </p>
             </div>
             <span className="text-xl font-black text-primary">
@@ -197,7 +212,7 @@ export default function LeaderboardByPhase({
               key={user.id}
               className={cn(
                 "rounded-xl border overflow-hidden transition-all",
-                isMe && "border-primary/60 bg-primary/5"
+                isMe && "border-primary/60 bg-primary/5",
               )}
             >
               {/* Row */}
@@ -232,7 +247,9 @@ export default function LeaderboardByPhase({
                 {/* Name + stats */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-semibold truncate">{user.name}</span>
+                    <span className="text-sm font-semibold truncate">
+                      {user.name}
+                    </span>
                     {isMe && (
                       <Badge
                         variant="default"
@@ -251,7 +268,9 @@ export default function LeaderboardByPhase({
                     </span>
                     <span className="text-red-500">{user.wrong}✗</span>
                     {user.pending > 0 && (
-                      <span className="text-muted-foreground">{user.pending}⏳</span>
+                      <span className="text-muted-foreground">
+                        {user.pending}⏳
+                      </span>
                     )}
                     <span>{user.preds.length}p</span>
                   </div>
@@ -276,20 +295,34 @@ export default function LeaderboardByPhase({
                   {/* Stats */}
                   <div className="grid grid-cols-4 gap-1.5 text-center">
                     <div className="bg-background rounded-lg py-2">
-                      <p className="text-lg font-black text-primary">{user.points}</p>
+                      <p className="text-lg font-black text-primary">
+                        {user.points}
+                      </p>
                       <p className="text-[10px] text-muted-foreground">pts</p>
                     </div>
                     <div className="bg-background rounded-lg py-2">
-                      <p className="text-lg font-black text-green-600">{user.exact}</p>
-                      <p className="text-[10px] text-muted-foreground">exactos</p>
+                      <p className="text-lg font-black text-green-600">
+                        {user.exact}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        exactos
+                      </p>
                     </div>
                     <div className="bg-background rounded-lg py-2">
-                      <p className="text-lg font-black text-blue-600">{user.correct}</p>
-                      <p className="text-[10px] text-muted-foreground">ganador</p>
+                      <p className="text-lg font-black text-blue-600">
+                        {user.correct}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        ganador
+                      </p>
                     </div>
                     <div className="bg-background rounded-lg py-2">
-                      <p className="text-lg font-black text-red-500">{user.wrong}</p>
-                      <p className="text-[10px] text-muted-foreground">fallos</p>
+                      <p className="text-lg font-black text-red-500">
+                        {user.wrong}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        fallos
+                      </p>
                     </div>
                   </div>
 
@@ -307,7 +340,9 @@ export default function LeaderboardByPhase({
                           if (!grouped[ph]) grouped[ph] = [];
                           grouped[ph].push(p);
                         }
-                        const phases = PHASE_ORDER.filter((ph) => grouped[ph]?.length);
+                        const phases = PHASE_ORDER.filter(
+                          (ph) => grouped[ph]?.length,
+                        );
                         return phases.map((ph) => (
                           <div key={ph} className="space-y-1">
                             {selectedTorneo === "ALL" && (
@@ -318,24 +353,41 @@ export default function LeaderboardByPhase({
                             <div className="space-y-1 max-h-64 overflow-y-auto">
                               {grouped[ph]
                                 .sort((a, b) => {
-                                  const na = parseInt(a.matchId.replace("match_", ""), 10);
-                                  const nb = parseInt(b.matchId.replace("match_", ""), 10);
+                                  const na = parseInt(
+                                    a.matchId.replace("match_", ""),
+                                    10,
+                                  );
+                                  const nb = parseInt(
+                                    b.matchId.replace("match_", ""),
+                                    10,
+                                  );
                                   return na - nb;
                                 })
                                 .map((pred) => {
-                                  const numId = pred.matchId.replace("match_", "");
+                                  const numId = pred.matchId.replace(
+                                    "match_",
+                                    "",
+                                  );
                                   const match = matchMap[numId];
-                                  const isFinished = finishedSet.has(pred.matchId);
-                                  const isPending = !isFinished && pred.points === 0;
+                                  const isFinished = finishedSet.has(
+                                    pred.matchId,
+                                  );
+                                  const isPending =
+                                    !isFinished && pred.points === 0;
                                   return (
                                     <div
                                       key={pred.matchId}
                                       className={cn(
                                         "flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs border",
-                                        pred.points === 5 && "border-green-500/30 bg-green-500/5",
-                                        pred.points === 3 && "border-blue-500/30 bg-blue-500/5",
-                                        isFinished && pred.points === 0 && "border-red-300/30 bg-red-500/5",
-                                        isPending && "border-border bg-background opacity-70"
+                                        pred.points === 5 &&
+                                          "border-green-500/30 bg-green-500/5",
+                                        pred.points === 3 &&
+                                          "border-blue-500/30 bg-blue-500/5",
+                                        isFinished &&
+                                          pred.points === 0 &&
+                                          "border-red-300/30 bg-red-500/5",
+                                        isPending &&
+                                          "border-border bg-background opacity-70",
                                       )}
                                     >
                                       {/* Result icon */}
@@ -346,7 +398,9 @@ export default function LeaderboardByPhase({
                                       ) : isFinished ? (
                                         <XCircle className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
                                       ) : (
-                                        <span className="h-3.5 w-3.5 flex-shrink-0 text-center text-[10px] leading-none">⏳</span>
+                                        <span className="h-3.5 w-3.5 flex-shrink-0 text-center text-[10px] leading-none">
+                                          ⏳
+                                        </span>
                                       )}
 
                                       {/* Teams */}
@@ -372,11 +426,17 @@ export default function LeaderboardByPhase({
                                           "font-bold flex-shrink-0",
                                           pred.points === 5 && "text-green-600",
                                           pred.points === 3 && "text-blue-600",
-                                          isFinished && pred.points === 0 && "text-red-400",
-                                          isPending && "text-muted-foreground"
+                                          isFinished &&
+                                            pred.points === 0 &&
+                                            "text-red-400",
+                                          isPending && "text-muted-foreground",
                                         )}
                                       >
-                                        {pred.points > 0 ? `+${pred.points}` : isPending ? "—" : "0"}
+                                        {pred.points > 0
+                                          ? `+${pred.points}`
+                                          : isPending
+                                            ? "—"
+                                            : "0"}
                                       </span>
                                     </div>
                                   );
@@ -388,7 +448,10 @@ export default function LeaderboardByPhase({
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground text-center py-2">
-                      Sin predicciones{selectedTorneo !== "ALL" ? ` en ${TORNEO_LABELS[selectedTorneo] ?? selectedTorneo}` : ""}
+                      Sin predicciones
+                      {selectedTorneo !== "ALL"
+                        ? ` en ${TORNEO_LABELS[selectedTorneo] ?? selectedTorneo}`
+                        : ""}
                     </p>
                   )}
                 </div>

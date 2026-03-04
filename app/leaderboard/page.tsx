@@ -82,7 +82,17 @@ export default async function LeaderboardPage() {
   }));
 
   // Build a lightweight match map: matchId (string) -> { home, away }
-  const matchMap: Record<string, { home: string; away: string; homeFlag: string; awayFlag: string; group?: string; phase?: string }> = {};
+  const matchMap: Record<
+    string,
+    {
+      home: string;
+      away: string;
+      homeFlag: string;
+      awayFlag: string;
+      group?: string;
+      phase?: string;
+    }
+  > = {};
   for (const m of matchesData.matches) {
     matchMap[String(m.id)] = {
       home: m.homeTeam.name,
@@ -103,7 +113,8 @@ export default async function LeaderboardPage() {
             Tabla de Posiciones
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {usersWithPoints.length} participante{usersWithPoints.length !== 1 ? "s" : ""}
+            {usersWithPoints.length} participante
+            {usersWithPoints.length !== 1 ? "s" : ""}
           </p>
         </div>
         <Badge variant="secondary">{usersWithPoints.length}p</Badge>
@@ -118,10 +129,15 @@ export default async function LeaderboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>Para aparecer en la tabla, los usuarios deben ser marcados como pagados por un admin.</p>
+            <p>
+              Para aparecer en la tabla, los usuarios deben ser marcados como
+              pagados por un admin.
+            </p>
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2 rounded-lg bg-muted">
-                <p className="text-xl font-bold text-foreground">{totalUsers}</p>
+                <p className="text-xl font-bold text-foreground">
+                  {totalUsers}
+                </p>
                 <p className="text-xs">Total</p>
               </div>
               <div className="p-2 rounded-lg bg-muted">
@@ -129,7 +145,9 @@ export default async function LeaderboardPage() {
                 <p className="text-xs">Pagados</p>
               </div>
               <div className="p-2 rounded-lg bg-muted">
-                <p className="text-xl font-bold text-foreground">{totalPredictions}</p>
+                <p className="text-xl font-bold text-foreground">
+                  {totalPredictions}
+                </p>
                 <p className="text-xs">Predicciones</p>
               </div>
             </div>
