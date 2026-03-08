@@ -94,11 +94,15 @@ const CITIES = Array.from(
   new Set(stadiumsData.stadiums.map((s) => s.city)),
 ).sort();
 
-const EARLY_KO_PHASES = PHASES.filter((p) =>
-  ["ROUND_OF_32"].includes(p.value)
-);
+const EARLY_KO_PHASES = PHASES.filter((p) => ["ROUND_OF_32"].includes(p.value));
 const FINALS_PHASES = PHASES.filter((p) =>
-  ["ROUND_OF_16", "QUARTER_FINAL", "SEMI_FINAL", "THIRD_PLACE", "FINAL"].includes(p.value)
+  [
+    "ROUND_OF_16",
+    "QUARTER_FINAL",
+    "SEMI_FINAL",
+    "THIRD_PLACE",
+    "FINAL",
+  ].includes(p.value),
 );
 
 export function AllMatchesManager() {
@@ -110,7 +114,25 @@ export function AllMatchesManager() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [groupMatches, setGroupMatches] = useState<JsonMatch[]>([]);
 
-  const GROUP_LETTERS = ["A","B","C","D","E","F","G","H","I","J","K","L"];
+  const GROUP_LETTERS = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+  ];
+  const [groupViewMode, setGroupViewMode] = useState<"group" | "date">("group");
+  const [groupDateFilter, setGroupDateFilter] = useState<string | null>(null);
+  const [knockoutDateFilter, setKnockoutDateFilter] = useState<string | null>(
+    null,
+  );
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{
@@ -151,6 +173,8 @@ export function AllMatchesManager() {
 
   useEffect(() => {
     loadTeams();
+    setKnockoutDateFilter(null);
+    setGroupDateFilter(null);
     if (selectedTab === "early_ko" || selectedTab === "finals") {
       loadKnockoutMatches();
     } else if (selectedTab === "group") {
@@ -479,6 +503,28 @@ export function AllMatchesManager() {
     }
   };
 
+  // YYYY-MM-DD in Mexico City TZ
+  const toMexDateStr = (d: Date) =>
+    d.toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" });
+
+  // Format YYYY-MM-DD → "Mié 11 jun"
+  const fmtDayLabel = (ymd: string) => {
+    const [y, m, day] = ymd.split("-").map(Number);
+    return new Date(y, m - 1, day).toLocaleDateString("es-MX", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+  };
+
+  const knockoutDates = [
+    ...new Set(matches.map((m) => toMexDateStr(new Date(m.matchDate)))),
+  ].sort();
+
+  const groupDates = [
+    ...new Set(groupMatches.map((m) => toMexDateStr(new Date(m.date)))),
+  ].sort();
+
   return (
     <div className="space-y-6">
       <Tabs
@@ -526,6 +572,44 @@ export function AllMatchesManager() {
             Agregar Partido
           </Button>
 
+          {/* Date filter bar */}
+          {knockoutDates.length > 0 && (
+            <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-1">
+              {knockoutDates.map((d) => {
+                const total = matches.filter(
+                  (m) => toMexDateStr(new Date(m.matchDate)) === d,
+                ).length;
+                const scored = matches.filter(
+                  (m) =>
+                    toMexDateStr(new Date(m.matchDate)) === d &&
+                    m.status === "FINISHED",
+                ).length;
+                const allDone = total > 0 && scored === total;
+                return (
+                  <button
+                    key={d}
+                    onClick={() =>
+                      setKnockoutDateFilter(knockoutDateFilter === d ? null : d)
+                    }
+                    className={[
+                      "relative flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap",
+                      knockoutDateFilter === d
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : allDone
+                          ? "border-green-500/50 text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950"
+                          : "border-border text-muted-foreground hover:text-foreground hover:bg-muted",
+                    ].join(" ")}
+                  >
+                    {fmtDayLabel(d)}
+                    {allDone && knockoutDateFilter !== d && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {loading ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">Cargando partidos...</p>
@@ -535,176 +619,376 @@ export function AllMatchesManager() {
               <CardContent className="py-12 text-center">
                 <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
-                  No hay partidos en esta fase. Haz clic en &quot;Agregar Partido&quot; para crear uno.
+                  No hay partidos en esta fase. Haz clic en &quot;Agregar
+                  Partido&quot; para crear uno.
                 </p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid gap-4">
-              {matches.map((match) => (
-                <Card key={match.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <CardTitle className="text-lg">
-                          {PHASES.find((p) => p.value === match.phase)?.label}
-                        </CardTitle>
-                        <Badge
-                          variant={
-                            match.status === "FINISHED"
-                              ? "default"
-                              : "secondary"
-                          }
+              {matches
+                .filter(
+                  (m) =>
+                    !knockoutDateFilter ||
+                    toMexDateStr(new Date(m.matchDate)) === knockoutDateFilter,
+                )
+                .map((match) => (
+                  <Card key={match.id}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <CardTitle className="text-lg">
+                            {PHASES.find((p) => p.value === match.phase)?.label}
+                          </CardTitle>
+                          <Badge
+                            variant={
+                              match.status === "FINISHED"
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
+                            {match.status === "FINISHED"
+                              ? "Finalizado"
+                              : "Pendiente"}
+                          </Badge>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteKnockoutMatch(match.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
-                          {match.status === "FINISHED"
-                            ? "Finalizado"
-                            : "Pendiente"}
-                        </Badge>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteKnockoutMatch(match.id)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <CardDescription className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4" />
-                        <span className="font-medium">
-                          {new Date(match.matchDate).toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
-                        </span>
-                        <Clock className="h-4 w-4 ml-2" />
-                        <span className="font-medium">
-                          {new Date(match.matchDate).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
-                        </span>
+                      <CardDescription className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4" />
+                          <span className="font-medium">
+                            {new Date(match.matchDate).toLocaleDateString(
+                              "es-MX",
+                              {
+                                weekday: "short",
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )}
+                          </span>
+                          <Clock className="h-4 w-4 ml-2" />
+                          <span className="font-medium">
+                            {new Date(match.matchDate).toLocaleTimeString(
+                              "es-MX",
+                              { hour: "2-digit", minute: "2-digit" },
+                            )}
+                          </span>
+                        </div>
+                        {match.stadium && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            {match.stadium}
+                          </div>
+                        )}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">
+                            Equipo Local
+                          </label>
+                          <Select
+                            value={
+                              knockoutEdits[match.id]?.homeTeamId ||
+                              match.homeTeam.id
+                            }
+                            onValueChange={(value) =>
+                              updateKnockoutMatch(match.id, {
+                                homeTeamId: value,
+                              })
+                            }
+                            disabled={match.status === "FINISHED"}
+                          >
+                            <SelectTrigger>
+                              <SelectValue>
+                                <div className="flex items-center gap-2">
+                                  {match.homeTeam.flag && (
+                                    <Image
+                                      src={match.homeTeam.flag}
+                                      alt={match.homeTeam.name}
+                                      width={20}
+                                      height={15}
+                                      className="object-cover"
+                                    />
+                                  )}
+                                  <span>{match.homeTeam.name}</span>
+                                </div>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {teams.map((team) => (
+                                <SelectItem key={team.id} value={team.id}>
+                                  <div className="flex items-center gap-2">
+                                    {team.flag && (
+                                      <Image
+                                        src={team.flag}
+                                        alt={team.name}
+                                        width={20}
+                                        height={15}
+                                        className="object-cover"
+                                      />
+                                    )}
+                                    <span>{team.name}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">
+                            Equipo Visitante
+                          </label>
+                          <Select
+                            value={
+                              knockoutEdits[match.id]?.awayTeamId ||
+                              match.awayTeam.id
+                            }
+                            onValueChange={(value) =>
+                              updateKnockoutMatch(match.id, {
+                                awayTeamId: value,
+                              })
+                            }
+                            disabled={match.status === "FINISHED"}
+                          >
+                            <SelectTrigger>
+                              <SelectValue>
+                                <div className="flex items-center gap-2">
+                                  {match.awayTeam.flag && (
+                                    <Image
+                                      src={match.awayTeam.flag}
+                                      alt={match.awayTeam.name}
+                                      width={20}
+                                      height={15}
+                                      className="object-cover"
+                                    />
+                                  )}
+                                  <span>{match.awayTeam.name}</span>
+                                </div>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {teams.map((team) => (
+                                <SelectItem key={team.id} value={team.id}>
+                                  <div className="flex items-center gap-2">
+                                    {team.flag && (
+                                      <Image
+                                        src={team.flag}
+                                        alt={team.name}
+                                        width={20}
+                                        height={15}
+                                        className="object-cover"
+                                      />
+                                    )}
+                                    <span>{team.name}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                      {match.stadium && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <MapPin className="h-3 w-3" />
-                          {match.stadium}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            Fecha y Hora (México)
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input
+                              type="date"
+                              value={
+                                extractMexicoCityDateTime(
+                                  getValidDate(
+                                    knockoutEdits[match.id]?.matchDate ??
+                                      match.matchDate,
+                                  ),
+                                ).date
+                              }
+                              onChange={(e) => {
+                                if (!e.target.value) return;
+                                const t = extractMexicoCityDateTime(
+                                  getValidDate(
+                                    knockoutEdits[match.id]?.matchDate ??
+                                      match.matchDate,
+                                  ),
+                                ).time;
+                                updateKnockoutMatch(match.id, {
+                                  matchDate: fromMexicoCityTime(
+                                    e.target.value,
+                                    t,
+                                  ).toISOString(),
+                                });
+                              }}
+                              disabled={match.status === "FINISHED"}
+                              className="h-11 text-base touch-manipulation"
+                            />
+                            <Input
+                              type="time"
+                              value={
+                                extractMexicoCityDateTime(
+                                  getValidDate(
+                                    knockoutEdits[match.id]?.matchDate ??
+                                      match.matchDate,
+                                  ),
+                                ).time
+                              }
+                              onChange={(e) => {
+                                if (!e.target.value) return;
+                                const d = extractMexicoCityDateTime(
+                                  getValidDate(
+                                    knockoutEdits[match.id]?.matchDate ??
+                                      match.matchDate,
+                                  ),
+                                ).date;
+                                updateKnockoutMatch(match.id, {
+                                  matchDate: fromMexicoCityTime(
+                                    d,
+                                    e.target.value,
+                                  ).toISOString(),
+                                });
+                              }}
+                              disabled={match.status === "FINISHED"}
+                              className="h-11 text-base touch-manipulation"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Estadio</label>
+                          <Select
+                            value={
+                              knockoutEdits[match.id]?.stadium ??
+                              match.stadium ??
+                              ""
+                            }
+                            onValueChange={(v) =>
+                              updateKnockoutMatch(match.id, { stadium: v })
+                            }
+                            disabled={match.status === "FINISHED"}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona un estadio" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {STADIUMS.map((s) => (
+                                <SelectItem key={s.id} value={s.name}>
+                                  {s.name} ({s.city}, {s.country})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Ciudad</label>
+                          <Select
+                            value={
+                              knockoutEdits[match.id]?.city ?? match.city ?? ""
+                            }
+                            onValueChange={(v) =>
+                              updateKnockoutMatch(match.id, { city: v })
+                            }
+                            disabled={match.status === "FINISHED"}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona una ciudad" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CITIES.map((c) => (
+                                <SelectItem key={c} value={c}>
+                                  {c}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      {match.homeTeam.code !== "TBD" &&
+                        match.awayTeam.code !== "TBD" && (
+                          <div className="border-t pt-4">
+                            <label className="text-sm font-medium mb-2 block">
+                              Resultado Final
+                            </label>
+                            <div className="flex items-center gap-4">
+                              <Input
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                                value={
+                                  knockoutEdits[match.id]?.homeScore !==
+                                  undefined
+                                    ? (knockoutEdits[match.id].homeScore ?? "")
+                                    : (match.homeScore ?? "")
+                                }
+                                onChange={(e) =>
+                                  updateKnockoutMatch(match.id, {
+                                    homeScore:
+                                      e.target.value === ""
+                                        ? null
+                                        : parseInt(e.target.value),
+                                    status: "FINISHED",
+                                  })
+                                }
+                                className="w-20 text-center"
+                              />
+                              <span className="text-2xl font-bold">-</span>
+                              <Input
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                                value={
+                                  knockoutEdits[match.id]?.awayScore !==
+                                  undefined
+                                    ? (knockoutEdits[match.id].awayScore ?? "")
+                                    : (match.awayScore ?? "")
+                                }
+                                onChange={(e) =>
+                                  updateKnockoutMatch(match.id, {
+                                    awayScore:
+                                      e.target.value === ""
+                                        ? null
+                                        : parseInt(e.target.value),
+                                    status: "FINISHED",
+                                  })
+                                }
+                                className="w-20 text-center"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      {knockoutEdits[match.id] && (
+                        <div className="flex gap-2 pt-4 border-t mt-4">
+                          <Button
+                            onClick={() => saveKnockoutMatch(match.id)}
+                            disabled={loading}
+                            className="flex-1"
+                            variant="default"
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            {loading ? "Guardando..." : "Guardar Cambios"}
+                          </Button>
+                          <Button
+                            onClick={() => cancelKnockoutEdit(match.id)}
+                            disabled={loading}
+                            variant="outline"
+                            className="flex-1"
+                          >
+                            Cancelar
+                          </Button>
                         </div>
                       )}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Equipo Local</label>
-                        <Select
-                          value={knockoutEdits[match.id]?.homeTeamId || match.homeTeam.id}
-                          onValueChange={(value) => updateKnockoutMatch(match.id, { homeTeamId: value })}
-                          disabled={match.status === "FINISHED"}
-                        >
-                          <SelectTrigger>
-                            <SelectValue>
-                              <div className="flex items-center gap-2">
-                                {match.homeTeam.flag && <Image src={match.homeTeam.flag} alt={match.homeTeam.name} width={20} height={15} className="object-cover" />}
-                                <span>{match.homeTeam.name}</span>
-                              </div>
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {teams.map((team) => (
-                              <SelectItem key={team.id} value={team.id}>
-                                <div className="flex items-center gap-2">
-                                  {team.flag && <Image src={team.flag} alt={team.name} width={20} height={15} className="object-cover" />}
-                                  <span>{team.name}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Equipo Visitante</label>
-                        <Select
-                          value={knockoutEdits[match.id]?.awayTeamId || match.awayTeam.id}
-                          onValueChange={(value) => updateKnockoutMatch(match.id, { awayTeamId: value })}
-                          disabled={match.status === "FINISHED"}
-                        >
-                          <SelectTrigger>
-                            <SelectValue>
-                              <div className="flex items-center gap-2">
-                                {match.awayTeam.flag && <Image src={match.awayTeam.flag} alt={match.awayTeam.name} width={20} height={15} className="object-cover" />}
-                                <span>{match.awayTeam.name}</span>
-                              </div>
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {teams.map((team) => (
-                              <SelectItem key={team.id} value={team.id}>
-                                <div className="flex items-center gap-2">
-                                  {team.flag && <Image src={team.flag} alt={team.name} width={20} height={15} className="object-cover" />}
-                                  <span>{team.name}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-2">
-                          <Clock className="w-4 h-4" />Fecha y Hora (México)
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Input type="date"
-                            value={extractMexicoCityDateTime(getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)).date}
-                            onChange={(e) => { if (!e.target.value) return; const t = extractMexicoCityDateTime(getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)).time; updateKnockoutMatch(match.id, { matchDate: fromMexicoCityTime(e.target.value, t).toISOString() }); }}
-                            disabled={match.status === "FINISHED"} className="h-11 text-base touch-manipulation" />
-                          <Input type="time"
-                            value={extractMexicoCityDateTime(getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)).time}
-                            onChange={(e) => { if (!e.target.value) return; const d = extractMexicoCityDateTime(getValidDate(knockoutEdits[match.id]?.matchDate ?? match.matchDate)).date; updateKnockoutMatch(match.id, { matchDate: fromMexicoCityTime(d, e.target.value).toISOString() }); }}
-                            disabled={match.status === "FINISHED"} className="h-11 text-base touch-manipulation" />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Estadio</label>
-                        <Select value={knockoutEdits[match.id]?.stadium ?? match.stadium ?? ""} onValueChange={(v) => updateKnockoutMatch(match.id, { stadium: v })} disabled={match.status === "FINISHED"}>
-                          <SelectTrigger><SelectValue placeholder="Selecciona un estadio" /></SelectTrigger>
-                          <SelectContent>{STADIUMS.map((s) => <SelectItem key={s.id} value={s.name}>{s.name} ({s.city}, {s.country})</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Ciudad</label>
-                        <Select value={knockoutEdits[match.id]?.city ?? match.city ?? ""} onValueChange={(v) => updateKnockoutMatch(match.id, { city: v })} disabled={match.status === "FINISHED"}>
-                          <SelectTrigger><SelectValue placeholder="Selecciona una ciudad" /></SelectTrigger>
-                          <SelectContent>{CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    {match.homeTeam.code !== "TBD" && match.awayTeam.code !== "TBD" && (
-                      <div className="border-t pt-4">
-                        <label className="text-sm font-medium mb-2 block">Resultado Final</label>
-                        <div className="flex items-center gap-4">
-                          <Input type="number" min="0" placeholder="0"
-                            value={knockoutEdits[match.id]?.homeScore !== undefined ? (knockoutEdits[match.id].homeScore ?? "") : (match.homeScore ?? "")}
-                            onChange={(e) => updateKnockoutMatch(match.id, { homeScore: e.target.value === "" ? null : parseInt(e.target.value), status: "FINISHED" })}
-                            className="w-20 text-center" />
-                          <span className="text-2xl font-bold">-</span>
-                          <Input type="number" min="0" placeholder="0"
-                            value={knockoutEdits[match.id]?.awayScore !== undefined ? (knockoutEdits[match.id].awayScore ?? "") : (match.awayScore ?? "")}
-                            onChange={(e) => updateKnockoutMatch(match.id, { awayScore: e.target.value === "" ? null : parseInt(e.target.value), status: "FINISHED" })}
-                            className="w-20 text-center" />
-                        </div>
-                      </div>
-                    )}
-                    {knockoutEdits[match.id] && (
-                      <div className="flex gap-2 pt-4 border-t mt-4">
-                        <Button onClick={() => saveKnockoutMatch(match.id)} disabled={loading} className="flex-1" variant="default">
-                          <Save className="w-4 h-4 mr-2" />{loading ? "Guardando..." : "Guardar Cambios"}
-                        </Button>
-                        <Button onClick={() => cancelKnockoutEdit(match.id)} disabled={loading} variant="outline" className="flex-1">Cancelar</Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
             </div>
           )}
         </TabsContent>
@@ -737,6 +1021,44 @@ export function AllMatchesManager() {
             Agregar Partido
           </Button>
 
+          {/* Date filter bar */}
+          {knockoutDates.length > 0 && (
+            <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-1">
+              {knockoutDates.map((d) => {
+                const total = matches.filter(
+                  (m) => toMexDateStr(new Date(m.matchDate)) === d,
+                ).length;
+                const scored = matches.filter(
+                  (m) =>
+                    toMexDateStr(new Date(m.matchDate)) === d &&
+                    m.status === "FINISHED",
+                ).length;
+                const allDone = total > 0 && scored === total;
+                return (
+                  <button
+                    key={d}
+                    onClick={() =>
+                      setKnockoutDateFilter(knockoutDateFilter === d ? null : d)
+                    }
+                    className={[
+                      "relative flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap",
+                      knockoutDateFilter === d
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : allDone
+                          ? "border-green-500/50 text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950"
+                          : "border-border text-muted-foreground hover:text-foreground hover:bg-muted",
+                    ].join(" ")}
+                  >
+                    {fmtDayLabel(d)}
+                    {allDone && knockoutDateFilter !== d && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {loading ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">Cargando partidos...</p>
@@ -746,394 +1068,406 @@ export function AllMatchesManager() {
               <CardContent className="py-12 text-center">
                 <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
-                  No hay partidos en esta fase. Haz clic en &quot;Agregar Partido&quot; para crear uno.
+                  No hay partidos en esta fase. Haz clic en &quot;Agregar
+                  Partido&quot; para crear uno.
                 </p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid gap-4">
-              {matches.map((match) => (
-                <Card key={match.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <CardTitle className="text-lg">
-                          {PHASES.find((p) => p.value === match.phase)?.label}
-                        </CardTitle>
-                        <Badge
-                          variant={
-                            match.status === "FINISHED"
-                              ? "default"
-                              : "secondary"
-                          }
-                        >
-                          {match.status === "FINISHED"
-                            ? "Finalizado"
-                            : "Pendiente"}
-                        </Badge>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteKnockoutMatch(match.id)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <CardDescription className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4" />
-                        <span className="font-medium">
-                          {new Date(match.matchDate).toLocaleDateString(
-                            "es-MX",
-                            {
-                              weekday: "short",
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            },
-                          )}
-                        </span>
-                        <Clock className="h-4 w-4 ml-2" />
-                        <span className="font-medium">
-                          {new Date(match.matchDate).toLocaleTimeString(
-                            "es-MX",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            },
-                          )}
-                        </span>
-                      </div>
-                      {match.stadium && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <MapPin className="h-3 w-3" />
-                          {match.stadium}
-                        </div>
-                      )}
-                    </CardDescription>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    {/* Equipos */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Equipo Local
-                        </label>
-                        <Select
-                          value={
-                            knockoutEdits[match.id]?.homeTeamId ||
-                            match.homeTeam.id
-                          }
-                          onValueChange={(value) => {
-                            updateKnockoutMatch(match.id, {
-                              homeTeamId: value,
-                            });
-                          }}
-                          disabled={match.status === "FINISHED"}
-                        >
-                          <SelectTrigger>
-                            <SelectValue>
-                              <div className="flex items-center gap-2">
-                                {match.homeTeam.flag && (
-                                  <Image
-                                    src={match.homeTeam.flag}
-                                    alt={match.homeTeam.name}
-                                    width={20}
-                                    height={15}
-                                    className="object-cover"
-                                  />
-                                )}
-                                <span>{match.homeTeam.name}</span>
-                              </div>
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {teams.map((team) => (
-                              <SelectItem key={team.id} value={team.id}>
-                                <div className="flex items-center gap-2">
-                                  {team.flag && (
-                                    <Image
-                                      src={team.flag}
-                                      alt={team.name}
-                                      width={20}
-                                      height={15}
-                                      className="object-cover"
-                                    />
-                                  )}
-                                  <span>{team.name}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Equipo Visitante
-                        </label>
-                        <Select
-                          value={
-                            knockoutEdits[match.id]?.awayTeamId ||
-                            match.awayTeam.id
-                          }
-                          onValueChange={(value) => {
-                            updateKnockoutMatch(match.id, {
-                              awayTeamId: value,
-                            });
-                          }}
-                          disabled={match.status === "FINISHED"}
-                        >
-                          <SelectTrigger>
-                            <SelectValue>
-                              <div className="flex items-center gap-2">
-                                {match.awayTeam.flag && (
-                                  <Image
-                                    src={match.awayTeam.flag}
-                                    alt={match.awayTeam.name}
-                                    width={20}
-                                    height={15}
-                                    className="object-cover"
-                                  />
-                                )}
-                                <span>{match.awayTeam.name}</span>
-                              </div>
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {teams.map((team) => (
-                              <SelectItem key={team.id} value={team.id}>
-                                <div className="flex items-center gap-2">
-                                  {team.flag && (
-                                    <Image
-                                      src={team.flag}
-                                      alt={team.name}
-                                      width={20}
-                                      height={15}
-                                      className="object-cover"
-                                    />
-                                  )}
-                                  <span>{team.name}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {/* Fecha, Estadio y Ciudad */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          Fecha y Hora (México)
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Input
-                            type="date"
-                            value={
-                              extractMexicoCityDateTime(
-                                getValidDate(
-                                  knockoutEdits[match.id]?.matchDate ??
-                                    match.matchDate,
-                                ),
-                              ).date
+              {matches
+                .filter(
+                  (m) =>
+                    !knockoutDateFilter ||
+                    toMexDateStr(new Date(m.matchDate)) === knockoutDateFilter,
+                )
+                .map((match) => (
+                  <Card key={match.id}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <CardTitle className="text-lg">
+                            {PHASES.find((p) => p.value === match.phase)?.label}
+                          </CardTitle>
+                          <Badge
+                            variant={
+                              match.status === "FINISHED"
+                                ? "default"
+                                : "secondary"
                             }
-                            onChange={(e) => {
-                              if (!e.target.value) return;
-                              const currentTime = extractMexicoCityDateTime(
-                                getValidDate(
-                                  knockoutEdits[match.id]?.matchDate ??
-                                    match.matchDate,
-                                ),
-                              ).time;
-                              updateKnockoutMatch(match.id, {
-                                matchDate: fromMexicoCityTime(
-                                  e.target.value,
-                                  currentTime,
-                                ).toISOString(),
-                              });
-                            }}
-                            disabled={match.status === "FINISHED"}
-                            className="h-11 text-base touch-manipulation"
-                          />
-                          <Input
-                            type="time"
-                            value={
-                              extractMexicoCityDateTime(
-                                getValidDate(
-                                  knockoutEdits[match.id]?.matchDate ??
-                                    match.matchDate,
-                                ),
-                              ).time
-                            }
-                            onChange={(e) => {
-                              if (!e.target.value) return;
-                              const currentDate = extractMexicoCityDateTime(
-                                getValidDate(
-                                  knockoutEdits[match.id]?.matchDate ??
-                                    match.matchDate,
-                                ),
-                              ).date;
-                              updateKnockoutMatch(match.id, {
-                                matchDate: fromMexicoCityTime(
-                                  currentDate,
-                                  e.target.value,
-                                ).toISOString(),
-                              });
-                            }}
-                            disabled={match.status === "FINISHED"}
-                            className="h-11 text-base touch-manipulation"
-                          />
+                          >
+                            {match.status === "FINISHED"
+                              ? "Finalizado"
+                              : "Pendiente"}
+                          </Badge>
                         </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Estadio</label>
-                        <Select
-                          value={
-                            knockoutEdits[match.id]?.stadium ??
-                            match.stadium ??
-                            ""
-                          }
-                          onValueChange={(value) => {
-                            updateKnockoutMatch(match.id, {
-                              stadium: value,
-                            });
-                          }}
-                          disabled={match.status === "FINISHED"}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteKnockoutMatch(match.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona un estadio" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {STADIUMS.map((stadium) => (
-                              <SelectItem key={stadium.id} value={stadium.name}>
-                                {stadium.name} ({stadium.city},{" "}
-                                {stadium.country})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
+                      <CardDescription className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4" />
+                          <span className="font-medium">
+                            {new Date(match.matchDate).toLocaleDateString(
+                              "es-MX",
+                              {
+                                weekday: "short",
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )}
+                          </span>
+                          <Clock className="h-4 w-4 ml-2" />
+                          <span className="font-medium">
+                            {new Date(match.matchDate).toLocaleTimeString(
+                              "es-MX",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )}
+                          </span>
+                        </div>
+                        {match.stadium && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            {match.stadium}
+                          </div>
+                        )}
+                      </CardDescription>
+                    </CardHeader>
 
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Ciudad</label>
-                        <Select
-                          value={
-                            knockoutEdits[match.id]?.city ?? match.city ?? ""
-                          }
-                          onValueChange={(value) => {
-                            updateKnockoutMatch(match.id, {
-                              city: value,
-                            });
-                          }}
-                          disabled={match.status === "FINISHED"}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona una ciudad" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {CITIES.map((city) => (
-                              <SelectItem key={city} value={city}>
-                                {city}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {/* Marcadores */}
-                    {match.homeTeam.code !== "TBD" &&
-                      match.awayTeam.code !== "TBD" && (
-                        <div className="border-t pt-4">
-                          <label className="text-sm font-medium mb-2 block">
-                            Resultado Final
+                    <CardContent className="space-y-4">
+                      {/* Equipos */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">
+                            Equipo Local
                           </label>
-                          <div className="flex items-center gap-4">
+                          <Select
+                            value={
+                              knockoutEdits[match.id]?.homeTeamId ||
+                              match.homeTeam.id
+                            }
+                            onValueChange={(value) => {
+                              updateKnockoutMatch(match.id, {
+                                homeTeamId: value,
+                              });
+                            }}
+                            disabled={match.status === "FINISHED"}
+                          >
+                            <SelectTrigger>
+                              <SelectValue>
+                                <div className="flex items-center gap-2">
+                                  {match.homeTeam.flag && (
+                                    <Image
+                                      src={match.homeTeam.flag}
+                                      alt={match.homeTeam.name}
+                                      width={20}
+                                      height={15}
+                                      className="object-cover"
+                                    />
+                                  )}
+                                  <span>{match.homeTeam.name}</span>
+                                </div>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {teams.map((team) => (
+                                <SelectItem key={team.id} value={team.id}>
+                                  <div className="flex items-center gap-2">
+                                    {team.flag && (
+                                      <Image
+                                        src={team.flag}
+                                        alt={team.name}
+                                        width={20}
+                                        height={15}
+                                        className="object-cover"
+                                      />
+                                    )}
+                                    <span>{team.name}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">
+                            Equipo Visitante
+                          </label>
+                          <Select
+                            value={
+                              knockoutEdits[match.id]?.awayTeamId ||
+                              match.awayTeam.id
+                            }
+                            onValueChange={(value) => {
+                              updateKnockoutMatch(match.id, {
+                                awayTeamId: value,
+                              });
+                            }}
+                            disabled={match.status === "FINISHED"}
+                          >
+                            <SelectTrigger>
+                              <SelectValue>
+                                <div className="flex items-center gap-2">
+                                  {match.awayTeam.flag && (
+                                    <Image
+                                      src={match.awayTeam.flag}
+                                      alt={match.awayTeam.name}
+                                      width={20}
+                                      height={15}
+                                      className="object-cover"
+                                    />
+                                  )}
+                                  <span>{match.awayTeam.name}</span>
+                                </div>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {teams.map((team) => (
+                                <SelectItem key={team.id} value={team.id}>
+                                  <div className="flex items-center gap-2">
+                                    {team.flag && (
+                                      <Image
+                                        src={team.flag}
+                                        alt={team.name}
+                                        width={20}
+                                        height={15}
+                                        className="object-cover"
+                                      />
+                                    )}
+                                    <span>{team.name}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {/* Fecha, Estadio y Ciudad */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            Fecha y Hora (México)
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
                             <Input
-                              type="number"
-                              min="0"
-                              placeholder="0"
+                              type="date"
                               value={
-                                knockoutEdits[match.id]?.homeScore !== undefined
-                                  ? (knockoutEdits[match.id].homeScore ?? "")
-                                  : (match.homeScore ?? "")
+                                extractMexicoCityDateTime(
+                                  getValidDate(
+                                    knockoutEdits[match.id]?.matchDate ??
+                                      match.matchDate,
+                                  ),
+                                ).date
                               }
                               onChange={(e) => {
-                                const homeScore =
-                                  e.target.value === ""
-                                    ? null
-                                    : parseInt(e.target.value);
+                                if (!e.target.value) return;
+                                const currentTime = extractMexicoCityDateTime(
+                                  getValidDate(
+                                    knockoutEdits[match.id]?.matchDate ??
+                                      match.matchDate,
+                                  ),
+                                ).time;
                                 updateKnockoutMatch(match.id, {
-                                  homeScore,
-                                  status: "FINISHED",
+                                  matchDate: fromMexicoCityTime(
+                                    e.target.value,
+                                    currentTime,
+                                  ).toISOString(),
                                 });
                               }}
-                              className="w-20 text-center"
+                              disabled={match.status === "FINISHED"}
+                              className="h-11 text-base touch-manipulation"
                             />
-                            <span className="text-2xl font-bold">-</span>
                             <Input
-                              type="number"
-                              min="0"
-                              placeholder="0"
+                              type="time"
                               value={
-                                knockoutEdits[match.id]?.awayScore !== undefined
-                                  ? (knockoutEdits[match.id].awayScore ?? "")
-                                  : (match.awayScore ?? "")
+                                extractMexicoCityDateTime(
+                                  getValidDate(
+                                    knockoutEdits[match.id]?.matchDate ??
+                                      match.matchDate,
+                                  ),
+                                ).time
                               }
                               onChange={(e) => {
-                                const awayScore =
-                                  e.target.value === ""
-                                    ? null
-                                    : parseInt(e.target.value);
+                                if (!e.target.value) return;
+                                const currentDate = extractMexicoCityDateTime(
+                                  getValidDate(
+                                    knockoutEdits[match.id]?.matchDate ??
+                                      match.matchDate,
+                                  ),
+                                ).date;
                                 updateKnockoutMatch(match.id, {
-                                  awayScore,
-                                  status: "FINISHED",
+                                  matchDate: fromMexicoCityTime(
+                                    currentDate,
+                                    e.target.value,
+                                  ).toISOString(),
                                 });
                               }}
-                              className="w-20 text-center"
+                              disabled={match.status === "FINISHED"}
+                              className="h-11 text-base touch-manipulation"
                             />
                           </div>
                         </div>
-                      )}
 
-                    {/* Botones de Guardar/Cancelar cambios generales - Movidos al final */}
-                    {knockoutEdits[match.id] && (
-                      <div className="flex gap-2 pt-4 border-t mt-4">
-                        <Button
-                          onClick={() => {
-                            console.log(
-                              "💾 Botón Guardar clickeado para:",
-                              match.id,
-                            );
-                            saveKnockoutMatch(match.id);
-                          }}
-                          disabled={loading}
-                          className="flex-1"
-                          variant="default"
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          {loading ? "Guardando..." : "Guardar Cambios"}
-                        </Button>
-                        <Button
-                          onClick={() => cancelKnockoutEdit(match.id)}
-                          disabled={loading}
-                          variant="outline"
-                          className="flex-1"
-                        >
-                          Cancelar
-                        </Button>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Estadio</label>
+                          <Select
+                            value={
+                              knockoutEdits[match.id]?.stadium ??
+                              match.stadium ??
+                              ""
+                            }
+                            onValueChange={(value) => {
+                              updateKnockoutMatch(match.id, {
+                                stadium: value,
+                              });
+                            }}
+                            disabled={match.status === "FINISHED"}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona un estadio" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {STADIUMS.map((stadium) => (
+                                <SelectItem
+                                  key={stadium.id}
+                                  value={stadium.name}
+                                >
+                                  {stadium.name} ({stadium.city},{" "}
+                                  {stadium.country})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Ciudad</label>
+                          <Select
+                            value={
+                              knockoutEdits[match.id]?.city ?? match.city ?? ""
+                            }
+                            onValueChange={(value) => {
+                              updateKnockoutMatch(match.id, {
+                                city: value,
+                              });
+                            }}
+                            disabled={match.status === "FINISHED"}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona una ciudad" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CITIES.map((city) => (
+                                <SelectItem key={city} value={city}>
+                                  {city}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+
+                      {/* Marcadores */}
+                      {match.homeTeam.code !== "TBD" &&
+                        match.awayTeam.code !== "TBD" && (
+                          <div className="border-t pt-4">
+                            <label className="text-sm font-medium mb-2 block">
+                              Resultado Final
+                            </label>
+                            <div className="flex items-center gap-4">
+                              <Input
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                                value={
+                                  knockoutEdits[match.id]?.homeScore !==
+                                  undefined
+                                    ? (knockoutEdits[match.id].homeScore ?? "")
+                                    : (match.homeScore ?? "")
+                                }
+                                onChange={(e) => {
+                                  const homeScore =
+                                    e.target.value === ""
+                                      ? null
+                                      : parseInt(e.target.value);
+                                  updateKnockoutMatch(match.id, {
+                                    homeScore,
+                                    status: "FINISHED",
+                                  });
+                                }}
+                                className="w-20 text-center"
+                              />
+                              <span className="text-2xl font-bold">-</span>
+                              <Input
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                                value={
+                                  knockoutEdits[match.id]?.awayScore !==
+                                  undefined
+                                    ? (knockoutEdits[match.id].awayScore ?? "")
+                                    : (match.awayScore ?? "")
+                                }
+                                onChange={(e) => {
+                                  const awayScore =
+                                    e.target.value === ""
+                                      ? null
+                                      : parseInt(e.target.value);
+                                  updateKnockoutMatch(match.id, {
+                                    awayScore,
+                                    status: "FINISHED",
+                                  });
+                                }}
+                                className="w-20 text-center"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Botones de Guardar/Cancelar cambios generales - Movidos al final */}
+                      {knockoutEdits[match.id] && (
+                        <div className="flex gap-2 pt-4 border-t mt-4">
+                          <Button
+                            onClick={() => {
+                              console.log(
+                                "💾 Botón Guardar clickeado para:",
+                                match.id,
+                              );
+                              saveKnockoutMatch(match.id);
+                            }}
+                            disabled={loading}
+                            className="flex-1"
+                            variant="default"
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            {loading ? "Guardando..." : "Guardar Cambios"}
+                          </Button>
+                          <Button
+                            onClick={() => cancelKnockoutEdit(match.id)}
+                            disabled={loading}
+                            variant="outline"
+                            className="flex-1"
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
             </div>
           )}
         </TabsContent>
@@ -1143,46 +1477,103 @@ export function AllMatchesManager() {
             <div>
               <h2 className="text-2xl font-bold">Fase de Grupos</h2>
               <p className="text-muted-foreground text-sm">
-                Selecciona el grupo para ver y editar sus partidos.
+                Filtra por grupo o por fecha para editar partidos.
               </p>
             </div>
-            {/* Group progress summary */}
-            <div className="text-sm text-muted-foreground">
-              {groupMatches.filter(m => m.group === selectedGroup && m.homeScore != null && m.awayScore != null).length}
-              /{groupMatches.filter(m => m.group === selectedGroup).length} jugados
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-muted-foreground">
+                {groupViewMode === "group"
+                  ? `${groupMatches.filter((m) => m.group === selectedGroup && m.homeScore != null && m.awayScore != null).length}/${groupMatches.filter((m) => m.group === selectedGroup).length} jugados (Grupo ${selectedGroup})`
+                  : `${groupMatches.filter((m) => (groupDateFilter ? toMexDateStr(new Date(m.date)) === groupDateFilter : true)).filter((m) => m.homeScore != null && m.awayScore != null).length}/${groupMatches.filter((m) => (groupDateFilter ? toMexDateStr(new Date(m.date)) === groupDateFilter : true)).length} jugados`}
+              </div>
+              {/* View mode toggle */}
+              <div className="flex border rounded-lg overflow-hidden text-xs font-medium">
+                <button
+                  onClick={() => setGroupViewMode("group")}
+                  className={`px-3 py-1.5 transition-colors ${groupViewMode === "group" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                >
+                  Por Grupo
+                </button>
+                <button
+                  onClick={() => setGroupViewMode("date")}
+                  className={`px-3 py-1.5 transition-colors ${groupViewMode === "date" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                >
+                  Por Fecha
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Group selector */}
-          <div className="flex gap-1.5 flex-wrap">
-            {GROUP_LETTERS.map((g) => {
-              const total = groupMatches.filter(m => m.group === g).length;
-              const scored = groupMatches.filter(m => m.group === g && m.homeScore != null && m.awayScore != null).length;
-              const allDone = total > 0 && scored === total;
-              const someDone = scored > 0 && scored < total;
-              return (
-                <button
-                  key={g}
-                  onClick={() => setSelectedGroup(g)}
-                  className={[
-                    "relative px-3 py-1.5 rounded-lg text-sm font-semibold border transition-colors",
-                    selectedGroup === g
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : allDone
-                        ? "border-green-500/50 text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950"
-                        : someDone
-                          ? "border-yellow-500/50 text-yellow-700 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-950"
+          {groupViewMode === "group" ? (
+            /* ── Por Grupo ── */
+            <div className="flex gap-1.5 flex-wrap">
+              {GROUP_LETTERS.map((g) => {
+                const total = groupMatches.filter((m) => m.group === g).length;
+                const scored = groupMatches.filter(
+                  (m) =>
+                    m.group === g && m.homeScore != null && m.awayScore != null,
+                ).length;
+                const allDone = total > 0 && scored === total;
+                const someDone = scored > 0 && scored < total;
+                return (
+                  <button
+                    key={g}
+                    onClick={() => setSelectedGroup(g)}
+                    className={[
+                      "relative px-3 py-1.5 rounded-lg text-sm font-semibold border transition-colors",
+                      selectedGroup === g
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : allDone
+                          ? "border-green-500/50 text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950"
+                          : someDone
+                            ? "border-yellow-500/50 text-yellow-700 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-950"
+                            : "border-border text-muted-foreground hover:text-foreground hover:bg-muted",
+                    ].join(" ")}
+                  >
+                    {g}
+                    {allDone && selectedGroup !== g && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            /* ── Por Fecha ── */
+            <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-1">
+              {groupDates.map((d) => {
+                const total = groupMatches.filter(
+                  (m) => toMexDateStr(new Date(m.date)) === d,
+                ).length;
+                const scored = groupMatches.filter(
+                  (m) =>
+                    toMexDateStr(new Date(m.date)) === d &&
+                    m.homeScore != null &&
+                    m.awayScore != null,
+                ).length;
+                const allDone = total > 0 && scored === total;
+                return (
+                  <button
+                    key={d}
+                    onClick={() => setGroupDateFilter(d)}
+                    className={[
+                      "relative flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap",
+                      groupDateFilter === d
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : allDone
+                          ? "border-green-500/50 text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950"
                           : "border-border text-muted-foreground hover:text-foreground hover:bg-muted",
-                  ].join(" ")}
-                >
-                  {g}
-                  {allDone && selectedGroup !== g && (
-                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                    ].join(" ")}
+                  >
+                    {fmtDayLabel(d)}
+                    {allDone && groupDateFilter !== d && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {loading ? (
             <div className="text-center py-12">
@@ -1190,219 +1581,235 @@ export function AllMatchesManager() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {groupMatches.filter(m => m.group === selectedGroup).map((match) => (
-                <Card key={match.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base">
-                        Partido {match.id} · Grupo {match.group}
-                      </CardTitle>
-                      <Badge
-                        variant={
-                          match.homeScore != null && match.awayScore != null
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {match.homeScore != null && match.awayScore != null
-                          ? `${match.homeScore}–${match.awayScore} ✓`
-                          : "Pendiente"}
-                      </Badge>
-                    </div>
-                    <CardDescription className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4" />
-                        <span className="font-medium">
-                          {new Date(match.date).toLocaleDateString("es-MX", {
-                            weekday: "short",
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </span>
-                        <Clock className="h-4 w-4 ml-2" />
-                        <span className="font-medium">
-                          {new Date(match.date).toLocaleTimeString("es-MX", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
+              {groupMatches
+                .filter((m) =>
+                  groupViewMode === "group"
+                    ? m.group === selectedGroup
+                    : groupDateFilter
+                      ? toMexDateStr(new Date(m.date)) === groupDateFilter
+                      : true,
+                )
+                .sort(
+                  (a, b) =>
+                    new Date(a.date).getTime() - new Date(b.date).getTime(),
+                )
+                .map((match) => (
+                  <Card key={match.id}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">
+                          Partido {match.id} · Grupo {match.group}
+                        </CardTitle>
+                        <Badge
+                          variant={
+                            match.homeScore != null && match.awayScore != null
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {match.homeScore != null && match.awayScore != null
+                            ? `${match.homeScore}–${match.awayScore} ✓`
+                            : "Pendiente"}
+                        </Badge>
                       </div>
-                      {match.stadium && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <MapPin className="h-3 w-3" />
-                          {match.stadium}
+                      <CardDescription className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4" />
+                          <span className="font-medium">
+                            {new Date(match.date).toLocaleDateString("es-MX", {
+                              weekday: "short",
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </span>
+                          <Clock className="h-4 w-4 ml-2" />
+                          <span className="font-medium">
+                            {new Date(match.date).toLocaleTimeString("es-MX", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        {match.stadium && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            {match.stadium}
+                          </div>
+                        )}
+                      </CardDescription>
+                    </CardHeader>
+
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Fecha */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            Fecha y Hora (México)
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input
+                              type="date"
+                              value={
+                                extractMexicoCityDateTime(
+                                  getValidDate(
+                                    groupEdits[match.id]?.matchDate ??
+                                      match.date,
+                                  ),
+                                ).date
+                              }
+                              onChange={(e) => {
+                                if (!e.target.value) return;
+                                const currentTime = extractMexicoCityDateTime(
+                                  getValidDate(
+                                    groupEdits[match.id]?.matchDate ??
+                                      match.date,
+                                  ),
+                                ).time;
+                                updateGroupMatch(match.id, {
+                                  matchDate: fromMexicoCityTime(
+                                    e.target.value,
+                                    currentTime,
+                                  ).toISOString(),
+                                });
+                              }}
+                              className="h-11 text-base touch-manipulation"
+                            />
+                            <Input
+                              type="time"
+                              value={
+                                extractMexicoCityDateTime(
+                                  getValidDate(
+                                    groupEdits[match.id]?.matchDate ??
+                                      match.date,
+                                  ),
+                                ).time
+                              }
+                              onChange={(e) => {
+                                if (!e.target.value) return;
+                                const currentDate = extractMexicoCityDateTime(
+                                  getValidDate(
+                                    groupEdits[match.id]?.matchDate ??
+                                      match.date,
+                                  ),
+                                ).date;
+                                updateGroupMatch(match.id, {
+                                  matchDate: fromMexicoCityTime(
+                                    currentDate,
+                                    e.target.value,
+                                  ).toISOString(),
+                                });
+                              }}
+                              className="h-11 text-base touch-manipulation"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Equipos Display */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Equipos</label>
+                          <div className="flex items-center justify-around p-2 border rounded-md">
+                            <div className="flex items-center gap-2">
+                              <Image
+                                src={match.homeTeam.flag}
+                                alt={match.homeTeam.name}
+                                width={24}
+                                height={18}
+                                className="object-cover"
+                              />
+                              <span className="text-sm">
+                                {match.homeTeam.name}
+                              </span>
+                            </div>
+                            <span className="text-muted-foreground">VS</span>
+                            <div className="flex items-center gap-2">
+                              <Image
+                                src={match.awayTeam.flag}
+                                alt={match.awayTeam.name}
+                                width={24}
+                                height={18}
+                                className="object-cover"
+                              />
+                              <span className="text-sm">
+                                {match.awayTeam.name}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Marcadores */}
+                      <div className="border-t pt-4">
+                        <label className="text-sm font-medium mb-2 block">
+                          Resultado Final
+                        </label>
+                        <div className="flex items-center gap-4">
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={
+                              groupEdits[match.id]?.homeScore !== undefined
+                                ? (groupEdits[match.id].homeScore ?? "")
+                                : (match.homeScore ?? "")
+                            }
+                            onChange={(e) => {
+                              const homeScore =
+                                e.target.value === ""
+                                  ? null
+                                  : parseInt(e.target.value);
+                              updateGroupMatch(match.id, { homeScore });
+                            }}
+                            className="w-20 text-center"
+                          />
+                          <span className="text-2xl font-bold">-</span>
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={
+                              groupEdits[match.id]?.awayScore !== undefined
+                                ? (groupEdits[match.id].awayScore ?? "")
+                                : (match.awayScore ?? "")
+                            }
+                            onChange={(e) => {
+                              const awayScore =
+                                e.target.value === ""
+                                  ? null
+                                  : parseInt(e.target.value);
+                              updateGroupMatch(match.id, { awayScore });
+                            }}
+                            className="w-20 text-center"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Botones de Guardar/Cancelar cambios generales - Movidos al final */}
+                      {groupEdits[match.id] && (
+                        <div className="flex gap-2 pt-4 border-t mt-4">
+                          <Button
+                            onClick={() => saveGroupMatch(match.id)}
+                            disabled={loading}
+                            className="flex-1"
+                            variant="default"
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            {loading ? "Guardando..." : "Guardar Cambios"}
+                          </Button>
+                          <Button
+                            onClick={() => cancelGroupEdit(match.id)}
+                            disabled={loading}
+                            variant="outline"
+                            className="flex-1"
+                          >
+                            Cancelar
+                          </Button>
                         </div>
                       )}
-                    </CardDescription>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Fecha */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          Fecha y Hora (México)
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Input
-                            type="date"
-                            value={
-                              extractMexicoCityDateTime(
-                                getValidDate(
-                                  groupEdits[match.id]?.matchDate ?? match.date,
-                                ),
-                              ).date
-                            }
-                            onChange={(e) => {
-                              if (!e.target.value) return;
-                              const currentTime = extractMexicoCityDateTime(
-                                getValidDate(
-                                  groupEdits[match.id]?.matchDate ?? match.date,
-                                ),
-                              ).time;
-                              updateGroupMatch(match.id, {
-                                matchDate: fromMexicoCityTime(
-                                  e.target.value,
-                                  currentTime,
-                                ).toISOString(),
-                              });
-                            }}
-                            className="h-11 text-base touch-manipulation"
-                          />
-                          <Input
-                            type="time"
-                            value={
-                              extractMexicoCityDateTime(
-                                getValidDate(
-                                  groupEdits[match.id]?.matchDate ?? match.date,
-                                ),
-                              ).time
-                            }
-                            onChange={(e) => {
-                              if (!e.target.value) return;
-                              const currentDate = extractMexicoCityDateTime(
-                                getValidDate(
-                                  groupEdits[match.id]?.matchDate ?? match.date,
-                                ),
-                              ).date;
-                              updateGroupMatch(match.id, {
-                                matchDate: fromMexicoCityTime(
-                                  currentDate,
-                                  e.target.value,
-                                ).toISOString(),
-                              });
-                            }}
-                            className="h-11 text-base touch-manipulation"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Equipos Display */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Equipos</label>
-                        <div className="flex items-center justify-around p-2 border rounded-md">
-                          <div className="flex items-center gap-2">
-                            <Image
-                              src={match.homeTeam.flag}
-                              alt={match.homeTeam.name}
-                              width={24}
-                              height={18}
-                              className="object-cover"
-                            />
-                            <span className="text-sm">
-                              {match.homeTeam.name}
-                            </span>
-                          </div>
-                          <span className="text-muted-foreground">VS</span>
-                          <div className="flex items-center gap-2">
-                            <Image
-                              src={match.awayTeam.flag}
-                              alt={match.awayTeam.name}
-                              width={24}
-                              height={18}
-                              className="object-cover"
-                            />
-                            <span className="text-sm">
-                              {match.awayTeam.name}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Marcadores */}
-                    <div className="border-t pt-4">
-                      <label className="text-sm font-medium mb-2 block">
-                        Resultado Final
-                      </label>
-                      <div className="flex items-center gap-4">
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={
-                            groupEdits[match.id]?.homeScore !== undefined
-                              ? (groupEdits[match.id].homeScore ?? "")
-                              : (match.homeScore ?? "")
-                          }
-                          onChange={(e) => {
-                            const homeScore =
-                              e.target.value === ""
-                                ? null
-                                : parseInt(e.target.value);
-                            updateGroupMatch(match.id, { homeScore });
-                          }}
-                          className="w-20 text-center"
-                        />
-                        <span className="text-2xl font-bold">-</span>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={
-                            groupEdits[match.id]?.awayScore !== undefined
-                              ? (groupEdits[match.id].awayScore ?? "")
-                              : (match.awayScore ?? "")
-                          }
-                          onChange={(e) => {
-                            const awayScore =
-                              e.target.value === ""
-                                ? null
-                                : parseInt(e.target.value);
-                            updateGroupMatch(match.id, { awayScore });
-                          }}
-                          className="w-20 text-center"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Botones de Guardar/Cancelar cambios generales - Movidos al final */}
-                    {groupEdits[match.id] && (
-                      <div className="flex gap-2 pt-4 border-t mt-4">
-                        <Button
-                          onClick={() => saveGroupMatch(match.id)}
-                          disabled={loading}
-                          className="flex-1"
-                          variant="default"
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          {loading ? "Guardando..." : "Guardar Cambios"}
-                        </Button>
-                        <Button
-                          onClick={() => cancelGroupEdit(match.id)}
-                          disabled={loading}
-                          variant="outline"
-                          className="flex-1"
-                        >
-                          Cancelar
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
             </div>
           )}
         </TabsContent>
