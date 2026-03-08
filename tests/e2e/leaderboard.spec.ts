@@ -34,7 +34,9 @@ test.describe("Leaderboard – torneo tab structure", () => {
     // auth redirect (redirect() in the server component) fires client-side after
     // streaming completes.  Wait for network activity to settle so the redirect
     // has a chance to happen before we check the URL.
-    await page.waitForLoadState("networkidle", { timeout: 8_000 }).catch(() => {});
+    await page
+      .waitForLoadState("networkidle", { timeout: 8_000 })
+      .catch(() => {});
     if (page.url().includes("/auth/signin")) {
       test.skip();
       return;
@@ -67,7 +69,9 @@ test.describe("Leaderboard – torneo tab structure", () => {
     expect(text.toLowerCase()).toMatch(/todo/i);
 
     // At least one data row visible
-    const rows = page.locator("table tbody tr, [data-testid='leaderboard-row']");
+    const rows = page.locator(
+      "table tbody tr, [data-testid='leaderboard-row']",
+    );
     await expect(rows.first()).toBeVisible({ timeout: 8_000 });
   });
 

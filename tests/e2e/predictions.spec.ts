@@ -92,7 +92,9 @@ test.describe("Predictions page – locked match UI", () => {
     await page.goto("/predictions");
     // Same RSC streaming / auth redirect pattern as leaderboard — wait for
     // network to settle before inspecting the URL.
-    await page.waitForLoadState("networkidle", { timeout: 8_000 }).catch(() => {});
+    await page
+      .waitForLoadState("networkidle", { timeout: 8_000 })
+      .catch(() => {});
 
     // If no auth session is present the app redirects to /auth/signin — skip.
     if (page.url().includes("/auth/signin")) {
@@ -104,9 +106,12 @@ test.describe("Predictions page – locked match UI", () => {
     // If the page has no cards (e.g. the predictions page is not yet implemented
     // or there are no matches in the DB), skip rather than timing out.
     const cardHandle = await page
-      .waitForSelector("[data-testid='prediction-card'], .prediction-card, form", {
-        timeout: 10_000,
-      })
+      .waitForSelector(
+        "[data-testid='prediction-card'], .prediction-card, form",
+        {
+          timeout: 10_000,
+        },
+      )
       .catch(() => null);
     if (!cardHandle) {
       test.skip();
@@ -117,7 +122,7 @@ test.describe("Predictions page – locked match UI", () => {
     // The exact selector depends on your MatchCard/PredictionCard implementation;
     // adjust if you add data-testid attributes (recommended).
     const lockedIndicators = page.locator(
-      "[data-testid='match-locked'], [aria-disabled='true'], input:disabled, button:disabled"
+      "[data-testid='match-locked'], [aria-disabled='true'], input:disabled, button:disabled",
     );
 
     // At least one match must be locked (since match 1 is in the past)

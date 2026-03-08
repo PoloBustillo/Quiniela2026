@@ -99,7 +99,7 @@ test.describe("Points calculation – via API scoring", () => {
     const preds = await predsRes.json();
 
     const match2Pred = preds.find(
-      (p: { matchId: string }) => p.matchId === "match_2"
+      (p: { matchId: string }) => p.matchId === "match_2",
     );
     if (match2Pred) {
       expect(match2Pred.points).toBe(5); // exact score → 5 points

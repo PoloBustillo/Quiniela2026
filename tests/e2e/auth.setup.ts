@@ -25,7 +25,7 @@ setup("authenticate as regular user", async ({ page }) => {
 
   if (!email || !password) {
     console.warn(
-      "⚠  TEST_USER_EMAIL / TEST_USER_PASSWORD not set — skipping user auth setup."
+      "⚠  TEST_USER_EMAIL / TEST_USER_PASSWORD not set — skipping user auth setup.",
     );
     // Write an empty storage state so downstream tests can still run (they'll just be unauthenticated)
     await page.context().storageState({ path: USER_FILE });
@@ -49,7 +49,7 @@ setup("authenticate as admin", async ({ page }) => {
 
   if (!email || !password) {
     console.warn(
-      "⚠  TEST_ADMIN_EMAIL / TEST_ADMIN_PASSWORD not set — skipping admin auth setup."
+      "⚠  TEST_ADMIN_EMAIL / TEST_ADMIN_PASSWORD not set — skipping admin auth setup.",
     );
     await page.context().storageState({ path: ADMIN_FILE });
     return;
