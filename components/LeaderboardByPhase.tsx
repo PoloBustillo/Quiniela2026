@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   XCircle,
   GitCompare,
+  Lock,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,14 +24,15 @@ interface MatchInfo {
   awayFlag: string;
   group?: string;
   phase?: string;
+  order?: number;
 }
 
 interface Prediction {
   matchId: string;
   phase: string | null;
   points: number;
-  homeScore: number;
-  awayScore: number;
+  homeScore: number | null;
+  awayScore: number | null;
 }
 
 interface UserWithPoints {
@@ -65,7 +67,7 @@ const TORNEOS = [
 const TORNEO_PHASES: Record<string, string[]> = {
   T1: ["GROUP_STAGE"],
   T2: ["ROUND_OF_32", "ROUND_OF_16"],
-  T3: ["QUARTER_FINAL", "SEMI_FINAL", "THIRD_PLACE", "FINAL"],
+  T3: ["ROUND_OF_8", "QUARTER_FINAL", "SEMI_FINAL", "THIRD_PLACE", "FINAL"],
 };
 
 /** Which payment flag a user needs to appear in a given torneo tab */
@@ -79,7 +81,8 @@ const TORNEO_TIER: Record<string, (u: UserWithPoints) => boolean> = {
 const PHASE_LABELS: Record<string, string> = {
   GROUP_STAGE: "Fase de Grupos",
   ROUND_OF_32: "32avos de Final",
-  ROUND_OF_16: "16avos (Octavos)",
+  ROUND_OF_16: "16vos de Final",
+  ROUND_OF_8: "8vos de Final",
   QUARTER_FINAL: "Cuartos de Final",
   SEMI_FINAL: "Semifinal",
   THIRD_PLACE: "3er Lugar",
@@ -96,6 +99,7 @@ const PHASE_ORDER = [
   "GROUP_STAGE",
   "ROUND_OF_32",
   "ROUND_OF_16",
+  "ROUND_OF_8",
   "QUARTER_FINAL",
   "SEMI_FINAL",
   "THIRD_PLACE",
@@ -104,6 +108,52 @@ const PHASE_ORDER = [
 
 const MEDAL = ["🥇", "🥈", "🥉"];
 
+const getPredictionOrder = (
+  matchId: string,
+  matchMap: Record<string, MatchInfo>,
+) => {
+  const rawId = matchId.replace("match_", "");
+  const orderFromMap = matchMap[rawId]?.order;
+  if (typeof orderFromMap === "number") {
+    return orderFromMap;
+  }
+
+  const numeric = Number(rawId);
+  if (!Number.isNaN(numeric)) {
+    return numeric;
+  }
+
+  return Number.MAX_SAFE_INTEGER;
+};
+
+const getQuotaLabel = (selectedTorneo: string, user: UserWithPoints) => {
+  if (selectedTorneo === "T1") {
+    return (
+      TORNEO_TIER.T1(user) ? "Cuota cubierta" : "Cuota pendiente"
+    ) as const;
+  }
+  if (selectedTorneo === "T2") {
+    return (
+      TORNEO_TIER.T2(user) ? "Cuota cubierta" : "Cuota pendiente"
+    ) as const;
+  }
+  if (selectedTorneo === "T3") {
+    return (
+      TORNEO_TIER.T3(user) ? "Cuota cubierta" : "Cuota pendiente"
+    ) as const;
+  }
+
+  const covered = [
+    user.hasPaid || user.paidGroupStage,
+    user.hasPaid || user.paidKnockout,
+    user.hasPaid || user.paidFinals,
+  ].filter(Boolean).length;
+
+  if (covered === 3) return "3/3 cuotas" as const;
+  if (covered > 0) return `${covered}/3 cuotas` as const;
+  return "0/3 cuotas" as const;
+};
+
 export default function LeaderboardByPhase({
   users,
   matchMap,
@@ -111,7 +161,7 @@ export default function LeaderboardByPhase({
   finishedMatchIds,
 }: LeaderboardByPhaseProps) {
   const [selectedTorneo, setSelectedTorneo] = useState("ALL");
-  const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
 
   const finishedSet = useMemo(
     () => new Set(finishedMatchIds),
@@ -119,10 +169,8 @@ export default function LeaderboardByPhase({
   );
 
   const leaderboard = useMemo(() => {
-    const tierCheck = TORNEO_TIER[selectedTorneo] ?? (() => true);
     const phasesForTorneo = TORNEO_PHASES[selectedTorneo] ?? [];
     return users
-      .filter(tierCheck)
       .map((user) => {
         const preds =
           selectedTorneo === "ALL"
@@ -157,7 +205,7 @@ export default function LeaderboardByPhase({
             key={t.value}
             onClick={() => {
               setSelectedTorneo(t.value);
-              setExpandedUser(null);
+              setExpandedUsers(new Set());
             }}
             className={cn(
               "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap",
@@ -204,8 +252,16 @@ export default function LeaderboardByPhase({
       {/* Leaderboard rows */}
       <div className="space-y-1.5">
         {leaderboard.map((user, idx) => {
-          const isExpanded = expandedUser === user.id;
+          const isExpanded = expandedUsers.has(user.id);
           const isMe = user.id === currentUserId;
+          const paidForCurrentTorneo =
+            selectedTorneo === "ALL"
+              ? user.hasPaid ||
+                user.paidGroupStage ||
+                user.paidKnockout ||
+                user.paidFinals
+              : (TORNEO_TIER[selectedTorneo] ?? (() => true))(user);
+          const quotaLabel = getQuotaLabel(selectedTorneo, user);
 
           return (
             <div
@@ -218,7 +274,17 @@ export default function LeaderboardByPhase({
               {/* Row */}
               <button
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-muted/30 transition-colors"
-                onClick={() => setExpandedUser(isExpanded ? null : user.id)}
+                onClick={() => {
+                  setExpandedUsers((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(user.id)) {
+                      next.delete(user.id);
+                    } else {
+                      next.add(user.id);
+                    }
+                    return next;
+                  });
+                }}
               >
                 {/* Position */}
                 <span className="w-7 text-center text-sm font-bold flex-shrink-0">
@@ -258,6 +324,17 @@ export default function LeaderboardByPhase({
                         Tú
                       </Badge>
                     )}
+                    <Badge
+                      variant={paidForCurrentTorneo ? "default" : "secondary"}
+                      className={cn(
+                        "text-[9px] h-4 px-1.5 py-0",
+                        paidForCurrentTorneo
+                          ? "bg-emerald-600/15 text-emerald-700"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {quotaLabel}
+                    </Badge>
                   </div>
                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
                     <span className="text-green-600 font-medium">
@@ -353,17 +430,25 @@ export default function LeaderboardByPhase({
                             <div className="space-y-1 max-h-64 overflow-y-auto">
                               {grouped[ph]
                                 .sort((a, b) => {
-                                  const na = parseInt(
-                                    a.matchId.replace("match_", ""),
-                                    10,
+                                  const na = getPredictionOrder(
+                                    a.matchId,
+                                    matchMap,
                                   );
-                                  const nb = parseInt(
-                                    b.matchId.replace("match_", ""),
-                                    10,
+                                  const nb = getPredictionOrder(
+                                    b.matchId,
+                                    matchMap,
                                   );
-                                  return na - nb;
+
+                                  if (na !== nb) {
+                                    return na - nb;
+                                  }
+
+                                  return a.matchId.localeCompare(b.matchId);
                                 })
                                 .map((pred) => {
+                                  const isRevealed =
+                                    pred.homeScore !== null &&
+                                    pred.awayScore !== null;
                                   const numId = pred.matchId.replace(
                                     "match_",
                                     "",
@@ -379,19 +464,27 @@ export default function LeaderboardByPhase({
                                       key={pred.matchId}
                                       className={cn(
                                         "flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs border",
-                                        pred.points === 5 &&
+                                        !isRevealed &&
+                                          "border-amber-300/40 bg-amber-500/5",
+                                        isRevealed &&
+                                          pred.points === 5 &&
                                           "border-green-500/30 bg-green-500/5",
-                                        pred.points === 3 &&
+                                        isRevealed &&
+                                          pred.points === 3 &&
                                           "border-blue-500/30 bg-blue-500/5",
-                                        isFinished &&
+                                        isRevealed &&
+                                          isFinished &&
                                           pred.points === 0 &&
                                           "border-red-300/30 bg-red-500/5",
-                                        isPending &&
+                                        isRevealed &&
+                                          isPending &&
                                           "border-border bg-background opacity-70",
                                       )}
                                     >
                                       {/* Result icon */}
-                                      {pred.points === 5 ? (
+                                      {!isRevealed ? (
+                                        <Lock className="h-3.5 w-3.5 text-amber-600 flex-shrink-0" />
+                                      ) : pred.points === 5 ? (
                                         <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
                                       ) : pred.points === 3 ? (
                                         <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
@@ -405,7 +498,11 @@ export default function LeaderboardByPhase({
 
                                       {/* Teams */}
                                       <span className="flex-1 truncate text-muted-foreground">
-                                        {match ? (
+                                        {!isRevealed ? (
+                                          <span className="italic text-amber-700">
+                                            Oculto hasta que inicie el partido
+                                          </span>
+                                        ) : match ? (
                                           <>
                                             {translateCountry(match.home)}{" "}
                                             <span className="text-foreground font-mono font-semibold">
@@ -424,19 +521,29 @@ export default function LeaderboardByPhase({
                                       <span
                                         className={cn(
                                           "font-bold flex-shrink-0",
-                                          pred.points === 5 && "text-green-600",
-                                          pred.points === 3 && "text-blue-600",
-                                          isFinished &&
+                                          !isRevealed && "text-amber-700",
+                                          isRevealed &&
+                                            pred.points === 5 &&
+                                            "text-green-600",
+                                          isRevealed &&
+                                            pred.points === 3 &&
+                                            "text-blue-600",
+                                          isRevealed &&
+                                            isFinished &&
                                             pred.points === 0 &&
                                             "text-red-400",
-                                          isPending && "text-muted-foreground",
+                                          isRevealed &&
+                                            isPending &&
+                                            "text-muted-foreground",
                                         )}
                                       >
-                                        {pred.points > 0
-                                          ? `+${pred.points}`
-                                          : isPending
-                                            ? "—"
-                                            : "0"}
+                                        {!isRevealed
+                                          ? "🔒"
+                                          : pred.points > 0
+                                            ? `+${pred.points}`
+                                            : isPending
+                                              ? "—"
+                                              : "0"}
                                       </span>
                                     </div>
                                   );

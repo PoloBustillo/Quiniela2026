@@ -15,11 +15,16 @@ async function recalculateAllPoints() {
       homeScore: { not: null },
       awayScore: { not: null },
     },
+    orderBy: { matchDate: "asc" },
   });
 
-  for (const match of knockoutMatches) {
+  for (const [idx, match] of knockoutMatches.entries()) {
+    const stableMatchId = `match_${match.id}`;
+    const legacyMatchId = `match_${1000 + idx}`;
     const predictions = await prisma.prediction.findMany({
-      where: { matchId: match.id },
+      where: {
+        OR: [{ matchId: stableMatchId }, { matchId: legacyMatchId }],
+      },
       include: { user: { select: { name: true } } },
     });
 

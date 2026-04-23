@@ -14,14 +14,14 @@ import {
 } from "@/lib/translations";
 
 interface Team {
-  id: number;
+  id: number | string;
   name: string;
   code: string;
   flag: string;
 }
 
 interface Match {
-  id: number;
+  id: string;
   matchNumber: number;
   homeTeam: Team;
   awayTeam: Team;
@@ -159,7 +159,13 @@ export default function PredictionCard({
   };
 
   // ── Shared score stepper ────────────────────────────────────────────────────
-  const ScoreControl = ({ team, value }: { team: "home" | "away"; value: number }) => (
+  const ScoreControl = ({
+    team,
+    value,
+  }: {
+    team: "home" | "away";
+    value: number;
+  }) => (
     <div className="flex items-center">
       <button
         type="button"
@@ -222,7 +228,7 @@ export default function PredictionCard({
         className={cn(
           "overflow-hidden transition-all",
           !isPast && saved && "border-green-500/50 bg-green-500/5",
-          isPast && "opacity-70"
+          isPast && "opacity-70",
         )}
       >
         <CardContent className="px-3 py-3">
@@ -233,8 +239,13 @@ export default function PredictionCard({
                 {translateCountry(match.homeTeam.name)}
               </p>
               <div className="w-8 h-6 sm:w-9 sm:h-7 flex-shrink-0 relative">
-                <Image src={match.homeTeam.flag} alt={match.homeTeam.name} fill
-                  className="object-contain" unoptimized />
+                <Image
+                  src={match.homeTeam.flag}
+                  alt={match.homeTeam.name}
+                  fill
+                  className="object-contain"
+                  unoptimized
+                />
               </div>
             </div>
 
@@ -245,8 +256,13 @@ export default function PredictionCard({
             {/* Away team */}
             <div className="flex items-center gap-1.5 min-w-0">
               <div className="w-8 h-6 sm:w-9 sm:h-7 flex-shrink-0 relative">
-                <Image src={match.awayTeam.flag} alt={match.awayTeam.name} fill
-                  className="object-contain" unoptimized />
+                <Image
+                  src={match.awayTeam.flag}
+                  alt={match.awayTeam.name}
+                  fill
+                  className="object-contain"
+                  unoptimized
+                />
               </div>
               <p className="text-xs sm:text-sm font-medium truncate leading-tight">
                 {translateCountry(match.awayTeam.name)}
@@ -264,36 +280,51 @@ export default function PredictionCard({
                   ? "bg-muted text-muted-foreground cursor-not-allowed border-transparent"
                   : saved
                     ? "bg-green-500/10 text-green-600 border-green-500/40"
-                    : "bg-primary text-primary-foreground border-transparent active:opacity-80"
+                    : "bg-primary text-primary-foreground border-transparent active:opacity-80",
               )}
             >
               {isSaving ? (
                 <span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin block" />
-              ) : isPast ? "🔒" : saved ? "✓" : "↑"}
+              ) : isPast ? (
+                "🔒"
+              ) : saved ? (
+                "✓"
+              ) : (
+                "↑"
+              )}
             </button>
           </div>
 
           <div className="mt-2.5 flex items-center justify-center gap-2">
             <CompactScoreInput team="home" value={homeScore} />
-            <span className="text-muted-foreground font-bold text-sm w-3 text-center select-none">–</span>
+            <span className="text-muted-foreground font-bold text-sm w-3 text-center select-none">
+              –
+            </span>
             <CompactScoreInput team="away" value={awayScore} />
           </div>
 
           {/* Meta row */}
           <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground gap-2">
             <span className="truncate">
-              {match.group ? `Grupo ${match.group}` : match.stage} · {translateCity(match.city)}
+              {match.group ? `Grupo ${match.group}` : match.stage} ·{" "}
+              {translateCity(match.city)}
             </span>
             <span className="flex-shrink-0">
               {matchDate.toLocaleDateString("es-MX", {
-                month: "short", day: "numeric", timeZone: "America/Mexico_City",
+                month: "short",
+                day: "numeric",
+                timeZone: "America/Mexico_City",
               })}{" "}
               {matchDate.toLocaleTimeString("es-MX", {
-                hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City",
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "America/Mexico_City",
               })}
             </span>
           </div>
-          {error && <p className="mt-1 text-[11px] text-destructive">{error}</p>}
+          {error && (
+            <p className="mt-1 text-[11px] text-destructive">{error}</p>
+          )}
         </CardContent>
       </Card>
     );
@@ -304,7 +335,7 @@ export default function PredictionCard({
     <Card
       className={cn(
         "overflow-hidden hover:shadow-lg transition-all",
-        saved && "border-green-500/50 bg-green-500/5"
+        saved && "border-green-500/50 bg-green-500/5",
       )}
     >
       <CardContent className="p-4 md:p-6">
@@ -314,8 +345,12 @@ export default function PredictionCard({
           </p>
           <p className="text-xs font-medium mt-0.5">
             {matchDate.toLocaleDateString("es-MX", {
-              weekday: "short", month: "short", day: "numeric",
-              hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City",
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZone: "America/Mexico_City",
             })}
           </p>
         </div>
@@ -324,21 +359,37 @@ export default function PredictionCard({
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <div className="relative w-10 h-10 flex-shrink-0">
-                <Image src={match.homeTeam.flag} alt={match.homeTeam.name} fill
-                  className="object-cover rounded-md" unoptimized />
+                <Image
+                  src={match.homeTeam.flag}
+                  alt={match.homeTeam.name}
+                  fill
+                  className="object-cover rounded-md"
+                  unoptimized
+                />
               </div>
-              <p className="text-sm font-medium truncate">{translateCountry(match.homeTeam.name)}</p>
+              <p className="text-sm font-medium truncate">
+                {translateCountry(match.homeTeam.name)}
+              </p>
             </div>
             <ScoreControl team="home" value={homeScore} />
           </div>
-          <div className="text-center text-xs text-muted-foreground font-medium">VS</div>
+          <div className="text-center text-xs text-muted-foreground font-medium">
+            VS
+          </div>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <div className="relative w-10 h-10 flex-shrink-0">
-                <Image src={match.awayTeam.flag} alt={match.awayTeam.name} fill
-                  className="object-cover rounded-md" unoptimized />
+                <Image
+                  src={match.awayTeam.flag}
+                  alt={match.awayTeam.name}
+                  fill
+                  className="object-cover rounded-md"
+                  unoptimized
+                />
               </div>
-              <p className="text-sm font-medium truncate">{translateCountry(match.awayTeam.name)}</p>
+              <p className="text-sm font-medium truncate">
+                {translateCountry(match.awayTeam.name)}
+              </p>
             </div>
             <ScoreControl team="away" value={awayScore} />
           </div>
@@ -364,10 +415,16 @@ export default function PredictionCard({
               ? "bg-muted text-muted-foreground cursor-not-allowed border-transparent"
               : saved
                 ? "bg-green-500/10 text-green-700 border-green-500/40"
-                : "bg-primary text-primary-foreground border-transparent"
+                : "bg-primary text-primary-foreground border-transparent",
           )}
         >
-          {isSaving ? "Guardando..." : isPast ? "🔒 Cerrado" : saved ? "✓ Guardado" : "Guardar Prediccion"}
+          {isSaving
+            ? "Guardando..."
+            : isPast
+              ? "🔒 Cerrado"
+              : saved
+                ? "✓ Guardado"
+                : "Guardar Prediccion"}
         </button>
       </CardContent>
     </Card>

@@ -3,6 +3,7 @@
 ## 2026-04-22
 
 ### Fixed
+
 - Mobile compact prediction card layout in [components/PredictionCard.tsx](components/PredictionCard.tsx):
 - Increased vertical space to avoid flag overlap.
 - Reorganized content into a taller two-row structure.
@@ -18,3 +19,46 @@
 - Knockout mapping bugs:
 - [app/api/predictions/route.ts](app/api/predictions/route.ts) now resolves knockout synthetic IDs by ordered index and rejects invalid IDs.
 - [app/leaderboard/page.tsx](app/leaderboard/page.tsx) now computes finished knockout IDs with synthetic IDs and includes knockout matches in `matchMap`.
+
+### Changed
+
+- Quota visibility for all users in leaderboard/compare data sources:
+- [app/leaderboard/page.tsx](app/leaderboard/page.tsx) now loads all users (not only paid), preserving payment flags for UI status.
+- [app/leaderboard/compare/page.tsx](app/leaderboard/compare/page.tsx) now loads all users.
+
+- Multi-user expand in leaderboard:
+- [components/LeaderboardByPhase.tsx](components/LeaderboardByPhase.tsx) now allows expanding several users simultaneously.
+
+- Payment status badges:
+- [components/LeaderboardByPhase.tsx](components/LeaderboardByPhase.tsx) now shows cuota status per user according to selected torneo.
+
+### Security
+
+- Prediction privacy hardening (server-side sanitization):
+- [app/leaderboard/page.tsx](app/leaderboard/page.tsx) and [app/leaderboard/compare/page.tsx](app/leaderboard/compare/page.tsx) now hide other users' scores until match start before sending data to client.
+- [components/LeaderboardByPhase.tsx](components/LeaderboardByPhase.tsx) and [app/leaderboard/compare/CompareClient.tsx](app/leaderboard/compare/CompareClient.tsx) now render locked state for unrevealed scores.
+
+- Stable knockout prediction IDs:
+- [app/page.tsx](app/page.tsx) now uses `match_<real_knockout_cuid>` for knockout cards instead of synthetic `match_1000+` IDs.
+- [app/api/predictions/route.ts](app/api/predictions/route.ts) now accepts stable IDs, resolves knockout matches by real DB ID, and rewrites legacy synthetic IDs to stable format on save.
+- [app/leaderboard/page.tsx](app/leaderboard/page.tsx) and [app/leaderboard/compare/page.tsx](app/leaderboard/compare/page.tsx) now normalize legacy synthetic knockout prediction IDs to stable IDs.
+
+- Phase visibility and naming consistency:
+- [components/LeaderboardByPhase.tsx](components/LeaderboardByPhase.tsx) now labels `ROUND_OF_16` as `16vos` and keeps Torneo 2 as `32vos + 16vos`.
+- [components/ClientHomePage.tsx](components/ClientHomePage.tsx) now labels `ROUND_OF_16` as `16vos` in phase view.
+- [app/leaderboard/compare/CompareClient.tsx](app/leaderboard/compare/CompareClient.tsx) now includes `THIRD_PLACE` in phase filters and labels `ROUND_OF_16` as `16vos`.
+
+- Mixed ID sorting bug in expanded leaderboard predictions:
+- [components/LeaderboardByPhase.tsx](components/LeaderboardByPhase.tsx) now uses match order metadata instead of `parseInt` to sort predictions, avoiding broken ordering with knockout cuid IDs.
+
+- Terminology correction (`16vos` != `octavos`) in user-facing filters/labels:
+- [components/LeaderboardByPhase.tsx](components/LeaderboardByPhase.tsx), [components/ClientHomePage.tsx](components/ClientHomePage.tsx), and [app/leaderboard/compare/CompareClient.tsx](app/leaderboard/compare/CompareClient.tsx) now label `ROUND_OF_16` as `16vos`.
+
+- Admin torneo phase segmentation mismatch:
+- [components/admin/AllMatchesManager.tsx](components/admin/AllMatchesManager.tsx) now includes `ROUND_OF_16` in Torneo 2 and starts Finales from `QUARTER_FINAL`.
+
+- Knockout points recomputation bug after ID migration:
+- [app/api/admin/matches/route.ts](app/api/admin/matches/route.ts) now recalculates predictions using stable `match_<cuid>` IDs with legacy fallback, instead of legacy-only synthetic index IDs.
+
+- Scoring utility scripts alignment with stable IDs:
+- [scripts/recalculate-all-points.ts](scripts/recalculate-all-points.ts) and [scripts/test-scoring-system.ts](scripts/test-scoring-system.ts) now query knockout predictions using stable IDs and legacy fallback.

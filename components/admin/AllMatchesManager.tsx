@@ -76,6 +76,7 @@ const PHASES = [
   { value: "GROUP_STAGE", label: "Fase de Grupos" },
   { value: "ROUND_OF_32", label: "32avos de Final" },
   { value: "ROUND_OF_16", label: "16avos de Final" },
+  { value: "ROUND_OF_8", label: "8avos de Final" },
   { value: "QUARTER_FINAL", label: "Cuartos de Final" },
   { value: "SEMI_FINAL", label: "Semifinales" },
   { value: "THIRD_PLACE", label: "Tercer Lugar" },
@@ -94,10 +95,12 @@ const CITIES = Array.from(
   new Set(stadiumsData.stadiums.map((s) => s.city)),
 ).sort();
 
-const EARLY_KO_PHASES = PHASES.filter((p) => ["ROUND_OF_32"].includes(p.value));
+const EARLY_KO_PHASES = PHASES.filter((p) =>
+  ["ROUND_OF_32", "ROUND_OF_16"].includes(p.value),
+);
 const FINALS_PHASES = PHASES.filter((p) =>
   [
-    "ROUND_OF_16",
+    "ROUND_OF_8",
     "QUARTER_FINAL",
     "SEMI_FINAL",
     "THIRD_PLACE",
@@ -207,6 +210,7 @@ export function AllMatchesManager() {
       if (data.length > 0) {
         console.log("📋 Ejemplo de partido knockout:", data[0]);
       }
+      console.log(data);
       setMatches(data);
     } catch (error) {
       console.error("Error loading matches:", error);
@@ -533,12 +537,12 @@ export function AllMatchesManager() {
           const tab = v as "group" | "early_ko" | "finals" | "rules" | "users";
           setSelectedTab(tab);
           if (tab === "early_ko") setSelectedPhase("ROUND_OF_32");
-          if (tab === "finals") setSelectedPhase("ROUND_OF_16");
+          if (tab === "finals") setSelectedPhase("QUARTER_FINAL");
         }}
       >
         <TabsList className="grid w-full max-w-3xl grid-cols-5">
           <TabsTrigger value="group">1. Grupos</TabsTrigger>
-          <TabsTrigger value="early_ko">2. 32avos</TabsTrigger>
+          <TabsTrigger value="early_ko">2. 32avos + 16vos</TabsTrigger>
           <TabsTrigger value="finals">3. Finales</TabsTrigger>
           <TabsTrigger value="rules">Reglas</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>

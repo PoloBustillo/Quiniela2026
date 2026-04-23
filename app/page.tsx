@@ -5,6 +5,26 @@ import { prisma } from "@/lib/prisma";
 import matchesData from "@/data/matches.json";
 import ClientHomePage from "@/components/ClientHomePage";
 
+const normalizePredictionMatchId = (
+  matchId: string,
+  knockoutMatches: { id: string }[],
+) => {
+  if (!matchId.startsWith("match_")) return matchId;
+  const rawId = matchId.replace("match_", "");
+  if (!/^\d+$/.test(rawId)) return matchId;
+
+  const numericId = Number(rawId);
+  if (numericId >= 1000) {
+    const knockoutIndex = numericId - 1000;
+    const knockoutMatch = knockoutMatches[knockoutIndex];
+    if (knockoutMatch) {
+      return `match_${knockoutMatch.id}`;
+    }
+  }
+
+  return matchId;
+};
+
 export default async function HomePage() {
   const session = await getServerSession(authOptions);
 
@@ -102,16 +122,16 @@ export default async function HomePage() {
 
   // Transform knockout matches to match the expected format
   const formattedKnockoutMatches = knockoutMatches.map((match, index) => ({
-    id: 1000 + index, // Use IDs starting from 1000 to avoid conflicts with group stage
+    id: `match_${match.id}`,
     matchNumber: 1000 + index,
     homeTeam: {
-      id: 1000 + index, // Simple numeric ID for frontend
+      id: match.homeTeam.id,
       name: match.homeTeam.name,
       code: match.homeTeam.code,
       flag: match.homeTeam.flag || "/flags/tbd.png",
     },
     awayTeam: {
-      id: 1000 + index, // Simple numeric ID for frontend
+      id: match.awayTeam.id,
       name: match.awayTeam.name,
       code: match.awayTeam.code,
       flag: match.awayTeam.flag || "/flags/tbd.png",
@@ -126,26 +146,27 @@ export default async function HomePage() {
   }));
 
   // Combine group stage matches (with DB data) with knockout matches from DB
-  const allMatches = [...groupMatches, ...formattedKnockoutMatches];
+  const formattedGroupMatches = groupMatches.map((match: any) => ({
+    ...match,
+    id: `match_${match.id}`,
+  }));
+
+  const allMatches = [...formattedGroupMatches, ...formattedKnockoutMatches];
 
   // Create a map of predictions by matchId for easy lookup
   const predictionMap = predictions.reduce(
     (acc, pred) => {
-      // Extract the numeric match ID from the stored string (e.g., "match_1" -> 1)
-      // Handle both "match_X" format (group stage) and numeric IDs (knockout)
-      let matchId: number;
-      if (pred.matchId.startsWith("match_")) {
-        matchId = parseInt(pred.matchId.replace("match_", ""));
-      } else {
-        matchId = parseInt(pred.matchId);
-      }
-      acc[matchId] = {
+      const normalizedId = normalizePredictionMatchId(
+        pred.matchId,
+        knockoutMatches,
+      );
+      acc[normalizedId] = {
         homeScore: pred.homeScore,
         awayScore: pred.awayScore,
       };
       return acc;
     },
-    {} as Record<number, { homeScore: number; awayScore: number }>,
+    {} as Record<string, { homeScore: number; awayScore: number }>,
   );
 
   return <ClientHomePage matches={allMatches} predictionMap={predictionMap} />;

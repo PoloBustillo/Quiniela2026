@@ -6,10 +6,10 @@ import { Calendar, Trophy, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Match {
-  id: number;
+  id: string;
   matchNumber: number;
-  homeTeam: { id: number; name: string; code: string; flag: string };
-  awayTeam: { id: number; name: string; code: string; flag: string };
+  homeTeam: { id: number | string; name: string; code: string; flag: string };
+  awayTeam: { id: number | string; name: string; code: string; flag: string };
   date: string;
   stadium: string;
   city: string;
@@ -20,7 +20,7 @@ interface Match {
 }
 
 interface PredictionMap {
-  [key: number]: { homeScore: number; awayScore: number };
+  [key: string]: { homeScore: number; awayScore: number };
 }
 
 interface ClientHomePageProps {
@@ -32,16 +32,18 @@ const PHASE_ORDER: Record<string, number> = {
   GROUP_STAGE: 0,
   ROUND_OF_32: 1,
   ROUND_OF_16: 2,
-  QUARTER_FINAL: 3,
-  SEMI_FINAL: 4,
-  THIRD_PLACE: 5,
-  FINAL: 6,
+  ROUND_OF_8: 3,
+  QUARTER_FINAL: 4,
+  SEMI_FINAL: 5,
+  THIRD_PLACE: 6,
+  FINAL: 7,
 };
 
 const PHASE_LABELS: Record<string, string> = {
   GROUP_STAGE: "Grupos",
   ROUND_OF_32: "32avos",
-  ROUND_OF_16: "16avos",
+  ROUND_OF_16: "16vos",
+  ROUND_OF_8: "8vos",
   QUARTER_FINAL: "Cuartos",
   SEMI_FINAL: "Semis",
   THIRD_PLACE: "3er Lugar",
@@ -54,33 +56,42 @@ const getGroupKey = (match: Match): string => {
   return "Otros";
 };
 
-export default function ClientHomePage({ matches, predictionMap }: ClientHomePageProps) {
+export default function ClientHomePage({
+  matches,
+  predictionMap,
+}: ClientHomePageProps) {
   const [viewMode, setViewMode] = useState<"date" | "group">("date");
   const [selectedGroup, setSelectedGroup] = useState<string>("all");
   const [groupSectionOpen, setGroupSectionOpen] = useState(true);
   const [knockoutSectionOpen, setKnockoutSectionOpen] = useState(true);
 
   const matchesByDate = useMemo(() => {
-    return matches.reduce((acc, match) => {
-      const date = new Date(match.date).toLocaleDateString("es-MX", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-      if (!acc[date]) acc[date] = [];
-      acc[date].push(match);
-      return acc;
-    }, {} as Record<string, Match[]>);
+    return matches.reduce(
+      (acc, match) => {
+        const date = new Date(match.date).toLocaleDateString("es-MX", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        if (!acc[date]) acc[date] = [];
+        acc[date].push(match);
+        return acc;
+      },
+      {} as Record<string, Match[]>,
+    );
   }, [matches]);
 
   const matchesByGroup = useMemo(() => {
-    return matches.reduce((acc, match) => {
-      const group = getGroupKey(match);
-      if (!acc[group]) acc[group] = [];
-      acc[group].push(match);
-      return acc;
-    }, {} as Record<string, Match[]>);
+    return matches.reduce(
+      (acc, match) => {
+        const group = getGroupKey(match);
+        if (!acc[group]) acc[group] = [];
+        acc[group].push(match);
+        return acc;
+      },
+      {} as Record<string, Match[]>,
+    );
   }, [matches]);
 
   const groups = useMemo(() => {
@@ -108,7 +119,9 @@ export default function ClientHomePage({ matches, predictionMap }: ClientHomePag
       {/* Header */}
       <div className="mb-3">
         <h1 className="text-xl font-bold">Mis Predicciones</h1>
-        <p className="text-xs text-muted-foreground">Mundial 2026 · {matches.length} partidos</p>
+        <p className="text-xs text-muted-foreground">
+          Mundial 2026 · {matches.length} partidos
+        </p>
       </div>
 
       {/* View toggle */}
@@ -119,7 +132,7 @@ export default function ClientHomePage({ matches, predictionMap }: ClientHomePag
             "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-sm font-medium transition-colors",
             viewMode === "date"
               ? "bg-background shadow text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+              : "text-muted-foreground hover:text-foreground",
           )}
         >
           <Calendar className="h-3.5 w-3.5" />
@@ -131,7 +144,7 @@ export default function ClientHomePage({ matches, predictionMap }: ClientHomePag
             "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-sm font-medium transition-colors",
             viewMode === "group"
               ? "bg-background shadow text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+              : "text-muted-foreground hover:text-foreground",
           )}
         >
           <Trophy className="h-3.5 w-3.5" />
@@ -149,7 +162,7 @@ export default function ClientHomePage({ matches, predictionMap }: ClientHomePag
               "w-full text-left px-3 py-2 rounded-lg text-sm font-medium border transition-colors",
               selectedGroup === "all"
                 ? "bg-primary text-primary-foreground border-primary"
-                : "border-border text-muted-foreground hover:text-foreground bg-muted/30"
+                : "border-border text-muted-foreground hover:text-foreground bg-muted/30",
             )}
           >
             Todos los partidos
@@ -163,7 +176,12 @@ export default function ClientHomePage({ matches, predictionMap }: ClientHomePag
                 className="w-full flex items-center justify-between px-3 py-2 bg-muted/40 text-sm font-semibold hover:bg-muted/60 transition-colors"
               >
                 <span>Fase de Grupos</span>
-                <ChevronDown className={cn("h-4 w-4 transition-transform", groupSectionOpen && "rotate-180")} />
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    groupSectionOpen && "rotate-180",
+                  )}
+                />
               </button>
               {groupSectionOpen && (
                 <div className="grid grid-cols-4 gap-px bg-border p-px">
@@ -175,7 +193,7 @@ export default function ClientHomePage({ matches, predictionMap }: ClientHomePag
                         "py-2 text-xs font-medium transition-colors",
                         selectedGroup === g
                           ? "bg-primary text-primary-foreground"
-                          : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50",
                       )}
                     >
                       {g.replace("Grupo ", "G")}
@@ -194,7 +212,12 @@ export default function ClientHomePage({ matches, predictionMap }: ClientHomePag
                 className="w-full flex items-center justify-between px-3 py-2 bg-muted/40 text-sm font-semibold hover:bg-muted/60 transition-colors"
               >
                 <span>Eliminatorias</span>
-                <ChevronDown className={cn("h-4 w-4 transition-transform", knockoutSectionOpen && "rotate-180")} />
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    knockoutSectionOpen && "rotate-180",
+                  )}
+                />
               </button>
               {knockoutSectionOpen && (
                 <div className="flex flex-wrap gap-px bg-border p-px">
@@ -206,7 +229,7 @@ export default function ClientHomePage({ matches, predictionMap }: ClientHomePag
                         "flex-1 min-w-[80px] py-2 text-xs font-medium transition-colors whitespace-nowrap",
                         selectedGroup === g
                           ? "bg-primary text-primary-foreground"
-                          : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50",
                       )}
                     >
                       {getGroupLabel(g)}
@@ -224,14 +247,17 @@ export default function ClientHomePage({ matches, predictionMap }: ClientHomePag
         {Object.entries(filteredMatches).map(([key, groupMatches]) => (
           <div key={key}>
             <div className="flex items-center gap-2 mb-2 sticky top-12 md:top-14 z-10 bg-background/95 backdrop-blur py-1">
-              {viewMode === "date"
-                ? <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                : <Trophy className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-              }
+              {viewMode === "date" ? (
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+              ) : (
+                <Trophy className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+              )}
               <h2 className="text-sm font-semibold capitalize truncate">
                 {viewMode === "date" ? key : getGroupLabel(key)}
               </h2>
-              <span className="ml-auto text-xs text-muted-foreground flex-shrink-0">{groupMatches.length}p</span>
+              <span className="ml-auto text-xs text-muted-foreground flex-shrink-0">
+                {groupMatches.length}p
+              </span>
             </div>
             <div className="space-y-1.5">
               {groupMatches.map((match) => (

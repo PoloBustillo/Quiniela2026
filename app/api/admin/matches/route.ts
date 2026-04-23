@@ -19,6 +19,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const phase = searchParams.get("phase");
+    console.log(phase);
 
     const matches = await prisma.match.findMany({
       where: phase ? { phase: phase as any } : {},
@@ -141,18 +142,22 @@ export async function PUT(request: Request) {
 
     // Si se actualizaron los marcadores, calcular puntos para todas las predicciones
     if (homeScore !== undefined && awayScore !== undefined) {
-      // Obtener todas las predicciones para este partido
-      // El matchId en predictions está en formato "match_1000", "match_1001", etc.
-      // donde los IDs > 1000 son partidos de knockout en la BD
-      // Necesitamos obtener el índice del partido para construir el matchId correcto
+      // Buscar predicciones con ID estable y fallback legacy para compatibilidad.
       const allMatches = await prisma.match.findMany({
         orderBy: { matchDate: "asc" },
       });
       const matchIndex = allMatches.findIndex((m) => m.id === id);
-      const predictionMatchId = `match_${1000 + matchIndex}`;
+      const stableMatchId = `match_${id}`;
+      const legacyMatchId =
+        matchIndex >= 0 ? `match_${1000 + matchIndex}` : null;
 
       const predictions = await prisma.prediction.findMany({
-        where: { matchId: predictionMatchId },
+        where: {
+          OR: [
+            { matchId: stableMatchId },
+            ...(legacyMatchId ? [{ matchId: legacyMatchId }] : []),
+          ],
+        },
       });
 
       // Actualizar puntos para cada predicción

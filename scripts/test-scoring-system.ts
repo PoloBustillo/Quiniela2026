@@ -29,7 +29,9 @@ async function testScoringSystem() {
       homeTeam: true,
       awayTeam: true,
     },
-    take: 5,
+    orderBy: {
+      matchDate: "asc",
+    },
   });
 
   const groupMatchScores = await prisma.groupMatchScore.findMany({
@@ -52,7 +54,7 @@ async function testScoringSystem() {
     );
   } else {
     // 3. Calcular puntos para cada partido de DB
-    for (const match of dbMatches) {
+    for (const [idx, match] of dbMatches.entries()) {
       console.log(
         `\n📊 Partido: ${match.homeTeam.name} ${match.homeScore} - ${match.awayScore} ${match.awayTeam.name}`,
       );
@@ -63,7 +65,12 @@ async function testScoringSystem() {
 
       // Buscar predicciones para este partido
       const predictions = await prisma.prediction.findMany({
-        where: { matchId: match.id },
+        where: {
+          OR: [
+            { matchId: `match_${match.id}` },
+            { matchId: `match_${1000 + idx}` },
+          ],
+        },
         include: { user: true },
       });
 
@@ -94,7 +101,7 @@ async function testScoringSystem() {
       );
 
       const predictions = await prisma.prediction.findMany({
-        where: { matchId: String(score.matchId) },
+        where: { matchId: `match_${score.matchId}` },
         include: { user: true },
       });
 

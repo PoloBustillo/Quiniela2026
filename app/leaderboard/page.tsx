@@ -8,20 +8,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import LeaderboardByPhase from "@/components/LeaderboardByPhase";
 import matchesData from "@/data/matches.json";
+import { parseMatchDate } from "@/lib/points";
+
+const normalizePredictionMatchId = (
+  matchId: string,
+  knockoutMatches: { id: string }[],
+) => {
+  if (!matchId.startsWith("match_")) return matchId;
+  const rawId = matchId.replace("match_", "");
+  if (!/^\d+$/.test(rawId)) return matchId;
+
+  const numericId = Number(rawId);
+  if (numericId >= 1000) {
+    const knockoutIndex = numericId - 1000;
+    const knockoutMatch = knockoutMatches[knockoutIndex];
+    if (knockoutMatch) {
+      return `match_${knockoutMatch.id}`;
+    }
+  }
+
+  return matchId;
+};
 
 export default async function LeaderboardPage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/auth/signin");
 
   const users = await prisma.user.findMany({
-    where: {
-      OR: [
-        { hasPaid: true },
-        { paidGroupStage: true },
-        { paidKnockout: true },
-        { paidFinals: true },
-      ],
-    },
     include: {
       predictions: {
         select: {
@@ -33,6 +46,7 @@ export default async function LeaderboardPage() {
         },
       },
     },
+    orderBy: { name: "asc" },
   });
 
   const totalUsers = await prisma.user.count();
@@ -47,6 +61,7 @@ export default async function LeaderboardPage() {
     },
   });
   const totalPredictions = await prisma.prediction.count();
+  const now = new Date();
 
   const knockoutMatches = await prisma.match.findMany({
     where: {
@@ -70,17 +85,49 @@ export default async function LeaderboardPage() {
   });
   const finishedMatchIds = finishedGroupScores.map((s) => `match_${s.matchId}`);
 
-  // Knockout predictions are stored as synthetic IDs: match_1000, match_1001...
-  // Build the finished list using the same ordering/indexing used in the app.
+  const groupDateOverrides = await prisma.groupMatchScore.findMany({
+    select: { matchId: true, matchDate: true },
+  });
+  const groupDateOverrideMap = new Map(
+    groupDateOverrides.map((m) => [m.matchId, m.matchDate]),
+  );
+
+  const startedGroupIds = matchesData.matches
+    .filter((m) => {
+      const overrideDate = groupDateOverrideMap.get(m.id);
+      const matchDate = overrideDate || parseMatchDate(m.date);
+      return matchDate <= now;
+    })
+    .map((m) => `match_${m.id}`);
+
   const finishedKnockoutIds = knockoutMatches
-    .map((match, index) => ({ match, syntheticId: `match_${1000 + index}` }))
+    .filter((match) => match.status === "FINISHED")
+    .map((match) => `match_${match.id}`);
+
+  const legacyFinishedKnockoutIds = knockoutMatches
+    .map((match, index) => ({ match, legacyId: `match_${1000 + index}` }))
     .filter(({ match }) => match.status === "FINISHED")
-    .map(({ syntheticId }) => syntheticId);
+    .map(({ legacyId }) => legacyId);
 
   const finishedMatchIdSet = [
     ...finishedMatchIds,
     ...finishedKnockoutIds,
+    ...legacyFinishedKnockoutIds,
   ];
+  const startedKnockoutIds = knockoutMatches
+    .filter((match) => match.matchDate <= now)
+    .map((match) => `match_${match.id}`);
+
+  const legacyStartedKnockoutIds = knockoutMatches
+    .map((match, index) => ({ match, legacyId: `match_${1000 + index}` }))
+    .filter(({ match }) => match.matchDate <= now)
+    .map(({ legacyId }) => legacyId);
+
+  const startedMatchIdSet = new Set([
+    ...startedGroupIds,
+    ...startedKnockoutIds,
+    ...legacyStartedKnockoutIds,
+  ]);
 
   const usersWithPoints = users.map((user) => ({
     id: user.id,
@@ -92,7 +139,30 @@ export default async function LeaderboardPage() {
     paidGroupStage: user.paidGroupStage,
     paidKnockout: user.paidKnockout,
     paidFinals: user.paidFinals,
-    predictions: user.predictions,
+    predictions: user.predictions.map((pred) => {
+      const normalizedMatchId = normalizePredictionMatchId(
+        pred.matchId,
+        knockoutMatches,
+      );
+      const canSeeScores =
+        user.id === session.user?.id ||
+        startedMatchIdSet.has(normalizedMatchId);
+
+      const normalizedPred = {
+        ...pred,
+        matchId: normalizedMatchId,
+      };
+
+      if (canSeeScores) {
+        return normalizedPred;
+      }
+
+      return {
+        ...normalizedPred,
+        homeScore: null,
+        awayScore: null,
+      };
+    }),
   }));
 
   // Build a lightweight match map: matchId (string) -> { home, away }
@@ -105,6 +175,7 @@ export default async function LeaderboardPage() {
       awayFlag: string;
       group?: string;
       phase?: string;
+      order?: number;
     }
   > = {};
   for (const m of matchesData.matches) {
@@ -115,16 +186,18 @@ export default async function LeaderboardPage() {
       awayFlag: m.awayTeam.flag,
       group: m.group,
       phase: (m as { phase?: string }).phase,
+      order: m.id,
     };
   }
 
   knockoutMatches.forEach((m, index) => {
-    matchMap[String(1000 + index)] = {
+    matchMap[m.id] = {
       home: m.homeTeam.name,
       away: m.awayTeam.name,
       homeFlag: m.homeTeam.flag || "/flags/tbd.png",
       awayFlag: m.awayTeam.flag || "/flags/tbd.png",
       phase: m.phase,
+      order: 1000 + index,
     };
   });
 

@@ -15,14 +15,22 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const { matchId, homeScore, awayScore } = body;
+    let normalizedMatchId =
+      typeof matchId === "number"
+        ? `match_${matchId}`
+        : typeof matchId === "string" && matchId.startsWith("match_")
+          ? matchId
+          : null;
 
     if (
-      typeof matchId !== "number" ||
+      !normalizedMatchId ||
       typeof homeScore !== "number" ||
       typeof awayScore !== "number"
     ) {
       return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
     }
+
+    const rawMatchId = normalizedMatchId.replace("match_", "");
 
     // Verificar si el partido ya empezó y obtener la fase
     // SIEMPRE usar tiempo del SERVIDOR — nunca confiar en el cliente
@@ -30,14 +38,17 @@ export async function POST(req: NextRequest) {
     let matchPhase: string | null = null;
 
     // Buscar en partidos de fase de grupos (JSON + override de BD)
-    if (matchId < 1000) {
-      const jsonMatch = matchesData.matches.find((m: any) => m.id === matchId);
+    if (/^\d+$/.test(rawMatchId)) {
+      const numericMatchId = Number(rawMatchId);
+      const jsonMatch = matchesData.matches.find(
+        (m: any) => m.id === numericMatchId,
+      );
       if (jsonMatch) {
         matchPhase = "GROUP_STAGE";
 
         // Checar si hay fecha personalizada en BD (tiene prioridad)
         const dbOverride = await prisma.groupMatchScore.findUnique({
-          where: { matchId: matchId },
+          where: { matchId: numericMatchId },
           select: { matchDate: true },
         });
 
@@ -46,33 +57,60 @@ export async function POST(req: NextRequest) {
         } else {
           matchDate = parseMatchDate(jsonMatch.date);
         }
+      } else if (numericMatchId >= 1000) {
+        // Compatibilidad legacy: knockout por índice sintético (match_1000+)
+        const knockoutIndex = numericMatchId - 1000;
+        const knockoutMatches = await prisma.match.findMany({
+          where: {
+            phase: {
+              not: "GROUP_STAGE",
+            },
+          },
+          select: {
+            id: true,
+            matchDate: true,
+            phase: true,
+          },
+          orderBy: {
+            matchDate: "asc",
+          },
+        });
+
+        const legacyKnockout = knockoutMatches[knockoutIndex];
+        if (!legacyKnockout) {
+          return NextResponse.json(
+            { error: "Partido inválido" },
+            { status: 400 },
+          );
+        }
+
+        matchDate = legacyKnockout.matchDate;
+        matchPhase = legacyKnockout.phase;
+
+        // Reescribir a ID estable para evitar seguir guardando formato legacy.
+        normalizedMatchId = `match_${legacyKnockout.id}`;
+      } else {
+        return NextResponse.json(
+          { error: "Partido inválido" },
+          { status: 400 },
+        );
       }
     } else {
       // Buscar en partidos de eliminatorias (DB)
-      const knockoutIndex = matchId - 1000;
-      const knockoutMatches = await prisma.match.findMany({
-        where: {
-          phase: {
-            not: "GROUP_STAGE",
-          },
-        },
+      const dbMatch = await prisma.match.findUnique({
+        where: { id: rawMatchId },
         select: {
           matchDate: true,
           phase: true,
         },
-        orderBy: {
-          matchDate: "asc",
-        },
       });
-
-      const dbMatch = knockoutMatches[knockoutIndex];
       if (dbMatch) {
         matchDate = dbMatch.matchDate;
         matchPhase = dbMatch.phase;
       } else {
         return NextResponse.json(
           { error: "Partido inválido" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -82,20 +120,18 @@ export async function POST(req: NextRequest) {
     if (matchDate && isPredictionClosed(matchDate)) {
       return NextResponse.json(
         {
-          error: "Este partido ya empezó. Las predicciones se cierran al iniciar el partido (hora del servidor).",
+          error:
+            "Este partido ya empezó. Las predicciones se cierran al iniciar el partido (hora del servidor).",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
-
-    // Convert matchId to string for database storage
-    const matchIdStr = `match_${matchId}`;
 
     const prediction = await prisma.prediction.upsert({
       where: {
         userId_matchId: {
           userId: session.user.id,
-          matchId: matchIdStr,
+          matchId: normalizedMatchId,
         },
       },
       update: {
@@ -105,7 +141,7 @@ export async function POST(req: NextRequest) {
       },
       create: {
         userId: session.user.id,
-        matchId: matchIdStr,
+        matchId: normalizedMatchId,
         homeScore,
         awayScore,
         phase: matchPhase,
@@ -117,7 +153,7 @@ export async function POST(req: NextRequest) {
     console.error("Error saving prediction:", error);
     return NextResponse.json(
       { error: "Error al guardar la predicción" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -141,7 +177,7 @@ export async function GET(req: NextRequest) {
     console.error("Error fetching predictions:", error);
     return NextResponse.json(
       { error: "Error al obtener las predicciones" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

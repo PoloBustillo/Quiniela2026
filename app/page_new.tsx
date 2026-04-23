@@ -21,31 +21,35 @@ export default async function HomePage() {
   });
 
   // Create a map of predictions by matchId for easy lookup
-  const predictionMap = predictions.reduce((acc, pred) => {
-    // Extract the numeric match ID from the stored string (e.g., "match_1" -> 1)
-    const matchId = parseInt(pred.matchId.replace("match_", ""));
-    acc[matchId] = {
-      homeScore: pred.homeScore,
-      awayScore: pred.awayScore,
-    };
-    return acc;
-  }, {} as Record<number, { homeScore: number; awayScore: number }>);
+  const predictionMap = predictions.reduce(
+    (acc, pred) => {
+      acc[pred.matchId] = {
+        homeScore: pred.homeScore,
+        awayScore: pred.awayScore,
+      };
+      return acc;
+    },
+    {} as Record<string, { homeScore: number; awayScore: number }>,
+  );
 
   // Group matches by date
-  const matchesByDate = matchesData.matches.reduce((acc, match) => {
-    const date = new Date(match.date).toLocaleDateString("es-MX", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  const matchesByDate = matchesData.matches.reduce(
+    (acc, match) => {
+      const date = new Date(match.date).toLocaleDateString("es-MX", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
 
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(match);
-    return acc;
-  }, {} as Record<string, typeof matchesData.matches>);
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(match);
+      return acc;
+    },
+    {} as Record<string, typeof matchesData.matches>,
+  );
 
   return (
     <div className="container max-w-7xl mx-auto px-4 py-8">
@@ -77,7 +81,7 @@ export default async function HomePage() {
         <div className="bg-card p-4 rounded-lg border">
           <p className="text-2xl font-bold">
             {Math.round(
-              (predictions.length / matchesData.matches.length) * 100
+              (predictions.length / matchesData.matches.length) * 100,
             )}
             %
           </p>
@@ -94,8 +98,8 @@ export default async function HomePage() {
               {matches.map((match) => (
                 <PredictionCard
                   key={match.id}
-                  match={match}
-                  existingPrediction={predictionMap[match.id]}
+                  match={{ ...match, id: `match_${match.id}` }}
+                  existingPrediction={predictionMap[`match_${match.id}`]}
                 />
               ))}
             </div>

@@ -45,6 +45,7 @@ interface Match {
 const PHASES = [
   { value: "ROUND_OF_32", label: "32avos de Final" },
   { value: "ROUND_OF_16", label: "16avos de Final" },
+  { value: "ROUND_OF_8", label: "8avos de Final" },
   { value: "QUARTER_FINAL", label: "Cuartos de Final" },
   { value: "SEMI_FINAL", label: "Semifinales" },
   { value: "THIRD_PLACE", label: "Tercer Lugar" },
