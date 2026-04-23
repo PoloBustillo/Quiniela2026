@@ -2,12 +2,12 @@
 
 ## Open
 
-1. Legacy synthetic knockout predictions still exist in DB rows
+1. Legacy synthetic knockout predictions still exist in DB rows (fix disponible)
 
 - Scope: [app/api/predictions/route.ts](app/api/predictions/route.ts), [app/leaderboard/page.tsx](app/leaderboard/page.tsx), [app/leaderboard/compare/page.tsx](app/leaderboard/compare/page.tsx)
-- Detail: Historical rows saved as `match_1000+` are normalized at read time and rewritten on new saves, but a full one-time migration has not yet been executed.
+- Detail: Historical rows saved as `match_1000+` are normalized at read time and rewritten on new saves. Se agregó migración one-shot para limpiar filas legacy existentes.
 - Risk: Low-medium. Behavior is compatible today, but legacy rows remain technical debt.
-- Recommendation: Run a one-time DB migration to rewrite all knockout predictions to `match_<real_cuid>`.
+- Recommendation: Ejecutar `bun run db:migrate-legacy-predictions` para reescribir todas las predicciones knockout a `match_<real_cuid>`.
 
 1. Phase model gap: no dedicated enum value for octavos
 

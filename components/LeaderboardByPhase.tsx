@@ -128,19 +128,13 @@ const getPredictionOrder = (
 
 const getQuotaLabel = (selectedTorneo: string, user: UserWithPoints) => {
   if (selectedTorneo === "T1") {
-    return (
-      TORNEO_TIER.T1(user) ? "Cuota cubierta" : "Cuota pendiente"
-    ) as const;
+    return TORNEO_TIER.T1(user) ? "Cuota cubierta" : "Cuota pendiente";
   }
   if (selectedTorneo === "T2") {
-    return (
-      TORNEO_TIER.T2(user) ? "Cuota cubierta" : "Cuota pendiente"
-    ) as const;
+    return TORNEO_TIER.T2(user) ? "Cuota cubierta" : "Cuota pendiente";
   }
   if (selectedTorneo === "T3") {
-    return (
-      TORNEO_TIER.T3(user) ? "Cuota cubierta" : "Cuota pendiente"
-    ) as const;
+    return TORNEO_TIER.T3(user) ? "Cuota cubierta" : "Cuota pendiente";
   }
 
   const covered = [
@@ -149,9 +143,9 @@ const getQuotaLabel = (selectedTorneo: string, user: UserWithPoints) => {
     user.hasPaid || user.paidFinals,
   ].filter(Boolean).length;
 
-  if (covered === 3) return "3/3 cuotas" as const;
-  if (covered > 0) return `${covered}/3 cuotas` as const;
-  return "0/3 cuotas" as const;
+  if (covered === 3) return "3/3 cuotas";
+  if (covered > 0) return `${covered}/3 cuotas`;
+  return "0/3 cuotas";
 };
 
 export default function LeaderboardByPhase({
