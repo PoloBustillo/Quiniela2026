@@ -57,15 +57,15 @@ interface LeaderboardByPhaseProps {
 const TORNEOS = [
   { value: "ALL", label: "Todo" },
   { value: "T1", label: "1. Grupos" },
-  { value: "T2", label: "2. 32avos" },
-  { value: "T3", label: "3. Finales" },
+  { value: "T2", label: "2. 32vos + 16vos" },
+  { value: "T3", label: "3. Fases finales" },
 ];
 
 /** Which raw phases belong to each torneo */
 const TORNEO_PHASES: Record<string, string[]> = {
   T1: ["GROUP_STAGE"],
-  T2: ["ROUND_OF_32"],
-  T3: ["ROUND_OF_16", "QUARTER_FINAL", "SEMI_FINAL", "THIRD_PLACE", "FINAL"],
+  T2: ["ROUND_OF_32", "ROUND_OF_16"],
+  T3: ["QUARTER_FINAL", "SEMI_FINAL", "THIRD_PLACE", "FINAL"],
 };
 
 /** Which payment flag a user needs to appear in a given torneo tab */
@@ -88,8 +88,8 @@ const PHASE_LABELS: Record<string, string> = {
 
 const TORNEO_LABELS: Record<string, string> = {
   T1: "Torneo 1 · Grupos",
-  T2: "Torneo 2 · 32avos",
-  T3: "Torneo 3 · Finales",
+  T2: "Torneo 2 · 32vos + 16vos",
+  T3: "Torneo 3 · Fases finales",
 };
 
 const PHASE_ORDER = [

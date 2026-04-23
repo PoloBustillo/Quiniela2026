@@ -48,6 +48,21 @@ export default async function LeaderboardPage() {
   });
   const totalPredictions = await prisma.prediction.count();
 
+  const knockoutMatches = await prisma.match.findMany({
+    where: {
+      phase: {
+        not: "GROUP_STAGE",
+      },
+    },
+    include: {
+      homeTeam: true,
+      awayTeam: true,
+    },
+    orderBy: {
+      matchDate: "asc",
+    },
+  });
+
   // Fetch finished group-stage match IDs (scored in GroupMatchScore)
   const finishedGroupScores = await prisma.groupMatchScore.findMany({
     where: { homeScore: { not: null }, awayScore: { not: null } },
@@ -55,17 +70,16 @@ export default async function LeaderboardPage() {
   });
   const finishedMatchIds = finishedGroupScores.map((s) => `match_${s.matchId}`);
 
-  // Also include finished knockout matches
-  const finishedKnockoutMatches = await prisma.match.findMany({
-    where: { status: "FINISHED" },
-    select: { id: true },
-  });
-  // Knockout matchIds in Prediction are stored as "match_<numeric>" but the
-  // Match table uses cuid. Pass cuid ids too so the component can match by
-  // pred.matchId when it falls through the group-stage format.
+  // Knockout predictions are stored as synthetic IDs: match_1000, match_1001...
+  // Build the finished list using the same ordering/indexing used in the app.
+  const finishedKnockoutIds = knockoutMatches
+    .map((match, index) => ({ match, syntheticId: `match_${1000 + index}` }))
+    .filter(({ match }) => match.status === "FINISHED")
+    .map(({ syntheticId }) => syntheticId);
+
   const finishedMatchIdSet = [
     ...finishedMatchIds,
-    ...finishedKnockoutMatches.map((m) => m.id),
+    ...finishedKnockoutIds,
   ];
 
   const usersWithPoints = users.map((user) => ({
@@ -103,6 +117,16 @@ export default async function LeaderboardPage() {
       phase: (m as { phase?: string }).phase,
     };
   }
+
+  knockoutMatches.forEach((m, index) => {
+    matchMap[String(1000 + index)] = {
+      home: m.homeTeam.name,
+      away: m.awayTeam.name,
+      homeFlag: m.homeTeam.flag || "/flags/tbd.png",
+      awayFlag: m.awayTeam.flag || "/flags/tbd.png",
+      phase: m.phase,
+    };
+  });
 
   return (
     <div className="max-w-2xl mx-auto px-3 py-3 space-y-4">

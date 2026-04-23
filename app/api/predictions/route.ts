@@ -49,14 +49,31 @@ export async function POST(req: NextRequest) {
       }
     } else {
       // Buscar en partidos de eliminatorias (DB)
-      const dbMatch = await prisma.match.findFirst({
+      const knockoutIndex = matchId - 1000;
+      const knockoutMatches = await prisma.match.findMany({
         where: {
-          // Buscar por el índice relativo (matchId - 1000)
+          phase: {
+            not: "GROUP_STAGE",
+          },
+        },
+        select: {
+          matchDate: true,
+          phase: true,
+        },
+        orderBy: {
+          matchDate: "asc",
         },
       });
+
+      const dbMatch = knockoutMatches[knockoutIndex];
       if (dbMatch) {
         matchDate = dbMatch.matchDate;
         matchPhase = dbMatch.phase;
+      } else {
+        return NextResponse.json(
+          { error: "Partido inválido" },
+          { status: 400 }
+        );
       }
     }
 

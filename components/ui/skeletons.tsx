@@ -6,33 +6,31 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 export function MatchListSkeleton() {
   return (
     <Card className="overflow-hidden">
-      <CardContent className="px-3 py-2.5">
-        <div className="flex items-center gap-2">
+      <CardContent className="px-3 py-3">
+        <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2">
           {/* Home name + flag */}
-          <div className="flex items-center gap-1.5 flex-1 justify-end">
+          <div className="flex items-center gap-1.5 min-w-0 justify-end">
             <div className="h-3 bg-muted rounded w-14 animate-pulse" />
-            <div className="w-7 h-5 bg-muted rounded animate-pulse flex-shrink-0" />
+            <div className="w-8 h-6 bg-muted rounded animate-pulse flex-shrink-0" />
           </div>
-          {/* Score controls */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <div className="h-9 w-9 bg-muted rounded-l-lg animate-pulse" />
-            <div className="h-9 w-10 bg-muted animate-pulse" />
-            <div className="h-9 w-9 bg-muted rounded-r-lg animate-pulse" />
-            <div className="w-3 h-3 bg-muted rounded animate-pulse mx-0.5" />
-            <div className="h-9 w-9 bg-muted rounded-l-lg animate-pulse" />
-            <div className="h-9 w-10 bg-muted animate-pulse" />
-            <div className="h-9 w-9 bg-muted rounded-r-lg animate-pulse" />
-          </div>
+          <div className="h-2.5 w-5 bg-muted rounded animate-pulse" />
           {/* Away flag + name */}
-          <div className="flex items-center gap-1.5 flex-1">
-            <div className="w-7 h-5 bg-muted rounded animate-pulse flex-shrink-0" />
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div className="w-8 h-6 bg-muted rounded animate-pulse flex-shrink-0" />
             <div className="h-3 bg-muted rounded w-14 animate-pulse" />
           </div>
           {/* Save btn */}
           <div className="h-9 w-9 bg-muted rounded-lg animate-pulse flex-shrink-0" />
         </div>
+
+        <div className="mt-2.5 flex items-center justify-center gap-2">
+          <div className="h-10 w-12 bg-muted rounded-lg animate-pulse" />
+          <div className="h-2.5 w-3 bg-muted rounded animate-pulse" />
+          <div className="h-10 w-12 bg-muted rounded-lg animate-pulse" />
+        </div>
+
         {/* Meta row */}
-        <div className="flex justify-between mt-1.5">
+        <div className="flex justify-between mt-2">
           <div className="h-2.5 bg-muted rounded w-28 animate-pulse" />
           <div className="h-2.5 bg-muted rounded w-16 animate-pulse" />
         </div>

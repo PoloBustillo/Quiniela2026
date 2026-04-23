@@ -193,6 +193,28 @@ export default function PredictionCard({
     </div>
   );
 
+  const CompactScoreInput = ({
+    team,
+    value,
+  }: {
+    team: "home" | "away";
+    value: number;
+  }) => (
+    <Input
+      type="number"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      min="0"
+      max="20"
+      value={value}
+      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+        handleInputChange(team, e.target.value)
+      }
+      disabled={isDisabled || isSaving}
+      className="w-12 h-10 text-center text-lg font-black px-0 rounded-lg border"
+    />
+  );
+
   // ── COMPACT (list) mode ─────────────────────────────────────────────────────
   if (compact) {
     return (
@@ -203,33 +225,30 @@ export default function PredictionCard({
           isPast && "opacity-70"
         )}
       >
-        <CardContent className="px-3 py-2.5">
-          <div className="flex items-center gap-2">
+        <CardContent className="px-3 py-3">
+          <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2">
             {/* Home team */}
-            <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
-              <p className="text-xs font-medium truncate text-right leading-tight">
+            <div className="flex items-center gap-1.5 min-w-0 justify-end">
+              <p className="text-xs sm:text-sm font-medium truncate text-right leading-tight">
                 {translateCountry(match.homeTeam.name)}
               </p>
-              <div className="w-7 h-5 flex-shrink-0 relative">
+              <div className="w-8 h-6 sm:w-9 sm:h-7 flex-shrink-0 relative">
                 <Image src={match.homeTeam.flag} alt={match.homeTeam.name} fill
                   className="object-contain" unoptimized />
               </div>
             </div>
 
-            {/* Score controls */}
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <ScoreControl team="home" value={homeScore} />
-              <span className="text-muted-foreground font-bold text-xs w-3 text-center select-none">–</span>
-              <ScoreControl team="away" value={awayScore} />
-            </div>
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold text-center w-6">
+              vs
+            </span>
 
             {/* Away team */}
-            <div className="flex items-center gap-1.5 flex-1 min-w-0">
-              <div className="w-7 h-5 flex-shrink-0 relative">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div className="w-8 h-6 sm:w-9 sm:h-7 flex-shrink-0 relative">
                 <Image src={match.awayTeam.flag} alt={match.awayTeam.name} fill
                   className="object-contain" unoptimized />
               </div>
-              <p className="text-xs font-medium truncate leading-tight">
+              <p className="text-xs sm:text-sm font-medium truncate leading-tight">
                 {translateCountry(match.awayTeam.name)}
               </p>
             </div>
@@ -254,8 +273,14 @@ export default function PredictionCard({
             </button>
           </div>
 
+          <div className="mt-2.5 flex items-center justify-center gap-2">
+            <CompactScoreInput team="home" value={homeScore} />
+            <span className="text-muted-foreground font-bold text-sm w-3 text-center select-none">–</span>
+            <CompactScoreInput team="away" value={awayScore} />
+          </div>
+
           {/* Meta row */}
-          <div className="flex items-center justify-between mt-1.5 text-[10px] text-muted-foreground gap-2">
+          <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground gap-2">
             <span className="truncate">
               {match.group ? `Grupo ${match.group}` : match.stage} · {translateCity(match.city)}
             </span>
