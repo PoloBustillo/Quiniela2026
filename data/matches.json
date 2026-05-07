@@ -33,7 +33,7 @@
       },
       "awayTeam": {
         "id": 4,
-        "name": "Winner UEFA Playoff D",
+        "name": "República Checa",
         "code": "uepd",
         "flag": "/flags/uepd.png"
       },
@@ -55,7 +55,7 @@
       },
       "awayTeam": {
         "id": 6,
-        "name": "Winner UEFA Playoff A",
+        "name": "Bosnia y Herzegovina",
         "code": "uepa",
         "flag": "/flags/uepa.png"
       },
@@ -143,7 +143,7 @@
       },
       "awayTeam": {
         "id": 12,
-        "name": "Scotland",
+        "name": "Escocia",
         "code": "sco",
         "flag": "/flags/sco.png"
       },
@@ -165,7 +165,7 @@
       },
       "awayTeam": {
         "id": 16,
-        "name": "Winner UEFA Playoff C",
+        "name": "Turquía",
         "code": "uepc",
         "flag": "/flags/uepc.png"
       },
@@ -247,7 +247,7 @@
       "matchNumber": 12,
       "homeTeam": {
         "id": 23,
-        "name": "Winner UEFA Playoff B",
+        "name": "Suecia",
         "code": "uepb",
         "flag": "/flags/uepb.png"
       },
@@ -379,7 +379,7 @@
       "matchNumber": 18,
       "homeTeam": {
         "id": 35,
-        "name": "Winner FIFA Playoff 2",
+        "name": "Irak",
         "code": "fp02",
         "flag": "/flags/fp02.png"
       },
@@ -451,7 +451,7 @@
       },
       "awayTeam": {
         "id": 42,
-        "name": "Winner FIFA Playoff 1",
+        "name": "RD de Congo",
         "code": "fp01",
         "flag": "/flags/fp01.png"
       },
@@ -533,7 +533,7 @@
       "matchNumber": 25,
       "homeTeam": {
         "id": 4,
-        "name": "Winner UEFA Playoff D",
+        "name": "República Checa",
         "code": "uepd",
         "flag": "/flags/uepd.png"
       },
@@ -561,7 +561,7 @@
       },
       "awayTeam": {
         "id": 6,
-        "name": "Winner UEFA Playoff A",
+        "name": "Bosnia y Herzegovina",
         "code": "uepa",
         "flag": "/flags/uepa.png"
       },
@@ -643,7 +643,7 @@
       "matchNumber": 30,
       "homeTeam": {
         "id": 12,
-        "name": "Scotland",
+        "name": "Escocia",
         "code": "sco",
         "flag": "/flags/sco.png"
       },
@@ -687,7 +687,7 @@
       "matchNumber": 32,
       "homeTeam": {
         "id": 16,
-        "name": "Winner UEFA Playoff C",
+        "name": "Turquía",
         "code": "uepc",
         "flag": "/flags/uepc.png"
       },
@@ -715,7 +715,7 @@
       },
       "awayTeam": {
         "id": 23,
-        "name": "Winner UEFA Playoff B",
+        "name": "Suecia",
         "code": "uepb",
         "flag": "/flags/uepb.png"
       },
@@ -913,7 +913,7 @@
       },
       "awayTeam": {
         "id": 35,
-        "name": "Winner FIFA Playoff 2",
+        "name": "Irak",
         "code": "fp02",
         "flag": "/flags/fp02.png"
       },
@@ -1045,7 +1045,7 @@
       },
       "awayTeam": {
         "id": 42,
-        "name": "Winner FIFA Playoff 1",
+        "name": "RD de Congo",
         "code": "fp01",
         "flag": "/flags/fp01.png"
       },
@@ -1083,7 +1083,7 @@
       "matchNumber": 50,
       "homeTeam": {
         "id": 6,
-        "name": "Winner UEFA Playoff A",
+        "name": "Bosnia y Herzegovina",
         "code": "uepa",
         "flag": "/flags/uepa.png"
       },
@@ -1105,7 +1105,7 @@
       "matchNumber": 51,
       "homeTeam": {
         "id": 12,
-        "name": "Scotland",
+        "name": "Escocia",
         "code": "sco",
         "flag": "/flags/sco.png"
       },
@@ -1149,7 +1149,7 @@
       "matchNumber": 53,
       "homeTeam": {
         "id": 4,
-        "name": "Winner UEFA Playoff D",
+        "name": "República Checa",
         "code": "uepd",
         "flag": "/flags/uepd.png"
       },
@@ -1243,7 +1243,7 @@
       },
       "awayTeam": {
         "id": 23,
-        "name": "Winner UEFA Playoff B",
+        "name": "Suecia",
         "code": "uepb",
         "flag": "/flags/uepb.png"
       },
@@ -1281,7 +1281,7 @@
       "matchNumber": 59,
       "homeTeam": {
         "id": 16,
-        "name": "Winner UEFA Playoff C",
+        "name": "Turquía",
         "code": "uepc",
         "flag": "/flags/uepc.png"
       },
@@ -1353,7 +1353,7 @@
       },
       "awayTeam": {
         "id": 35,
-        "name": "Winner FIFA Playoff 2",
+        "name": "Irak",
         "code": "fp02",
         "flag": "/flags/fp02.png"
       },
@@ -1523,7 +1523,7 @@
       "matchNumber": 70,
       "homeTeam": {
         "id": 42,
-        "name": "Winner FIFA Playoff 1",
+        "name": "RD de Congo",
         "code": "fp01",
         "flag": "/flags/fp01.png"
       },

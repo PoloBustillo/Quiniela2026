@@ -41,9 +41,9 @@ interface CompareClientProps {
 const PHASES = [
   { value: "ALL", label: "Todo" },
   { value: "GROUP_STAGE", label: "Grupos" },
-  { value: "ROUND_OF_32", label: "32avos" },
-  { value: "ROUND_OF_16", label: "16vos" },
-  { value: "ROUND_OF_8", label: "8vos" },
+  { value: "ROUND_OF_32", label: "16vos" },
+  { value: "ROUND_OF_16", label: "8vos" },
+  { value: "ROUND_OF_8", label: "Cuartos" },
   { value: "QUARTER_FINAL", label: "Cuartos" },
   { value: "SEMI_FINAL", label: "Semis" },
   { value: "THIRD_PLACE", label: "3er Lugar" },

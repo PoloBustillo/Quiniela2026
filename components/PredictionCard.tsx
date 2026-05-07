@@ -235,7 +235,7 @@ export default function PredictionCard({
           <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2">
             {/* Home team */}
             <div className="flex items-center gap-1.5 min-w-0 justify-end">
-              <p className="text-xs sm:text-sm font-medium truncate text-right leading-tight">
+              <p className="text-xs sm:text-sm font-medium line-clamp-2 text-right leading-tight">
                 {translateCountry(match.homeTeam.name)}
               </p>
               <div className="w-8 h-6 sm:w-9 sm:h-7 flex-shrink-0 relative">
@@ -264,7 +264,7 @@ export default function PredictionCard({
                   unoptimized
                 />
               </div>
-              <p className="text-xs sm:text-sm font-medium truncate leading-tight">
+              <p className="text-xs sm:text-sm font-medium line-clamp-2 leading-tight">
                 {translateCountry(match.awayTeam.name)}
               </p>
             </div>
@@ -367,7 +367,7 @@ export default function PredictionCard({
                   unoptimized
                 />
               </div>
-              <p className="text-sm font-medium truncate">
+              <p className="text-sm font-medium line-clamp-2 leading-tight">
                 {translateCountry(match.homeTeam.name)}
               </p>
             </div>
@@ -387,7 +387,7 @@ export default function PredictionCard({
                   unoptimized
                 />
               </div>
-              <p className="text-sm font-medium truncate">
+              <p className="text-sm font-medium line-clamp-2 leading-tight">
                 {translateCountry(match.awayTeam.name)}
               </p>
             </div>

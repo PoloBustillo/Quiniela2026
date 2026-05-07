@@ -51,8 +51,8 @@ const PHASES = [
   },
   {
     key: "knockout" as const,
-    label: "32vos + 16vos",
-    shortLabel: "32/16vos",
+    label: "16vos + 8vos",
+    shortLabel: "16/8vos",
     paidKey: "paidKnockout" as keyof User,
     paidAtKey: "paidKnockoutAt" as keyof User,
     color: "orange",
@@ -91,7 +91,7 @@ export function UsersPaymentManager() {
   const togglePhasePayment = async (
     userId: string,
     phase: string,
-    currentStatus: boolean
+    currentStatus: boolean,
   ) => {
     try {
       const response = await fetch("/api/admin/users", {
@@ -121,15 +121,15 @@ export function UsersPaymentManager() {
   };
 
   const fullyPaidUsers = users.filter(
-    (u) => u.paidGroupStage && u.paidKnockout && u.paidFinals
+    (u) => u.paidGroupStage && u.paidKnockout && u.paidFinals,
   );
   const partiallyPaidUsers = users.filter(
     (u) =>
       (u.paidGroupStage || u.paidKnockout || u.paidFinals) &&
-      !(u.paidGroupStage && u.paidKnockout && u.paidFinals)
+      !(u.paidGroupStage && u.paidKnockout && u.paidFinals),
   );
   const unpaidUsers = users.filter(
-    (u) => !u.paidGroupStage && !u.paidKnockout && !u.paidFinals
+    (u) => !u.paidGroupStage && !u.paidKnockout && !u.paidFinals,
   );
 
   const totalRevenue = users.reduce((acc, u) => acc + getTotalPaid(u), 0);
@@ -151,28 +151,36 @@ export function UsersPaymentManager() {
           <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
             <div className="flex items-center gap-1.5 mb-1">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              <span className="text-xs font-medium text-green-600">Completos</span>
+              <span className="text-xs font-medium text-green-600">
+                Completos
+              </span>
             </div>
             <p className="text-2xl font-bold">{fullyPaidUsers.length}</p>
           </div>
           <div className="p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
             <div className="flex items-center gap-1.5 mb-1">
               <CheckCircle className="h-4 w-4 text-yellow-600" />
-              <span className="text-xs font-medium text-yellow-600">Parciales</span>
+              <span className="text-xs font-medium text-yellow-600">
+                Parciales
+              </span>
             </div>
             <p className="text-2xl font-bold">{partiallyPaidUsers.length}</p>
           </div>
           <div className="p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
             <div className="flex items-center gap-1.5 mb-1">
               <XCircle className="h-4 w-4 text-orange-600" />
-              <span className="text-xs font-medium text-orange-600">Sin pagar</span>
+              <span className="text-xs font-medium text-orange-600">
+                Sin pagar
+              </span>
             </div>
             <p className="text-2xl font-bold">{unpaidUsers.length}</p>
           </div>
           <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
             <div className="flex items-center gap-1.5 mb-1">
               <DollarSign className="h-4 w-4 text-primary" />
-              <span className="text-xs font-medium text-primary">Total recaudado</span>
+              <span className="text-xs font-medium text-primary">
+                Total recaudado
+              </span>
             </div>
             <p className="text-2xl font-bold">${totalRevenue}</p>
           </div>
@@ -182,9 +190,7 @@ export function UsersPaymentManager() {
         <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg">
           {PHASES.map((phase) => (
             <div key={phase.key} className="flex items-center gap-1.5 text-xs">
-              <div
-                className={`w-3 h-3 rounded-sm bg-${phase.color}-500`}
-              />
+              <div className={`w-3 h-3 rounded-sm bg-${phase.color}-500`} />
               <span className="font-medium">{phase.label}</span>
               <span className="text-muted-foreground">$100</span>
             </div>
@@ -204,8 +210,8 @@ export function UsersPaymentManager() {
                     totalPaid === 300
                       ? "bg-green-500/5 border-green-500/30"
                       : totalPaid > 0
-                      ? "bg-yellow-500/5 border-yellow-500/30"
-                      : "bg-card border-border hover:border-primary/30"
+                        ? "bg-yellow-500/5 border-yellow-500/30"
+                        : "bg-card border-border hover:border-primary/30"
                   }`}
                 >
                   {/* User info row */}
@@ -247,8 +253,8 @@ export function UsersPaymentManager() {
                           totalPaid === 300
                             ? "text-green-600"
                             : totalPaid > 0
-                            ? "text-yellow-600"
-                            : "text-muted-foreground"
+                              ? "text-yellow-600"
+                              : "text-muted-foreground"
                         }`}
                       >
                         ${totalPaid}/300

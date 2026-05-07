@@ -74,8 +74,8 @@ interface JsonMatch {
 
 const PHASES = [
   { value: "GROUP_STAGE", label: "Fase de Grupos" },
-  { value: "ROUND_OF_32", label: "32avos de Final" },
-  { value: "ROUND_OF_16", label: "16avos de Final" },
+  { value: "ROUND_OF_32", label: "16vos de Final" },
+  { value: "ROUND_OF_16", label: "8vos de Final" },
   { value: "ROUND_OF_8", label: "8avos de Final" },
   { value: "QUARTER_FINAL", label: "Cuartos de Final" },
   { value: "SEMI_FINAL", label: "Semifinales" },
@@ -542,17 +542,17 @@ export function AllMatchesManager() {
       >
         <TabsList className="grid w-full max-w-3xl grid-cols-5">
           <TabsTrigger value="group">1. Grupos</TabsTrigger>
-          <TabsTrigger value="early_ko">2. 32avos + 16vos</TabsTrigger>
+          <TabsTrigger value="early_ko">2. 16vos + 8vos</TabsTrigger>
           <TabsTrigger value="finals">3. Finales</TabsTrigger>
           <TabsTrigger value="rules">Reglas</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
         </TabsList>
 
-        {/* ── TORNEO 2: 32avos + 16avos ───────────────────────── */}
+        {/* ── TORNEO 2: 16vos + 8vos ───────────────────────── */}
         <TabsContent value="early_ko" className="space-y-4 mt-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h2 className="text-2xl font-bold">Torneo 2 · 32avos de Final</h2>
+              <h2 className="text-2xl font-bold">Torneo 2 · 16vos de Final</h2>
               <p className="text-muted-foreground">
                 Selecciona equipos, cambia fechas y escribe marcadores.
               </p>

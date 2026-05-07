@@ -59,7 +59,7 @@ interface LeaderboardByPhaseProps {
 const TORNEOS = [
   { value: "ALL", label: "Todo" },
   { value: "T1", label: "1. Grupos" },
-  { value: "T2", label: "2. 32vos + 16vos" },
+  { value: "T2", label: "2. 16vos + 8vos" },
   { value: "T3", label: "3. Fases finales" },
 ];
 
@@ -80,9 +80,9 @@ const TORNEO_TIER: Record<string, (u: UserWithPoints) => boolean> = {
 
 const PHASE_LABELS: Record<string, string> = {
   GROUP_STAGE: "Fase de Grupos",
-  ROUND_OF_32: "32avos de Final",
-  ROUND_OF_16: "16vos de Final",
-  ROUND_OF_8: "8vos de Final",
+  ROUND_OF_32: "16vos de Final",
+  ROUND_OF_16: "8vos de Final",
+  ROUND_OF_8: "Cuartos de Final",
   QUARTER_FINAL: "Cuartos de Final",
   SEMI_FINAL: "Semifinal",
   THIRD_PLACE: "3er Lugar",
@@ -91,7 +91,7 @@ const PHASE_LABELS: Record<string, string> = {
 
 const TORNEO_LABELS: Record<string, string> = {
   T1: "Torneo 1 · Grupos",
-  T2: "Torneo 2 · 32vos + 16vos",
+  T2: "Torneo 2 · 16vos + 8vos",
   T3: "Torneo 3 · Fases finales",
 };
 
@@ -189,6 +189,13 @@ export default function LeaderboardByPhase({
 
   const myEntry = leaderboard.find((u) => u.id === currentUserId);
   const myRank = leaderboard.findIndex((u) => u.id === currentUserId) + 1;
+
+  /** Drop last surname when 4+ words; hard-cap at 28 chars. */
+  const formatDisplayName = (n: string) => {
+    const words = n.trim().split(/\s+/);
+    const shortened = words.length >= 4 ? words.slice(0, 3).join(" ") : n;
+    return shortened.length > 28 ? shortened.slice(0, 27) + "…" : shortened;
+  };
 
   return (
     <div className="space-y-3">
@@ -307,8 +314,19 @@ export default function LeaderboardByPhase({
                 {/* Name + stats */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-semibold truncate">
-                      {user.name}
+                    <span
+                      className="text-sm font-semibold"
+                      style={
+                        {
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        } as unknown as React.CSSProperties
+                      }
+                      title={user.name}
+                    >
+                      {formatDisplayName(user.name)}
                     </span>
                     {isMe && (
                       <Badge
