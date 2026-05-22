@@ -76,7 +76,7 @@ const PHASES = [
   { value: "GROUP_STAGE", label: "Fase de Grupos" },
   { value: "ROUND_OF_32", label: "16vos de Final" },
   { value: "ROUND_OF_16", label: "8vos de Final" },
-  { value: "ROUND_OF_8", label: "8avos de Final" },
+  { value: "ROUND_OF_8", label: "Cuartos de Final" },
   { value: "QUARTER_FINAL", label: "Cuartos de Final" },
   { value: "SEMI_FINAL", label: "Semifinales" },
   { value: "THIRD_PLACE", label: "Tercer Lugar" },
@@ -99,13 +99,7 @@ const EARLY_KO_PHASES = PHASES.filter((p) =>
   ["ROUND_OF_32", "ROUND_OF_16"].includes(p.value),
 );
 const FINALS_PHASES = PHASES.filter((p) =>
-  [
-    "ROUND_OF_8",
-    "QUARTER_FINAL",
-    "SEMI_FINAL",
-    "THIRD_PLACE",
-    "FINAL",
-  ].includes(p.value),
+  ["ROUND_OF_8", "SEMI_FINAL", "THIRD_PLACE", "FINAL"].includes(p.value),
 );
 
 export function AllMatchesManager() {
@@ -537,15 +531,25 @@ export function AllMatchesManager() {
           const tab = v as "group" | "early_ko" | "finals" | "rules" | "users";
           setSelectedTab(tab);
           if (tab === "early_ko") setSelectedPhase("ROUND_OF_32");
-          if (tab === "finals") setSelectedPhase("QUARTER_FINAL");
+          if (tab === "finals") setSelectedPhase("ROUND_OF_8");
         }}
       >
-        <TabsList className="grid w-full max-w-3xl grid-cols-5">
-          <TabsTrigger value="group">1. Grupos</TabsTrigger>
-          <TabsTrigger value="early_ko">2. 16vos + 8vos</TabsTrigger>
-          <TabsTrigger value="finals">3. Finales</TabsTrigger>
-          <TabsTrigger value="rules">Reglas</TabsTrigger>
-          <TabsTrigger value="users">Usuarios</TabsTrigger>
+        <TabsList className="grid w-full max-w-3xl grid-cols-3 sm:grid-cols-5 h-auto">
+          <TabsTrigger value="group" className="text-xs px-2 py-1.5">
+            1. Grupos
+          </TabsTrigger>
+          <TabsTrigger value="early_ko" className="text-xs px-2 py-1.5">
+            2. 16v+8vos
+          </TabsTrigger>
+          <TabsTrigger value="finals" className="text-xs px-2 py-1.5">
+            3. Finales
+          </TabsTrigger>
+          <TabsTrigger value="rules" className="text-xs px-2 py-1.5">
+            Reglas
+          </TabsTrigger>
+          <TabsTrigger value="users" className="text-xs px-2 py-1.5">
+            Usuarios
+          </TabsTrigger>
         </TabsList>
 
         {/* ── TORNEO 2: 16vos + 8vos ───────────────────────── */}

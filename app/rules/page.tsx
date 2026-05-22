@@ -1,9 +1,17 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { BookOpen, Info, Trophy, DollarSign } from "lucide-react";
+import {
+  BookOpen,
+  Info,
+  Trophy,
+  DollarSign,
+  Banknote,
+  Medal,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CopyButton } from "@/components/ui/copy-button";
 
 export default async function RulesPage() {
   const session = await getServerSession(authOptions);
@@ -147,6 +155,86 @@ export default async function RulesPage() {
             Puedes inscribirte en una, dos o las tres fases. Cada fase es
             independiente.
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Premiación */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Medal className="h-4 w-4 text-yellow-500" />
+            Premiación
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {[
+            {
+              place: "🥇 1er Lugar",
+              prize: "70% del bote − $50",
+              bg: "bg-yellow-500/10 border-yellow-500/40",
+              text: "text-yellow-700 dark:text-yellow-400",
+            },
+            {
+              place: "🥈 2do Lugar",
+              prize: "30% del bote − $50",
+              bg: "bg-slate-400/10 border-slate-400/40",
+              text: "text-slate-700 dark:text-slate-300",
+            },
+            {
+              place: "🥉 3er Lugar",
+              prize: "Reintegro de entrada $100",
+              bg: "bg-amber-700/10 border-amber-700/30",
+              text: "text-amber-800 dark:text-amber-400",
+            },
+          ].map((item, i) => (
+            <div
+              key={i}
+              className={`flex items-center justify-between p-3 rounded-lg border ${item.bg}`}
+            >
+              <p className="text-sm font-semibold">{item.place}</p>
+              <p className={`text-sm font-bold ${item.text}`}>{item.prize}</p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Datos de depósito */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Banknote className="h-4 w-4 text-primary" />
+            Depósito / Inscripción
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-2 text-sm">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">
+                A nombre de
+              </span>
+              <span className="font-medium">
+                Mario Leopoldo Bustillo Eguiluz
+              </span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">
+                CLABE interbancaria
+              </span>
+              <div className="flex items-center gap-1">
+                <span className="font-mono font-bold tracking-widest text-base select-all">
+                  002320700942203419
+                </span>
+                <CopyButton value="002320700942203419" />
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 rounded-r-lg text-xs">
+            <Info className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
+            <p className="text-blue-800 dark:text-blue-200">
+              Envía tu comprobante al grupo o al <strong>3317700339</strong> con
+              tu email de registro.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

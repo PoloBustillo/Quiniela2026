@@ -36,6 +36,7 @@ interface CompareClientProps {
   users: UserData[];
   matchMap: Record<string, MatchInfo>;
   currentUserId: string;
+  startedMatchIds: string[];
 }
 
 const PHASES = [
@@ -56,7 +57,9 @@ export default function CompareClient({
   users,
   matchMap,
   currentUserId,
+  startedMatchIds,
 }: CompareClientProps) {
+  const startedSet = new Set(startedMatchIds);
   const [compareUserId, setCompareUserId] = useState<string>("");
   const [phase, setPhase] = useState("ALL");
   const [filter, setFilter] = useState<Filter>("all");
@@ -67,10 +70,12 @@ export default function CompareClient({
   const comparison = useMemo(() => {
     if (!me || !other) return null;
 
-    // All matchIds from either user
+    // Only show matches that have already been played
     const myIds = new Set(me.predictions.map((p) => p.matchId));
     const otherIds = new Set(other.predictions.map((p) => p.matchId));
-    const allIds = new Set([...myIds, ...otherIds]);
+    const allIds = new Set(
+      [...myIds, ...otherIds].filter((id) => startedSet.has(id)),
+    );
 
     const rows = Array.from(allIds)
       .map((matchId) => {
@@ -122,7 +127,7 @@ export default function CompareClient({
         .filter((p) => phase === "ALL" || p.phase === phase)
         .reduce((s, p) => s + p.points, 0),
     };
-  }, [me, other, phase, filter, matchMap]);
+  }, [me, other, phase, filter, matchMap, startedSet]);
 
   return (
     <div className="space-y-4">

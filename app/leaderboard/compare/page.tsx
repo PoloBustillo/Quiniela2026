@@ -178,6 +178,7 @@ export default async function ComparePage() {
         users={usersData}
         matchMap={matchMap}
         currentUserId={session.user?.id ?? ""}
+        startedMatchIds={Array.from(startedMatchIdSet)}
       />
     </div>
   );
