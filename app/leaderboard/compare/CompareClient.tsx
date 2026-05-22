@@ -44,7 +44,6 @@ const PHASES = [
   { value: "GROUP_STAGE", label: "Grupos" },
   { value: "ROUND_OF_32", label: "16vos" },
   { value: "ROUND_OF_16", label: "8vos" },
-  { value: "ROUND_OF_8", label: "Cuartos" },
   { value: "QUARTER_FINAL", label: "Cuartos" },
   { value: "SEMI_FINAL", label: "Semis" },
   { value: "THIRD_PLACE", label: "3er Lugar" },
@@ -59,10 +58,11 @@ export default function CompareClient({
   currentUserId,
   startedMatchIds,
 }: CompareClientProps) {
-  const startedSet = new Set(startedMatchIds);
   const [compareUserId, setCompareUserId] = useState<string>("");
   const [phase, setPhase] = useState("ALL");
   const [filter, setFilter] = useState<Filter>("all");
+
+  const startedSet = useMemo(() => new Set(startedMatchIds), [startedMatchIds]);
 
   const me = users.find((u) => u.id === currentUserId);
   const other = users.find((u) => u.id === compareUserId);
@@ -120,12 +120,8 @@ export default function CompareClient({
       total: rows.length,
       same: rows.filter((r) => r.same).length,
       different: rows.filter((r) => !r.same).length,
-      myPoints: me.predictions
-        .filter((p) => phase === "ALL" || p.phase === phase)
-        .reduce((s, p) => s + p.points, 0),
-      otherPoints: other.predictions
-        .filter((p) => phase === "ALL" || p.phase === phase)
-        .reduce((s, p) => s + p.points, 0),
+      myPoints: rows.reduce((s, r) => s + (r.myPred?.points ?? 0), 0),
+      otherPoints: rows.reduce((s, r) => s + (r.otherPred?.points ?? 0), 0),
     };
   }, [me, other, phase, filter, matchMap, startedSet]);
 

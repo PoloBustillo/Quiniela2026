@@ -67,7 +67,7 @@ const TORNEOS = [
 const TORNEO_PHASES: Record<string, string[]> = {
   T1: ["GROUP_STAGE"],
   T2: ["ROUND_OF_32", "ROUND_OF_16"],
-  T3: ["ROUND_OF_8", "QUARTER_FINAL", "SEMI_FINAL", "THIRD_PLACE", "FINAL"],
+  T3: ["QUARTER_FINAL", "SEMI_FINAL", "THIRD_PLACE", "FINAL"],
 };
 
 /** Which payment flag a user needs to appear in a given torneo tab */
@@ -82,7 +82,6 @@ const PHASE_LABELS: Record<string, string> = {
   GROUP_STAGE: "Fase de Grupos",
   ROUND_OF_32: "16vos de Final",
   ROUND_OF_16: "8vos de Final",
-  ROUND_OF_8: "Cuartos de Final",
   QUARTER_FINAL: "Cuartos de Final",
   SEMI_FINAL: "Semifinal",
   THIRD_PLACE: "3er Lugar",
@@ -99,7 +98,6 @@ const PHASE_ORDER = [
   "GROUP_STAGE",
   "ROUND_OF_32",
   "ROUND_OF_16",
-  "ROUND_OF_8",
   "QUARTER_FINAL",
   "SEMI_FINAL",
   "THIRD_PLACE",

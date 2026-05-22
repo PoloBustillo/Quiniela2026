@@ -32,18 +32,16 @@ const PHASE_ORDER: Record<string, number> = {
   GROUP_STAGE: 0,
   ROUND_OF_32: 1,
   ROUND_OF_16: 2,
-  ROUND_OF_8: 3,
-  QUARTER_FINAL: 4,
-  SEMI_FINAL: 5,
-  THIRD_PLACE: 6,
-  FINAL: 7,
+  QUARTER_FINAL: 3,
+  SEMI_FINAL: 4,
+  THIRD_PLACE: 5,
+  FINAL: 6,
 };
 
 const PHASE_LABELS: Record<string, string> = {
   GROUP_STAGE: "Grupos",
   ROUND_OF_32: "16vos",
   ROUND_OF_16: "8vos",
-  ROUND_OF_8: "Cuartos",
   QUARTER_FINAL: "Cuartos",
   SEMI_FINAL: "Semis",
   THIRD_PLACE: "3er Lugar",

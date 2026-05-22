@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-05-22
+
+### Fixed
+
+- Admin Finales phase selector in [components/admin/AllMatchesManager.tsx](components/admin/AllMatchesManager.tsx) now points back to `QUARTER_FINAL`, matching seeded DB quarter-final matches.
+- Removed the unused `ROUND_OF_8` quarter-final bucket from user-facing phase maps and deleted the confirmed unused TBD/TBD DB row.
+- Compare summary points in [app/leaderboard/compare/CompareClient.tsx](app/leaderboard/compare/CompareClient.tsx) now count only started matches visible in the comparison.
+- Active point rules now drive recalculation in admin match score updates and scoring scripts.
+- Prediction saves now reject unpaid tournament tiers and invalid match dates server-side.
+- Admin date handling no longer falls back to the current time for invalid Mexico City input.
+
+### Added
+
+- Deep audit report added in [AUDIT_QUINIELAS_2026.md](AUDIT_QUINIELAS_2026.md) with phase, compare, payment, scoring, and clock-risk findings.
+
 ## 2026-04-22
 
 ### Fixed

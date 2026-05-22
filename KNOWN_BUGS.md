@@ -9,14 +9,32 @@
 - Risk: Low-medium. Behavior is compatible today, but legacy rows remain technical debt.
 - Recommendation: Ejecutar `bun run db:migrate-legacy-predictions` para reescribir todas las predicciones knockout a `match_<real_cuid>`.
 
-1. Phase model gap: no dedicated enum value for octavos
-
-- Scope: [prisma/schema.prisma](prisma/schema.prisma), [components/LeaderboardByPhase.tsx](components/LeaderboardByPhase.tsx), [components/admin/AllMatchesManager.tsx](components/admin/AllMatchesManager.tsx)
-- Detail: Product now treats `16vos` and `octavos` as distinct, but Prisma enum currently only has `ROUND_OF_16` and no dedicated octavos phase.
-- Risk: Medium. If both rounds are required simultaneously, one round cannot be represented distinctly in DB.
-- Recommendation: add a dedicated enum phase (e.g. `ROUND_OF_8`) with migration and update admin/UI filters.
-
 ## Closed in this cycle
+
+1. Suspect `ROUND_OF_8` DB row created duplicate quarter-final bucket
+
+- Previous behavior: DB had one TBD/TBD `ROUND_OF_8` row dated 2026-05-22 and UI maps could include `ROUND_OF_8` as another Cuartos bucket.
+- Status: Fixed. Confirmed zero predictions for the row, deleted it from DB, and removed `ROUND_OF_8` from user-facing/admin phase maps.
+
+1. Compare summary points included hidden future matches
+
+- Previous behavior: compare rows were limited to started matches, but score summary still summed all predictions for the selected phase.
+- Status: Fixed in [app/leaderboard/compare/CompareClient.tsx](app/leaderboard/compare/CompareClient.tsx).
+
+1. Points rule admin did not drive scoring
+
+- Previous behavior: active point rules could be edited, but recalculation used hardcoded defaults only.
+- Status: Fixed in [lib/points.ts](lib/points.ts), [app/api/admin/matches/route.ts](app/api/admin/matches/route.ts), [app/api/admin/group-matches/route.ts](app/api/admin/group-matches/route.ts), and scoring scripts.
+
+1. Predictions could be saved without paying the corresponding quiniela
+
+- Previous behavior: [app/api/predictions/route.ts](app/api/predictions/route.ts) validated auth and kickoff time, but not `paidGroupStage`, `paidKnockout`, or `paidFinals`.
+- Status: Fixed. Prediction saves now require the matching paid tier or legacy `hasPaid`.
+
+1. Invalid admin Mexico-time input could fall back to current time
+
+- Previous behavior: `fromMexicoCityTime` returned `new Date()` for invalid input, which could create a match at the current time.
+- Status: Fixed in [lib/points.ts](lib/points.ts), [app/api/admin/matches/route.ts](app/api/admin/matches/route.ts), and [app/api/admin/group-matches/route.ts](app/api/admin/group-matches/route.ts).
 
 1. Knockout validation selected wrong DB match
 

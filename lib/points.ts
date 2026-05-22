@@ -6,11 +6,24 @@
  * - 3 puntos: Ganador correcto (sin marcador exacto) O empate acertado
  * - 0 puntos: Predicción incorrecta
  */
+export interface PointsRuleValues {
+  exactScore: number;
+  correctWinner: number;
+  correctDraw: number;
+}
+
+const DEFAULT_POINTS_RULES: PointsRuleValues = {
+  exactScore: 5,
+  correctWinner: 3,
+  correctDraw: 3,
+};
+
 export function calculatePoints(
   predictedHome: number,
   predictedAway: number,
   actualHome: number,
   actualAway: number,
+  rules: PointsRuleValues = DEFAULT_POINTS_RULES,
 ): number {
   // Convertir explícitamente a números para evitar problemas de tipo
   const predHome = Number(predictedHome);
@@ -20,7 +33,7 @@ export function calculatePoints(
 
   // Resultado exacto
   if (predHome === actHome && predAway === actAway) {
-    return 5;
+    return rules.exactScore;
   }
 
   // Diferencias de goles
@@ -29,7 +42,7 @@ export function calculatePoints(
 
   // Empate acertado (ambos predicen empate)
   if (predictedDiff === 0 && actualDiff === 0) {
-    return 3;
+    return rules.correctDraw;
   }
 
   // Ganador correcto
@@ -37,7 +50,7 @@ export function calculatePoints(
     (predictedDiff > 0 && actualDiff > 0) || // Ambos predicen victoria local
     (predictedDiff < 0 && actualDiff < 0) // Ambos predicen victoria visitante
   ) {
-    return 3;
+    return rules.correctWinner;
   }
 
   // Predicción incorrecta
@@ -145,8 +158,7 @@ export function extractMexicoCityDateTime(date: Date): {
 export function fromMexicoCityTime(dateStr: string, timeStr: string): Date {
   // Validar inputs
   if (!dateStr || !timeStr) {
-    console.error("Invalid date/time:", { dateStr, timeStr });
-    return new Date(); // Retornar fecha actual como fallback
+    throw new Error("Invalid date/time");
   }
 
   // Crear string en formato ISO con offset de México (UTC-6)
@@ -155,8 +167,7 @@ export function fromMexicoCityTime(dateStr: string, timeStr: string): Date {
 
   // Validar que la fecha sea válida
   if (isNaN(date.getTime())) {
-    console.error("Invalid date created:", { dateStr, timeStr, isoString });
-    return new Date(); // Retornar fecha actual como fallback
+    throw new Error(`Invalid date created: ${isoString}`);
   }
 
   return date;

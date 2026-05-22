@@ -28,7 +28,7 @@ Contiene información de los 48 equipos participantes:
 
 ### `matches.json`
 
-Contiene el calendario de partidos de la fase de grupos (primeros 24 partidos):
+Contiene el calendario de partidos de la fase de grupos (72 partidos):
 
 - ID único del partido
 - Número de partido
@@ -45,14 +45,14 @@ Contiene el calendario de partidos de la fase de grupos (primeros 24 partidos):
 {
   "id": 1,
   "matchNumber": 1,
-  "date": "2026-06-11T18:00:00Z",
+  "date": "2026-06-11 13:00:00-06",
   "stadium": "Estadio Azteca",
   "city": "Ciudad de México",
   "country": "México",
   "group": "A",
   "homeTeam": "MEX",
   "awayTeam": "PAN",
-  "phase": "GROUP",
+  "phase": "GROUP_STAGE",
   "round": 1
 }
 ```
@@ -82,16 +82,10 @@ Información de los 16 estadios sede:
 
 ## Grupos
 
-El Mundial 2026 tiene **8 grupos (A-H)** con **6 equipos** cada uno:
+El Mundial 2026 tiene **12 grupos (A-L)** con **4 equipos** cada uno:
 
-- **Grupo A:** México, Ecuador, Italia, Senegal, Japón, Panamá
-- **Grupo B:** Estados Unidos, Perú, Bélgica, Marruecos, Corea del Sur, Honduras
-- **Grupo C:** Canadá, Francia, Croacia, Nigeria, Irán, Nueva Zelanda
-- **Grupo D:** Argentina, España, Dinamarca, Túnez, Australia, Paraguay
-- **Grupo E:** Brasil, Alemania, Suiza, Camerún, Arabia Saudita, Gales
-- **Grupo F:** Uruguay, Inglaterra, Polonia, Ghana, Qatar, Serbia
-- **Grupo G:** Colombia, Portugal, Suecia, Costa de Marfil, Costa Rica, Islandia
-- **Grupo H:** Chile, Países Bajos, Ucrania, Egipto, Jamaica, TBD
+- Grupos A-L con 4 equipos por grupo.
+- Los equipos TBD se actualizan conforme se definan clasificados/playoffs.
 
 ## Banderas
 
@@ -109,10 +103,10 @@ node scripts/download-flags.js
 
 ## Formato de Fechas
 
-Todas las fechas están en formato ISO 8601 (UTC):
+Las fechas de `matches.json` usan hora de Ciudad de Mexico con offset:
 
 ```
-2026-06-11T18:00:00Z
+2026-06-11 13:00:00-06
 ```
 
 Para convertir a hora local en tu código:

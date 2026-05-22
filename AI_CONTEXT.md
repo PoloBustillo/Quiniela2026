@@ -10,11 +10,13 @@
 - 1. Group stage
 - 1. Round of 32 + Round of 16 (16vos)
 - 1. Final phases (Quarterfinals, Semifinals, Third Place, Final)
+- Current canonical quarter-final phase is `QUARTER_FINAL`; `ROUND_OF_8` exists in schema history only and should stay out of user-facing filters unless product explicitly redefines it.
 
 ## Phase Terminology
 
 - In this product context, `16vos` and `octavos` must be treated as different phases.
-- Current enum only models `ROUND_OF_16`; a dedicated phase value for octavos is still pending if the tournament structure requires both.
+- `ROUND_OF_16` is used for 8vos/octavos in current seeded knockout data.
+- Avoid adding `ROUND_OF_8` to user-facing phase filters unless the data model is intentionally migrated.
 
 ## UI Direction
 
@@ -31,6 +33,12 @@
 
 - All users should be listed in leaderboard/compare views so cuota coverage can be visible to everyone.
 - Each row should show quota status for the current torneo tab.
+- Saving a prediction now requires the matching paid tier (`paidGroupStage`, `paidKnockout`, or `paidFinals`) unless legacy `hasPaid` is true.
+
+## Scoring Rules
+
+- `calculatePoints` accepts active rule values and defaults to 5 exact / 3 winner / 3 draw / 2 goal difference.
+- Admin score updates fetch the active `PointsRule` before recalculating predictions.
 
 ## Knockout ID Mapping
 

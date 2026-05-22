@@ -57,12 +57,20 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const { homeTeamId, awayTeamId, matchDate, stadium, city, phase } = body;
+    const parsedMatchDate = new Date(matchDate);
+
+    if (!matchDate || isNaN(parsedMatchDate.getTime())) {
+      return NextResponse.json(
+        { error: "Fecha de partido inválida" },
+        { status: 400 },
+      );
+    }
 
     const match = await prisma.match.create({
       data: {
         homeTeamId,
         awayTeamId,
-        matchDate: new Date(matchDate),
+        matchDate: parsedMatchDate,
         stadium,
         city,
         phase,
@@ -122,6 +130,14 @@ export async function PUT(request: Request) {
       city,
     });
 
+    const parsedMatchDate = matchDate ? new Date(matchDate) : null;
+    if (matchDate && (!parsedMatchDate || isNaN(parsedMatchDate.getTime()))) {
+      return NextResponse.json(
+        { error: "Fecha de partido inválida" },
+        { status: 400 },
+      );
+    }
+
     const match = await prisma.match.update({
       where: { id },
       data: {
@@ -130,7 +146,7 @@ export async function PUT(request: Request) {
         ...(homeScore !== undefined && { homeScore }),
         ...(awayScore !== undefined && { awayScore }),
         ...(status && { status }),
-        ...(matchDate && { matchDate: new Date(matchDate) }),
+        ...(parsedMatchDate && { matchDate: parsedMatchDate }),
         ...(stadium !== undefined && { stadium }),
         ...(city !== undefined && { city }),
       },
@@ -142,6 +158,15 @@ export async function PUT(request: Request) {
 
     // Si se actualizaron los marcadores, calcular puntos para todas las predicciones
     if (homeScore !== undefined && awayScore !== undefined) {
+      const activeRules = await prisma.pointsRule.findFirst({
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" },
+        select: {
+          exactScore: true,
+          correctWinner: true,
+          correctDraw: true,
+        },
+      });
       // Buscar predicciones con ID estable y fallback legacy para compatibilidad.
       const allMatches = await prisma.match.findMany({
         orderBy: { matchDate: "asc" },
@@ -167,6 +192,7 @@ export async function PUT(request: Request) {
           prediction.awayScore,
           homeScore,
           awayScore,
+          activeRules ?? undefined,
         );
 
         await prisma.prediction.update({

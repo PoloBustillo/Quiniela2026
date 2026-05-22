@@ -9,6 +9,16 @@ const prisma = new PrismaClient();
 async function testScoringSystem() {
   console.log("🧪 Iniciando pruebas del sistema de puntos...\n");
 
+  const activeRules = await prisma.pointsRule.findFirst({
+    where: { isActive: true },
+    orderBy: { createdAt: "desc" },
+    select: {
+      exactScore: true,
+      correctWinner: true,
+      correctDraw: true,
+    },
+  });
+
   // 1. Obtener usuarios de prueba
   const users = await prisma.user.findMany({
     take: 5,
@@ -86,6 +96,7 @@ async function testScoringSystem() {
           prediction.awayScore,
           match.homeScore!,
           match.awayScore!,
+          activeRules ?? undefined,
         );
 
         console.log(
@@ -113,6 +124,7 @@ async function testScoringSystem() {
             prediction.awayScore,
             score.homeScore!,
             score.awayScore!,
+            activeRules ?? undefined,
           );
 
           console.log(

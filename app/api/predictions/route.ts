@@ -5,6 +5,31 @@ import { prisma } from "@/lib/prisma";
 import matchesData from "@/data/matches.json";
 import { parseMatchDate, isPredictionClosed } from "@/lib/points";
 
+const canPredictPhase = (
+  phase: string | null,
+  user: {
+    hasPaid: boolean;
+    paidGroupStage: boolean;
+    paidKnockout: boolean;
+    paidFinals: boolean;
+  },
+) => {
+  if (user.hasPaid) return true;
+  if (phase === "GROUP_STAGE") return user.paidGroupStage;
+  if (phase === "ROUND_OF_32" || phase === "ROUND_OF_16") {
+    return user.paidKnockout;
+  }
+  if (
+    phase === "QUARTER_FINAL" ||
+    phase === "SEMI_FINAL" ||
+    phase === "THIRD_PLACE" ||
+    phase === "FINAL"
+  ) {
+    return user.paidFinals;
+  }
+  return false;
+};
+
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -117,6 +142,13 @@ export async function POST(req: NextRequest) {
 
     // VALIDACIÓN EN SERVIDOR: Si el partido ya empezó, rechazar la predicción
     // El tiempo es el del servidor — cambiar el reloj local no tiene efecto
+    if (!matchDate || isNaN(matchDate.getTime())) {
+      return NextResponse.json(
+        { error: "Fecha de partido inválida" },
+        { status: 400 },
+      );
+    }
+
     if (matchDate && isPredictionClosed(matchDate)) {
       return NextResponse.json(
         {
@@ -124,6 +156,25 @@ export async function POST(req: NextRequest) {
             "Este partido ya empezó. Las predicciones se cierran al iniciar el partido (hora del servidor).",
         },
         { status: 400 },
+      );
+    }
+
+    const userPayment = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        hasPaid: true,
+        paidGroupStage: true,
+        paidKnockout: true,
+        paidFinals: true,
+      },
+    });
+
+    if (!userPayment || !canPredictPhase(matchPhase, userPayment)) {
+      return NextResponse.json(
+        {
+          error: "Tu cuota para esta quiniela aún no está marcada como pagada.",
+        },
+        { status: 403 },
       );
     }
 

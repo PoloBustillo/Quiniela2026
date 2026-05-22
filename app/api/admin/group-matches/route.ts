@@ -129,18 +129,24 @@ export async function PUT(request: Request) {
 
     // Preparar datos de actualización
     const updateData: any = {};
+    const parsedMatchDate = matchDate ? new Date(matchDate) : null;
+    if (matchDate && (!parsedMatchDate || isNaN(parsedMatchDate.getTime()))) {
+      return NextResponse.json(
+        { error: "Fecha de partido inválida" },
+        { status: 400 },
+      );
+    }
+
     if (homeScore !== undefined) updateData.homeScore = homeScore;
     if (awayScore !== undefined) updateData.awayScore = awayScore;
-    if (matchDate !== undefined)
-      updateData.matchDate = matchDate ? new Date(matchDate) : null;
+    if (matchDate !== undefined) updateData.matchDate = parsedMatchDate;
 
     const createData: any = {
       matchId: matchId,
       homeScore: homeScore ?? null,
       awayScore: awayScore ?? null,
     };
-    if (matchDate !== undefined)
-      createData.matchDate = matchDate ? new Date(matchDate) : null;
+    if (matchDate !== undefined) createData.matchDate = parsedMatchDate;
 
     // Actualizar o crear el marcador en la base de datos
     const updatedScore = await prisma.groupMatchScore.upsert({
@@ -153,6 +159,15 @@ export async function PUT(request: Request) {
 
     // Si se actualizaron los marcadores, calcular puntos para todas las predicciones
     if (homeScore !== undefined && awayScore !== undefined) {
+      const activeRules = await prisma.pointsRule.findFirst({
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" },
+        select: {
+          exactScore: true,
+          correctWinner: true,
+          correctDraw: true,
+        },
+      });
       const predictionMatchId = `match_${matchId}`;
 
       const predictions = await prisma.prediction.findMany({
@@ -166,6 +181,7 @@ export async function PUT(request: Request) {
           prediction.awayScore,
           homeScore,
           awayScore,
+          activeRules ?? undefined,
         );
 
         await prisma.prediction.update({

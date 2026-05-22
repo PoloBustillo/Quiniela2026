@@ -7,6 +7,15 @@ async function recalculateAllPoints() {
 
   let totalUpdated = 0;
   let totalFixed = 0;
+  const activeRules = await prisma.pointsRule.findFirst({
+    where: { isActive: true },
+    orderBy: { createdAt: "desc" },
+    select: {
+      exactScore: true,
+      correctWinner: true,
+      correctDraw: true,
+    },
+  });
 
   // 1. Recalcular puntos para partidos de knockout (en la BD)
   console.log("📊 Procesando partidos knockout...");
@@ -39,6 +48,7 @@ async function recalculateAllPoints() {
         prediction.awayScore,
         match.homeScore!,
         match.awayScore!,
+        activeRules ?? undefined,
       );
 
       if (oldPoints !== newPoints) {
@@ -88,6 +98,7 @@ async function recalculateAllPoints() {
         prediction.awayScore,
         score.homeScore!,
         score.awayScore!,
+        activeRules ?? undefined,
       );
 
       if (oldPoints !== newPoints) {

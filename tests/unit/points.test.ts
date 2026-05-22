@@ -75,6 +75,33 @@ describe("calculatePoints", () => {
       expect(calculatePoints("2", "1", "2", "1")).toBe(5);
     });
   });
+
+  describe("custom point rules", () => {
+    const customRules = {
+      exactScore: 10,
+      correctWinner: 6,
+      correctDraw: 4,
+    };
+
+    it("uses custom exact-score points", () => {
+      expect(calculatePoints(2, 1, 2, 1, customRules)).toBe(10);
+    });
+
+    it("uses custom winner points", () => {
+      expect(calculatePoints(3, 0, 2, 0, customRules)).toBe(6);
+    });
+
+    it("uses custom draw points", () => {
+      expect(calculatePoints(1, 1, 2, 2, customRules)).toBe(4);
+    });
+
+    it("returns 0 for correct goal difference but wrong winner (no GD bonus)", () => {
+      // 2-0 vs 3-1: same diff (+2) but wrong winner not applicable here;
+      // predicted home win, actual home win → correctWinner applies.
+      // But 2-0 vs 1-0: same winner direction, different diff → correctWinner.
+      expect(calculatePoints(2, 0, 1, 0, customRules)).toBe(6);
+    });
+  });
 });
 
 // ─── isPredictionClosed ───────────────────────────────────────────────────────
@@ -154,9 +181,7 @@ describe("fromMexicoCityTime", () => {
     expect(d).toBeInstanceOf(Date);
   });
 
-  it("returns a fallback Date (not NaN) for empty inputs", () => {
-    const d = fromMexicoCityTime("", "");
-    expect(d).toBeInstanceOf(Date);
-    expect(isNaN(d.getTime())).toBe(false);
+  it("throws for empty inputs instead of falling back to current time", () => {
+    expect(() => fromMexicoCityTime("", "")).toThrow("Invalid date/time");
   });
 });

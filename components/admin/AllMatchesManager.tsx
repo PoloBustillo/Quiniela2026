@@ -76,7 +76,6 @@ const PHASES = [
   { value: "GROUP_STAGE", label: "Fase de Grupos" },
   { value: "ROUND_OF_32", label: "16vos de Final" },
   { value: "ROUND_OF_16", label: "8vos de Final" },
-  { value: "ROUND_OF_8", label: "Cuartos de Final" },
   { value: "QUARTER_FINAL", label: "Cuartos de Final" },
   { value: "SEMI_FINAL", label: "Semifinales" },
   { value: "THIRD_PLACE", label: "Tercer Lugar" },
@@ -99,7 +98,7 @@ const EARLY_KO_PHASES = PHASES.filter((p) =>
   ["ROUND_OF_32", "ROUND_OF_16"].includes(p.value),
 );
 const FINALS_PHASES = PHASES.filter((p) =>
-  ["ROUND_OF_8", "SEMI_FINAL", "THIRD_PLACE", "FINAL"].includes(p.value),
+  ["QUARTER_FINAL", "SEMI_FINAL", "THIRD_PLACE", "FINAL"].includes(p.value),
 );
 
 export function AllMatchesManager() {
@@ -531,7 +530,7 @@ export function AllMatchesManager() {
           const tab = v as "group" | "early_ko" | "finals" | "rules" | "users";
           setSelectedTab(tab);
           if (tab === "early_ko") setSelectedPhase("ROUND_OF_32");
-          if (tab === "finals") setSelectedPhase("ROUND_OF_8");
+          if (tab === "finals") setSelectedPhase("QUARTER_FINAL");
         }}
       >
         <TabsList className="grid w-full max-w-3xl grid-cols-3 sm:grid-cols-5 h-auto">

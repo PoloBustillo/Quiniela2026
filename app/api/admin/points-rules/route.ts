@@ -18,7 +18,6 @@ export async function GET(request: Request) {
           exactScore: 5,
           correctWinner: 3,
           correctDraw: 3,
-          correctGoalDifference: 2,
           isActive: true,
         },
       });
@@ -30,7 +29,7 @@ export async function GET(request: Request) {
     console.error("Error fetching points rules:", error);
     return NextResponse.json(
       { error: "Error al obtener reglas de puntos" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -50,8 +49,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { exactScore, correctWinner, correctDraw, correctGoalDifference } =
-      body;
+    const { exactScore, correctWinner, correctDraw } = body;
 
     // Desactivar reglas anteriores
     await prisma.pointsRule.updateMany({
@@ -65,7 +63,6 @@ export async function PUT(request: Request) {
         exactScore,
         correctWinner,
         correctDraw,
-        correctGoalDifference,
         isActive: true,
       },
     });
@@ -75,7 +72,7 @@ export async function PUT(request: Request) {
     console.error("Error updating points rules:", error);
     return NextResponse.json(
       { error: "Error al actualizar reglas de puntos" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

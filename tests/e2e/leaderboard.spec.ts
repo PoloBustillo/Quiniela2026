@@ -3,7 +3,7 @@
  *
  * Verifies that users only appear in the torneo tabs they have paid for:
  *   T1 (Grupos)   → paidGroupStage = true
- *   T2 (32avos)   → paidKnockout   = true
+ *   T2 (16vos + 8vos) → paidKnockout   = true
  *   T3 (Finales)  → paidFinals     = true
  *
  * Strategy
@@ -55,7 +55,7 @@ test.describe("Leaderboard – torneo tab structure", () => {
     const joined = labels.join(" ").toLowerCase();
     expect(joined).toMatch(/todo/i);
     expect(joined).toMatch(/t1|grupos/i);
-    expect(joined).toMatch(/t2|32/i);
+    expect(joined).toMatch(/t2|16|8/i);
     expect(joined).toMatch(/t3|final/i);
   });
 
@@ -105,7 +105,7 @@ test.describe("Leaderboard – torneo tab structure", () => {
       .count();
 
     // Switch to T2
-    const t2Tab = page.getByRole("tab", { name: /t2|32avos/i });
+    const t2Tab = page.getByRole("tab", { name: /t2|16vos|8vos/i });
     await t2Tab.click();
     await page.waitForTimeout(500); // let re-render settle
 

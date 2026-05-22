@@ -17,7 +17,6 @@ interface PointsRule {
   exactScore: number;
   correctWinner: number;
   correctDraw: number;
-  correctGoalDifference: number;
   isActive: boolean;
 }
 
@@ -26,7 +25,6 @@ export function PointsRulesManager() {
   const [exactScore, setExactScore] = useState(5);
   const [correctWinner, setCorrectWinner] = useState(3);
   const [correctDraw, setCorrectDraw] = useState(3);
-  const [correctGoalDifference, setCorrectGoalDifference] = useState(2);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -41,7 +39,6 @@ export function PointsRulesManager() {
       setExactScore(data.exactScore);
       setCorrectWinner(data.correctWinner);
       setCorrectDraw(data.correctDraw);
-      setCorrectGoalDifference(data.correctGoalDifference);
     } catch (error) {
       console.error("Error loading rules:", error);
     }
@@ -57,7 +54,6 @@ export function PointsRulesManager() {
           exactScore,
           correctWinner,
           correctDraw,
-          correctGoalDifference,
         }),
       });
 
@@ -128,22 +124,6 @@ export function PointsRulesManager() {
               Puntos por acertar que hay empate (sin marcador exacto)
             </p>
           </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Diferencia de Goles</label>
-            <Input
-              type="number"
-              min="0"
-              value={correctGoalDifference}
-              onChange={(e) =>
-                setCorrectGoalDifference(parseInt(e.target.value) || 0)
-              }
-              className="text-center"
-            />
-            <p className="text-xs text-muted-foreground">
-              Puntos por acertar la diferencia de goles (sin ganador correcto)
-            </p>
-          </div>
         </div>
 
         <div className="pt-4 border-t">
@@ -169,9 +149,13 @@ export function PointsRulesManager() {
             </div>
             <div className="flex justify-between p-2 bg-muted rounded">
               <span>Real: 3-1, Predicción: 2-0</span>
-              <span className="font-bold text-yellow-600">
-                {correctGoalDifference} puntos
+              <span className="font-bold text-blue-600">
+                {correctWinner} puntos
               </span>
+            </div>
+            <div className="flex justify-between p-2 bg-muted rounded">
+              <span>Real: 2-1, Predicción: 0-1</span>
+              <span className="font-bold text-red-600">0 puntos</span>
             </div>
           </div>
         </div>
