@@ -307,44 +307,51 @@ export default function PredictionCard({
           </div>
 
           {/* Result indicator — visible once match has a score */}
-          {isPast && match.homeScore != null && match.awayScore != null && (() => {
-            const pts = existingPrediction
-              ? calculatePoints(
-                  existingPrediction.homeScore,
-                  existingPrediction.awayScore,
-                  match.homeScore,
-                  match.awayScore,
-                )
-              : null;
-            return (
-              <div className="mt-2 flex items-center justify-between px-1">
-                <span className="text-[11px] text-muted-foreground">
-                  Resultado:{" "}
-                  <span className="font-bold text-foreground">
-                    {match.homeScore}–{match.awayScore}
+          {isPast &&
+            match.homeScore != null &&
+            match.awayScore != null &&
+            (() => {
+              const pts = existingPrediction
+                ? calculatePoints(
+                    existingPrediction.homeScore,
+                    existingPrediction.awayScore,
+                    match.homeScore,
+                    match.awayScore,
+                  )
+                : null;
+              return (
+                <div className="mt-2 flex items-center justify-between px-1">
+                  <span className="text-[11px] text-muted-foreground">
+                    Resultado:{" "}
+                    <span className="font-bold text-foreground">
+                      {match.homeScore}–{match.awayScore}
+                    </span>
                   </span>
-                </span>
-                {pts != null ? (
-                  <span
-                    className={cn(
-                      "text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
-                      pts === 5
-                        ? "bg-green-500/15 text-green-600"
+                  {pts != null ? (
+                    <span
+                      className={cn(
+                        "text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
+                        pts === 5
+                          ? "bg-green-500/15 text-green-600"
+                          : pts === 3
+                            ? "bg-blue-500/15 text-blue-600"
+                            : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {pts === 5
+                        ? "✓ Exacto"
                         : pts === 3
-                          ? "bg-blue-500/15 text-blue-600"
-                          : "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {pts === 5 ? "✓ Exacto" : pts === 3 ? "✓ Ganador" : "✗ 0pts"}
-                  </span>
-                ) : (
-                  <span className="text-[10px] text-muted-foreground/60 italic">
-                    Sin predicción
-                  </span>
-                )}
-              </div>
-            );
-          })()}
+                          ? "✓ Ganador"
+                          : "✗ 0pts"}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground/60 italic">
+                      Sin predicción
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
 
           {/* Meta row */}
           <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground gap-2">
