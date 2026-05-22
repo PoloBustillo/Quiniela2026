@@ -143,6 +143,8 @@ export default async function HomePage() {
     stage: match.phase,
     phase: match.phase,
     group: "", // No group for knockout matches
+    homeScore: match.homeScore ?? null,
+    awayScore: match.awayScore ?? null,
   }));
 
   // Combine group stage matches (with DB data) with knockout matches from DB

@@ -17,6 +17,8 @@ interface Match {
   stage: string;
   group?: string;
   phase?: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
 }
 
 interface PredictionMap {
