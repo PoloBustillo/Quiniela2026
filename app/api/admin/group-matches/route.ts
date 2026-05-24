@@ -140,11 +140,16 @@ export async function PUT(request: Request) {
     if (homeScore !== undefined) updateData.homeScore = homeScore;
     if (awayScore !== undefined) updateData.awayScore = awayScore;
     if (matchDate !== undefined) updateData.matchDate = parsedMatchDate;
+    // Marcar como override manual para que BSD no sobrescriba
+    updateData.manualOverride = true;
+    updateData.syncSource = "manual";
 
     const createData: any = {
       matchId: matchId,
       homeScore: homeScore ?? null,
       awayScore: awayScore ?? null,
+      manualOverride: true,
+      syncSource: "manual",
     };
     if (matchDate !== undefined) createData.matchDate = parsedMatchDate;
 

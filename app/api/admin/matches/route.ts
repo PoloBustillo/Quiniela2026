@@ -116,6 +116,7 @@ export async function PUT(request: Request) {
       matchDate,
       stadium,
       city,
+      bsdEventId,
     } = body;
 
     console.log("🔧 API recibió actualización:", {
@@ -149,6 +150,13 @@ export async function PUT(request: Request) {
         ...(parsedMatchDate && { matchDate: parsedMatchDate }),
         ...(stadium !== undefined && { stadium }),
         ...(city !== undefined && { city }),
+        // bsdEventId: asignar/quitar mapeo BSD para sync automático
+        ...(bsdEventId !== undefined && {
+          bsdEventId: bsdEventId === null ? null : Number(bsdEventId),
+        }),
+        // Marcar como override manual para que BSD no sobrescriba
+        manualOverride: true,
+        syncSource: "manual",
       },
       include: {
         homeTeam: true,

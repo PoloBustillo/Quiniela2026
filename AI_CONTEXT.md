@@ -2,7 +2,38 @@
 
 ## Date
 
-- 2026-04-22
+- 2026-05-24
+
+## BSD Sports API Integration
+
+- **Integración incremental y no invasiva** con BSD Sports API (https://sports.bzzoiro.com/)
+- **BSD_API_TOKEN** debe configurarse en `.env` y en Vercel Environment Variables
+- `league_id: 27`, `season_id: 188` = FIFA World Cup 2026 en BSD
+- Todos los 72 partidos de fase de grupos tienen mapeo estático en `lib/bsd-mapping.ts`
+- Los partidos de eliminatoria se mapean asignando `bsdEventId` al crearlos en el panel admin
+- **manualOverride = true** bloquea cualquier actualización automática de ese partido
+- Cuando el admin guarda un score manualmente, `manualOverride` se activa automáticamente
+- BSD se trata como "best effort" — si falla, el sistema sigue funcionando
+
+## Archivos de integración BSD
+
+- `lib/bsd-client.ts` — wrapper de la API con timeout y fallback
+- `lib/bsd-sync.ts` — lógica de sync, respeta manualOverride, recalcula puntos
+- `lib/bsd-mapping.ts` — mapeo estático local_id → bsd_event_id
+- `app/api/admin/bsd/route.ts` — endpoint admin para control manual del sync
+- `app/api/cron/sync-bsd/route.ts` — endpoint para Vercel cron (cada minuto)
+- `components/admin/BsdSyncPanel.tsx` — UI panel en tab "BSD Sync" del admin
+
+## Vercel Cron
+
+- Configurado en `vercel.json`: `* * * * *` (cada minuto)
+- Llama a `/api/cron/sync-bsd` con `Authorization: Bearer CRON_SECRET`
+- Solo disponible en plan Hobby+ de Vercel
+
+## Variables de entorno requeridas
+
+- `BSD_API_TOKEN=667ccb4b29ade16c6863e4ebdfa03268f3882dff`
+- `CRON_SECRET=<valor_aleatorio>` (protege el endpoint del cron)
 
 ## Current Product Rules
 

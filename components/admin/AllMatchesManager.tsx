@@ -37,6 +37,7 @@ import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PointsRulesManager } from "./PointsRulesManager";
 import { UsersPaymentManager } from "./UsersPaymentManager";
+import { BsdSyncPanel } from "./BsdSyncPanel";
 import stadiumsData from "@/data/stadiums.json";
 import { extractMexicoCityDateTime, fromMexicoCityTime } from "@/lib/points";
 
@@ -58,6 +59,8 @@ interface Match {
   city: string | null;
   phase: string;
   status: string;
+  bsdEventId: number | null;
+  manualOverride: boolean;
 }
 
 interface JsonMatch {
@@ -103,7 +106,7 @@ const FINALS_PHASES = PHASES.filter((p) =>
 
 export function AllMatchesManager() {
   const [selectedTab, setSelectedTab] = useState<
-    "group" | "early_ko" | "finals" | "rules" | "users"
+    "group" | "early_ko" | "finals" | "rules" | "users" | "bsd"
   >("group");
   const [selectedPhase, setSelectedPhase] = useState("ROUND_OF_32");
   const [selectedGroup, setSelectedGroup] = useState("A");
@@ -155,6 +158,7 @@ export function AllMatchesManager() {
       stadium?: string;
       city?: string;
       status?: string;
+      bsdEventId?: number | null;
     };
   }>({});
 
@@ -311,6 +315,9 @@ export function AllMatchesManager() {
       }
       if (edits.status && edits.status !== originalMatch.status) {
         updateData.status = edits.status;
+      }
+      if (edits.bsdEventId !== undefined) {
+        updateData.bsdEventId = edits.bsdEventId;
       }
 
       console.log("📤 Enviando actualización knockout:", updateData);
@@ -527,13 +534,19 @@ export function AllMatchesManager() {
       <Tabs
         value={selectedTab}
         onValueChange={(v) => {
-          const tab = v as "group" | "early_ko" | "finals" | "rules" | "users";
+          const tab = v as
+            | "group"
+            | "early_ko"
+            | "finals"
+            | "rules"
+            | "users"
+            | "bsd";
           setSelectedTab(tab);
           if (tab === "early_ko") setSelectedPhase("ROUND_OF_32");
           if (tab === "finals") setSelectedPhase("QUARTER_FINAL");
         }}
       >
-        <TabsList className="grid w-full max-w-3xl grid-cols-3 sm:grid-cols-5 h-auto">
+        <TabsList className="grid w-full max-w-4xl grid-cols-3 sm:grid-cols-6 h-auto">
           <TabsTrigger value="group" className="text-xs px-2 py-1.5">
             1. Grupos
           </TabsTrigger>
@@ -548,6 +561,9 @@ export function AllMatchesManager() {
           </TabsTrigger>
           <TabsTrigger value="users" className="text-xs px-2 py-1.5">
             Usuarios
+          </TabsTrigger>
+          <TabsTrigger value="bsd" className="text-xs px-2 py-1.5">
+            BSD Sync
           </TabsTrigger>
         </TabsList>
 
@@ -917,6 +933,37 @@ export function AllMatchesManager() {
                               ))}
                             </SelectContent>
                           </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-muted-foreground">
+                            BSD Event ID (opcional)
+                          </label>
+                          <Input
+                            type="number"
+                            placeholder="ej: 8390"
+                            value={
+                              knockoutEdits[match.id]?.bsdEventId ??
+                              match.bsdEventId ??
+                              ""
+                            }
+                            onChange={(e) =>
+                              updateKnockoutMatch(match.id, {
+                                bsdEventId:
+                                  e.target.value === ""
+                                    ? null
+                                    : parseInt(e.target.value),
+                              })
+                            }
+                          />
+                          {match.bsdEventId &&
+                            !knockoutEdits[match.id]?.bsdEventId && (
+                              <p className="text-xs text-green-600">
+                                ✓ Sync BSD activo · ID: {match.bsdEventId}
+                                {match.manualOverride
+                                  ? " · override manual"
+                                  : ""}
+                              </p>
+                            )}
                         </div>
                       </div>
                       {match.homeTeam.code !== "TBD" &&
@@ -1385,6 +1432,37 @@ export function AllMatchesManager() {
                             </SelectContent>
                           </Select>
                         </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-muted-foreground">
+                            BSD Event ID (opcional)
+                          </label>
+                          <Input
+                            type="number"
+                            placeholder="ej: 8390"
+                            value={
+                              knockoutEdits[match.id]?.bsdEventId ??
+                              match.bsdEventId ??
+                              ""
+                            }
+                            onChange={(e) =>
+                              updateKnockoutMatch(match.id, {
+                                bsdEventId:
+                                  e.target.value === ""
+                                    ? null
+                                    : parseInt(e.target.value),
+                              })
+                            }
+                          />
+                          {match.bsdEventId &&
+                            !knockoutEdits[match.id]?.bsdEventId && (
+                              <p className="text-xs text-green-600">
+                                ✓ Sync BSD activo · ID: {match.bsdEventId}
+                                {match.manualOverride
+                                  ? " · override manual"
+                                  : ""}
+                              </p>
+                            )}
+                        </div>
                       </div>
 
                       {/* Marcadores */}
@@ -1827,6 +1905,10 @@ export function AllMatchesManager() {
 
         <TabsContent value="users" className="space-y-4 mt-6">
           <UsersPaymentManager />
+        </TabsContent>
+
+        <TabsContent value="bsd" className="space-y-4 mt-6">
+          <BsdSyncPanel />
         </TabsContent>
       </Tabs>
 

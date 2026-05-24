@@ -84,23 +84,29 @@ model Team {
 }
 
 model Match {
-    id         String      @id @default(cuid())
-    homeTeamId String
-    awayTeamId String
-    homeTeam   Team        @relation("HomeTeam", fields: [homeTeamId], references: [id])
-    awayTeam   Team        @relation("AwayTeam", fields: [awayTeamId], references: [id])
-    homeScore  Int?
-    awayScore  Int?
-    matchDate  DateTime
-    stadium    String?
-    city       String?
-    phase      MatchPhase
-    status     MatchStatus @default(SCHEDULED)
-    createdAt  DateTime    @default(now())
-    updatedAt  DateTime    @updatedAt
+    id             String      @id @default(cuid())
+    homeTeamId     String
+    awayTeamId     String
+    homeTeam       Team        @relation("HomeTeam", fields: [homeTeamId], references: [id])
+    awayTeam       Team        @relation("AwayTeam", fields: [awayTeamId], references: [id])
+    homeScore      Int?
+    awayScore      Int?
+    matchDate      DateTime
+    stadium        String?
+    city           String?
+    phase          MatchPhase
+    status         MatchStatus @default(SCHEDULED)
+    createdAt      DateTime    @default(now())
+    updatedAt      DateTime    @updatedAt
+    // BSD Sports API integration (optional, non-breaking)
+    bsdEventId     Int?        @unique // BSD event ID para sync automático
+    manualOverride Boolean     @default(false) // true = no sobrescribir con sync
+    lastSyncedAt   DateTime? // última vez que BSD actualizó este partido
+    syncSource     String? // "manual" | "bsd" | null
 
     @@index([matchDate])
     @@index([status])
+    @@index([bsdEventId])
 }
 
 model Prediction {
@@ -122,14 +128,20 @@ model Prediction {
 }
 
 model GroupMatchScore {
-    id        String    @id @default(cuid())
-    matchId   Int       @unique // ID del partido en matches.json
-    homeScore Int?
-    awayScore Int?
-    matchDate DateTime? // Fecha/hora personalizada (anula la del JSON)
-    updatedAt DateTime  @updatedAt
+    id             String    @id @default(cuid())
+    matchId        Int       @unique // ID del partido en matches.json
+    homeScore      Int?
+    awayScore      Int?
+    matchDate      DateTime? // Fecha/hora personalizada (anula la del JSON)
+    updatedAt      DateTime  @updatedAt
+    // BSD Sports API integration (optional, non-breaking)
+    bsdEventId     Int?      @unique // BSD event ID para sync automático
+    manualOverride Boolean   @default(false) // true = no sobrescribir con sync
+    lastSyncedAt   DateTime? // última vez que BSD actualizó este partido
+    syncSource     String? // "manual" | "bsd" | null
 
     @@index([matchId])
+    @@index([bsdEventId])
 }
 
 model PointsRule {
@@ -168,4 +180,18 @@ enum MatchStatus {
     FINISHED
     POSTPONED
     CANCELLED
+}
+
+// BSD Sports API - Log de sincronización
+model BsdSyncLog {
+    id             String   @id @default(cuid())
+    syncType       String // "live_poll" | "group_sync" | "knockout_sync"
+    status         String // "ok" | "error" | "skipped"
+    matchesUpdated Int      @default(0)
+    errorMessage   String?  @db.Text
+    durationMs     Int?
+    createdAt      DateTime @default(now())
+
+    @@index([createdAt])
+    @@index([syncType])
 }

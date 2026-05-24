@@ -1,6 +1,35 @@
 # Changelog
 
-## 2026-05-22
+## 2026-05-24
+
+### Added — BSD Sports API Integration (incremental, non-invasive)
+
+- **`lib/bsd-client.ts`** — Cliente tipado de BSD API v2 con timeout 8s, fallback a null en cualquier error, sin dependencias críticas.
+- **`lib/bsd-mapping.ts`** — Mapeo estático de los 72 partidos de fase de grupos (ID local → BSD event ID). Verificado contra la API real.
+- **`lib/bsd-sync.ts`** — Servicio de sync con lógica de manual override, recálculo de puntos, y logging a `BsdSyncLog`.
+- **`app/api/admin/bsd/route.ts`** — Endpoint admin `GET/POST /api/admin/bsd` para ver estado y disparar syncs manuales.
+- **`app/api/cron/sync-bsd/route.ts`** — Endpoint de Vercel cron para polling automático cada minuto durante partidos en vivo.
+- **`components/admin/BsdSyncPanel.tsx`** — Panel en nueva tab "BSD Sync" del admin para monitorear y controlar la integración.
+
+### Changed
+
+- **`prisma/schema.prisma`** — Campos adicionales no invasivos en `Match` y `GroupMatchScore`: `bsdEventId`, `manualOverride`, `lastSyncedAt`, `syncSource`. Nueva tabla `BsdSyncLog`.
+- **`app/api/admin/group-matches/route.ts`** — PUT ahora activa `manualOverride=true` al guardar manualmente (protege de sobrescritura BSD).
+- **`app/api/admin/matches/route.ts`** — PUT ahora activa `manualOverride=true` al guardar manualmente.
+- **`components/admin/AllMatchesManager.tsx`** — Nueva tab "BSD Sync" con `BsdSyncPanel`.
+- **`vercel.json`** — Cron job configurado: `* * * * *` → `/api/cron/sync-bsd`.
+
+### Migration
+
+- `prisma/migrations/20260524062841_add_bsd_sync_fields/` — Migración aplicada en producción (Neon DB).
+
+### Notes
+
+- La operación manual sigue funcionando exactamente como antes.
+- BSD falla silenciosamente — ningún error de BSD rompe el sistema.
+- `manualOverride=true` bloquea todo update automático hasta que el admin lo resetee.
+- World Cup 2026 en BSD: `league_id=27`, `season_id=188`.
+
 
 ### Fixed
 
