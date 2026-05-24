@@ -368,6 +368,35 @@ export function AllMatchesManager() {
     });
   };
 
+  // Forzar sync de un partido de eliminatoria desde su bsdEventId
+  const syncKnockoutNow = async (matchId: string) => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/admin/bsd", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync_knockout", dbId: matchId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const r = data.result;
+        showToast(
+          r.updated > 0
+            ? `Sincronizado: ${r.details[0] ?? "OK"}`
+            : `Sin cambios: ${r.details[0] ?? "no hay datos nuevos"}`,
+          r.updated > 0 ? "success" : undefined,
+        );
+        await loadKnockoutMatches();
+      } else {
+        showToast(`Error: ${data.error}`, "error");
+      }
+    } catch {
+      showToast("Error de red al sincronizar", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Actualizar estado temporal de grupos
   const updateGroupMatch = (matchId: number, updates: any) => {
     setGroupEdits((prev) => ({
@@ -988,12 +1017,23 @@ export function AllMatchesManager() {
                           />
                           {match.bsdEventId &&
                             !knockoutEdits[match.id]?.bsdEventId && (
-                              <p className="text-xs text-green-600">
-                                ✓ Sync BSD activo · ID: {match.bsdEventId}
-                                {match.manualOverride
-                                  ? " · override manual"
-                                  : ""}
-                              </p>
+                              <div className="flex items-center gap-3 mt-1">
+                                <p className="text-xs text-green-600">
+                                  ✓ Sync BSD activo · ID: {match.bsdEventId}
+                                  {match.manualOverride
+                                    ? " · override manual"
+                                    : ""}
+                                </p>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 text-xs px-2 py-0"
+                                  disabled={loading}
+                                  onClick={() => syncKnockoutNow(match.id)}
+                                >
+                                  Sync ahora
+                                </Button>
+                              </div>
                             )}
                         </div>
                       </div>
@@ -1007,8 +1047,7 @@ export function AllMatchesManager() {
                             min="0"
                             placeholder="0"
                             value={
-                              knockoutEdits[match.id]?.homeScore !==
-                              undefined
+                              knockoutEdits[match.id]?.homeScore !== undefined
                                 ? (knockoutEdits[match.id].homeScore ?? "")
                                 : (match.homeScore ?? "")
                             }
@@ -1029,8 +1068,7 @@ export function AllMatchesManager() {
                             min="0"
                             placeholder="0"
                             value={
-                              knockoutEdits[match.id]?.awayScore !==
-                              undefined
+                              knockoutEdits[match.id]?.awayScore !== undefined
                                 ? (knockoutEdits[match.id].awayScore ?? "")
                                 : (match.awayScore ?? "")
                             }
@@ -1477,12 +1515,23 @@ export function AllMatchesManager() {
                           />
                           {match.bsdEventId &&
                             !knockoutEdits[match.id]?.bsdEventId && (
-                              <p className="text-xs text-green-600">
-                                ✓ Sync BSD activo · ID: {match.bsdEventId}
-                                {match.manualOverride
-                                  ? " · override manual"
-                                  : ""}
-                              </p>
+                              <div className="flex items-center gap-3 mt-1">
+                                <p className="text-xs text-green-600">
+                                  ✓ Sync BSD activo · ID: {match.bsdEventId}
+                                  {match.manualOverride
+                                    ? " · override manual"
+                                    : ""}
+                                </p>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 text-xs px-2 py-0"
+                                  disabled={loading}
+                                  onClick={() => syncKnockoutNow(match.id)}
+                                >
+                                  Sync ahora
+                                </Button>
+                              </div>
                             )}
                         </div>
                       </div>
@@ -1498,8 +1547,7 @@ export function AllMatchesManager() {
                             min="0"
                             placeholder="0"
                             value={
-                              knockoutEdits[match.id]?.homeScore !==
-                              undefined
+                              knockoutEdits[match.id]?.homeScore !== undefined
                                 ? (knockoutEdits[match.id].homeScore ?? "")
                                 : (match.homeScore ?? "")
                             }
@@ -1521,8 +1569,7 @@ export function AllMatchesManager() {
                             min="0"
                             placeholder="0"
                             value={
-                              knockoutEdits[match.id]?.awayScore !==
-                              undefined
+                              knockoutEdits[match.id]?.awayScore !== undefined
                                 ? (knockoutEdits[match.id].awayScore ?? "")
                                 : (match.awayScore ?? "")
                             }

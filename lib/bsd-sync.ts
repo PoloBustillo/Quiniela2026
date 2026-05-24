@@ -264,7 +264,11 @@ export async function forceSyncKnockoutMatch(
     });
 
     if (newHomeScore !== null && newAwayScore !== null) {
-      await recalcKnockoutMatchPredictions(matchDbId, newHomeScore, newAwayScore);
+      await recalcKnockoutMatchPredictions(
+        matchDbId,
+        newHomeScore,
+        newAwayScore,
+      );
     }
 
     result.updated = 1;
