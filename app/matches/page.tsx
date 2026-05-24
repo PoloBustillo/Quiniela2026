@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { Calendar } from "lucide-react";
 import { MatchCard } from "@/components/MatchCard";
 import matchesData from "@/data/matches.json";
-import teamsData from "@/data/teams.json";
 
 export default async function MatchesPage() {
   const session = await getServerSession(authOptions);
@@ -13,26 +12,23 @@ export default async function MatchesPage() {
     redirect("/auth/signin");
   }
 
-  // Crear un mapa de equipos para acceso rápido
-  const teamsMap = teamsData.teams.reduce((acc, team) => {
-    acc[team.id] = team;
-    return acc;
-  }, {} as Record<string, any>);
-
   // Agrupar partidos por fecha
-  const matchesByDate = matchesData.matches.reduce((acc, match) => {
-    const date = new Date(match.date).toLocaleDateString("es-MX", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(match);
-    return acc;
-  }, {} as Record<string, any[]>);
+  const matchesByDate = matchesData.matches.reduce(
+    (acc, match) => {
+      const date = new Date(match.date).toLocaleDateString("es-MX", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(match);
+      return acc;
+    },
+    {} as Record<string, any[]>,
+  );
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -60,7 +56,7 @@ export default async function MatchesPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {matches.map((match) => (
-                <MatchCard key={match.id} match={match} teams={teamsMap} />
+                <MatchCard key={match.id} match={match as any} />
               ))}
             </div>
           </div>

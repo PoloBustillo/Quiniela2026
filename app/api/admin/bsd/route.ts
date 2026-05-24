@@ -17,6 +17,7 @@ import { authOptions } from "@/lib/auth";
 import {
   syncLiveMatches,
   syncSingleGroupMatch,
+  forceSyncKnockoutMatch,
   getLastSyncStatus,
 } from "@/lib/bsd-sync";
 import { getEventDetail, getLiveMatches } from "@/lib/bsd-client";
@@ -116,6 +117,18 @@ export async function POST(request: Request) {
         { error: "Parámetros inválidos para reset_override" },
         { status: 400 },
       );
+    }
+
+    if (action === "sync_knockout") {
+      const { dbId } = body;
+      if (typeof dbId !== "string") {
+        return NextResponse.json(
+          { error: "dbId requerido (string UUID)" },
+          { status: 400 },
+        );
+      }
+      const result = await forceSyncKnockoutMatch(dbId);
+      return NextResponse.json({ success: true, result });
     }
 
     // ── test_connection: verifica token + retorna raw BSD data de un partido ──

@@ -531,6 +531,43 @@ export function AllMatchesManager() {
 
   return (
     <div className="space-y-6">
+      {/* Reset puntos — solo visible antes del torneo */}
+      <div className="flex items-center justify-between p-3 rounded-lg border border-destructive/30 bg-destructive/5">
+        <div>
+          <p className="text-sm font-medium text-destructive">
+            Reset de puntos de prueba
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Pone todos los puntos a 0. Úsalo si hiciste pruebas con scores antes
+            del inicio del torneo.
+          </p>
+        </div>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={async () => {
+            if (
+              !confirm(
+                "¿Resetear TODOS los puntos a 0? Esta acción no se puede deshacer.",
+              )
+            )
+              return;
+            try {
+              const res = await fetch("/api/admin/reset-points", {
+                method: "POST",
+              });
+              const data = await res.json();
+              if (res.ok) showToast(data.message, "success");
+              else showToast(data.error || "Error al resetear", "error");
+            } catch {
+              showToast("Error de conexión", "error");
+            }
+          }}
+        >
+          Resetear todos los puntos
+        </Button>
+      </div>
+
       <Tabs
         value={selectedTab}
         onValueChange={(v) => {
@@ -730,7 +767,6 @@ export function AllMatchesManager() {
                                 homeTeamId: value,
                               })
                             }
-                            disabled={match.status === "FINISHED"}
                           >
                             <SelectTrigger>
                               <SelectValue>
@@ -782,7 +818,6 @@ export function AllMatchesManager() {
                                 awayTeamId: value,
                               })
                             }
-                            disabled={match.status === "FINISHED"}
                           >
                             <SelectTrigger>
                               <SelectValue>
@@ -853,7 +888,6 @@ export function AllMatchesManager() {
                                   ).toISOString(),
                                 });
                               }}
-                              disabled={match.status === "FINISHED"}
                               className="h-11 text-base touch-manipulation"
                             />
                             <Input
@@ -881,7 +915,6 @@ export function AllMatchesManager() {
                                   ).toISOString(),
                                 });
                               }}
-                              disabled={match.status === "FINISHED"}
                               className="h-11 text-base touch-manipulation"
                             />
                           </div>
@@ -897,7 +930,6 @@ export function AllMatchesManager() {
                             onValueChange={(v) =>
                               updateKnockoutMatch(match.id, { stadium: v })
                             }
-                            disabled={match.status === "FINISHED"}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Selecciona un estadio" />
@@ -920,7 +952,6 @@ export function AllMatchesManager() {
                             onValueChange={(v) =>
                               updateKnockoutMatch(match.id, { city: v })
                             }
-                            disabled={match.status === "FINISHED"}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Selecciona una ciudad" />
@@ -966,59 +997,56 @@ export function AllMatchesManager() {
                             )}
                         </div>
                       </div>
-                      {match.homeTeam.code !== "TBD" &&
-                        match.awayTeam.code !== "TBD" && (
-                          <div className="border-t pt-4">
-                            <label className="text-sm font-medium mb-2 block">
-                              Resultado Final
-                            </label>
-                            <div className="flex items-center gap-4">
-                              <Input
-                                type="number"
-                                min="0"
-                                placeholder="0"
-                                value={
-                                  knockoutEdits[match.id]?.homeScore !==
-                                  undefined
-                                    ? (knockoutEdits[match.id].homeScore ?? "")
-                                    : (match.homeScore ?? "")
-                                }
-                                onChange={(e) =>
-                                  updateKnockoutMatch(match.id, {
-                                    homeScore:
-                                      e.target.value === ""
-                                        ? null
-                                        : parseInt(e.target.value),
-                                    status: "FINISHED",
-                                  })
-                                }
-                                className="w-20 text-center"
-                              />
-                              <span className="text-2xl font-bold">-</span>
-                              <Input
-                                type="number"
-                                min="0"
-                                placeholder="0"
-                                value={
-                                  knockoutEdits[match.id]?.awayScore !==
-                                  undefined
-                                    ? (knockoutEdits[match.id].awayScore ?? "")
-                                    : (match.awayScore ?? "")
-                                }
-                                onChange={(e) =>
-                                  updateKnockoutMatch(match.id, {
-                                    awayScore:
-                                      e.target.value === ""
-                                        ? null
-                                        : parseInt(e.target.value),
-                                    status: "FINISHED",
-                                  })
-                                }
-                                className="w-20 text-center"
-                              />
-                            </div>
-                          </div>
-                        )}
+                      <div className="border-t pt-4">
+                        <label className="text-sm font-medium mb-2 block">
+                          Resultado Final
+                        </label>
+                        <div className="flex items-center gap-4">
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={
+                              knockoutEdits[match.id]?.homeScore !==
+                              undefined
+                                ? (knockoutEdits[match.id].homeScore ?? "")
+                                : (match.homeScore ?? "")
+                            }
+                            onChange={(e) =>
+                              updateKnockoutMatch(match.id, {
+                                homeScore:
+                                  e.target.value === ""
+                                    ? null
+                                    : parseInt(e.target.value),
+                                status: "FINISHED",
+                              })
+                            }
+                            className="w-20 text-center"
+                          />
+                          <span className="text-2xl font-bold">-</span>
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={
+                              knockoutEdits[match.id]?.awayScore !==
+                              undefined
+                                ? (knockoutEdits[match.id].awayScore ?? "")
+                                : (match.awayScore ?? "")
+                            }
+                            onChange={(e) =>
+                              updateKnockoutMatch(match.id, {
+                                awayScore:
+                                  e.target.value === ""
+                                    ? null
+                                    : parseInt(e.target.value),
+                                status: "FINISHED",
+                              })
+                            }
+                            className="w-20 text-center"
+                          />
+                        </div>
+                      </div>
                       {knockoutEdits[match.id] && (
                         <div className="flex gap-2 pt-4 border-t mt-4">
                           <Button
@@ -1215,7 +1243,6 @@ export function AllMatchesManager() {
                                 homeTeamId: value,
                               });
                             }}
-                            disabled={match.status === "FINISHED"}
                           >
                             <SelectTrigger>
                               <SelectValue>
@@ -1268,7 +1295,6 @@ export function AllMatchesManager() {
                                 awayTeamId: value,
                               });
                             }}
-                            disabled={match.status === "FINISHED"}
                           >
                             <SelectTrigger>
                               <SelectValue>
@@ -1341,7 +1367,6 @@ export function AllMatchesManager() {
                                   ).toISOString(),
                                 });
                               }}
-                              disabled={match.status === "FINISHED"}
                               className="h-11 text-base touch-manipulation"
                             />
                             <Input
@@ -1369,7 +1394,6 @@ export function AllMatchesManager() {
                                   ).toISOString(),
                                 });
                               }}
-                              disabled={match.status === "FINISHED"}
                               className="h-11 text-base touch-manipulation"
                             />
                           </div>
@@ -1388,7 +1412,6 @@ export function AllMatchesManager() {
                                 stadium: value,
                               });
                             }}
-                            disabled={match.status === "FINISHED"}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Selecciona un estadio" />
@@ -1418,7 +1441,6 @@ export function AllMatchesManager() {
                                 city: value,
                               });
                             }}
-                            disabled={match.status === "FINISHED"}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Selecciona una ciudad" />
@@ -1466,61 +1488,58 @@ export function AllMatchesManager() {
                       </div>
 
                       {/* Marcadores */}
-                      {match.homeTeam.code !== "TBD" &&
-                        match.awayTeam.code !== "TBD" && (
-                          <div className="border-t pt-4">
-                            <label className="text-sm font-medium mb-2 block">
-                              Resultado Final
-                            </label>
-                            <div className="flex items-center gap-4">
-                              <Input
-                                type="number"
-                                min="0"
-                                placeholder="0"
-                                value={
-                                  knockoutEdits[match.id]?.homeScore !==
-                                  undefined
-                                    ? (knockoutEdits[match.id].homeScore ?? "")
-                                    : (match.homeScore ?? "")
-                                }
-                                onChange={(e) => {
-                                  const homeScore =
-                                    e.target.value === ""
-                                      ? null
-                                      : parseInt(e.target.value);
-                                  updateKnockoutMatch(match.id, {
-                                    homeScore,
-                                    status: "FINISHED",
-                                  });
-                                }}
-                                className="w-20 text-center"
-                              />
-                              <span className="text-2xl font-bold">-</span>
-                              <Input
-                                type="number"
-                                min="0"
-                                placeholder="0"
-                                value={
-                                  knockoutEdits[match.id]?.awayScore !==
-                                  undefined
-                                    ? (knockoutEdits[match.id].awayScore ?? "")
-                                    : (match.awayScore ?? "")
-                                }
-                                onChange={(e) => {
-                                  const awayScore =
-                                    e.target.value === ""
-                                      ? null
-                                      : parseInt(e.target.value);
-                                  updateKnockoutMatch(match.id, {
-                                    awayScore,
-                                    status: "FINISHED",
-                                  });
-                                }}
-                                className="w-20 text-center"
-                              />
-                            </div>
-                          </div>
-                        )}
+                      <div className="border-t pt-4">
+                        <label className="text-sm font-medium mb-2 block">
+                          Resultado Final
+                        </label>
+                        <div className="flex items-center gap-4">
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={
+                              knockoutEdits[match.id]?.homeScore !==
+                              undefined
+                                ? (knockoutEdits[match.id].homeScore ?? "")
+                                : (match.homeScore ?? "")
+                            }
+                            onChange={(e) => {
+                              const homeScore =
+                                e.target.value === ""
+                                  ? null
+                                  : parseInt(e.target.value);
+                              updateKnockoutMatch(match.id, {
+                                homeScore,
+                                status: "FINISHED",
+                              });
+                            }}
+                            className="w-20 text-center"
+                          />
+                          <span className="text-2xl font-bold">-</span>
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={
+                              knockoutEdits[match.id]?.awayScore !==
+                              undefined
+                                ? (knockoutEdits[match.id].awayScore ?? "")
+                                : (match.awayScore ?? "")
+                            }
+                            onChange={(e) => {
+                              const awayScore =
+                                e.target.value === ""
+                                  ? null
+                                  : parseInt(e.target.value);
+                              updateKnockoutMatch(match.id, {
+                                awayScore,
+                                status: "FINISHED",
+                              });
+                            }}
+                            className="w-20 text-center"
+                          />
+                        </div>
+                      </div>
 
                       {/* Botones de Guardar/Cancelar cambios generales - Movidos al final */}
                       {knockoutEdits[match.id] && (

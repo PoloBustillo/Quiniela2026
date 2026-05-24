@@ -221,6 +221,64 @@ export async function syncKnockoutMatch(
 // ── Sync de partidos en vivo (polling principal) ─────────────────────────────
 
 /**
+ * Fuerza la sincronización de un partido de eliminatoria desde su bsdEventId.
+ * Ignora manualOverride — para uso exclusivo del admin.
+ */
+export async function forceSyncKnockoutMatch(
+  matchDbId: string,
+): Promise<SyncResult> {
+  const result: SyncResult = { updated: 0, skipped: 0, errors: 0, details: [] };
+  try {
+    const match = await prisma.match.findUnique({
+      where: { id: matchDbId },
+      select: { id: true, bsdEventId: true },
+    });
+
+    if (!match?.bsdEventId) {
+      result.skipped = 1;
+      result.details.push(`Partido ${matchDbId} sin bsdEventId asignado`);
+      return result;
+    }
+
+    const event = await getEventDetail(match.bsdEventId);
+    if (!event) {
+      result.errors = 1;
+      result.details.push(`Evento BSD ${match.bsdEventId} no encontrado`);
+      return result;
+    }
+
+    const newHomeScore = event.home_score;
+    const newAwayScore = event.away_score;
+    const newStatus = bsdStatusToLocal(event.status);
+
+    await prisma.match.update({
+      where: { id: matchDbId },
+      data: {
+        homeScore: newHomeScore,
+        awayScore: newAwayScore,
+        status: newStatus,
+        syncSource: "bsd",
+        lastSyncedAt: new Date(),
+        manualOverride: false,
+      },
+    });
+
+    if (newHomeScore !== null && newAwayScore !== null) {
+      await recalcKnockoutMatchPredictions(matchDbId, newHomeScore, newAwayScore);
+    }
+
+    result.updated = 1;
+    result.details.push(
+      `Partido ${matchDbId} sincronizado forzosamente: ${newHomeScore}-${newAwayScore} (${event.status})`,
+    );
+  } catch (err) {
+    result.errors = 1;
+    result.details.push(`Error: ${String(err)}`);
+  }
+  return result;
+}
+
+/**
  * Sincroniza todos los partidos del Mundial que están en vivo o recién terminados.
  * Cruza los BSD live events con los mapeos locales.
  * Nunca lanza — retorna un SyncResult siempre.
@@ -231,12 +289,6 @@ export async function syncLiveMatches(): Promise<SyncResult> {
 
   try {
     const liveEvents = await getLiveMatches();
-
-    if (liveEvents.length === 0) {
-      result.details.push("No hay partidos del Mundial en vivo actualmente");
-      await logSync("live_poll", "ok", result, Date.now() - startMs);
-      return result;
-    }
 
     // Construir mapa inverso: bsdEventId → localMatchId (fase de grupos)
     const bsdToLocalGroup = buildBsdToLocalGroupMap();
@@ -252,7 +304,24 @@ export async function syncLiveMatches(): Promise<SyncResult> {
         .map((m) => [m.bsdEventId as number, m.id]),
     );
 
+    if (liveEvents.length === 0 && bsdToLocalKnockout.size === 0) {
+      result.details.push("No hay partidos del Mundial en vivo actualmente");
+      await logSync("live_poll", "ok", result, Date.now() - startMs);
+      return result;
+    }
+
+    if (liveEvents.length === 0) {
+      result.details.push(
+        "No hay partidos del Mundial en vivo actualmente; revisando eliminatorias con bsdEventId...",
+      );
+    }
+
+    // Conjunto de bsdEventIds ya procesados desde el live feed
+    const processedBsdIds = new Set<number>();
+
     for (const event of liveEvents) {
+      processedBsdIds.add(event.id);
+
       // Verificar si es partido de grupos
       const localGroupId = bsdToLocalGroup.get(event.id);
       if (localGroupId !== undefined) {
@@ -293,6 +362,42 @@ export async function syncLiveMatches(): Promise<SyncResult> {
 
       // BSD event no mapeado → ignorar silenciosamente
       result.skipped++;
+    }
+
+    // Para partidos de eliminatoria con bsdEventId explícito que no aparecieron
+    // en el live feed (ej. partidos de otra liga usados en pruebas, o partidos
+    // que ya terminaron y BSD los quitó del feed en vivo), sincronizar directamente.
+    for (const [bsdEventId, knockoutDbId] of bsdToLocalKnockout.entries()) {
+      if (processedBsdIds.has(bsdEventId)) continue; // ya procesado arriba
+
+      const event = await getEventDetail(bsdEventId);
+      if (!event) {
+        result.details.push(
+          `Evento BSD ${bsdEventId} no encontrado (eliminatoria ${knockoutDbId})`,
+        );
+        result.skipped++;
+        continue;
+      }
+
+      // Solo sincronizar si el partido está en curso o terminado
+      if (event.status === "notstarted") {
+        result.skipped++;
+        continue;
+      }
+
+      const outcome = await syncKnockoutMatch(knockoutDbId, event);
+      result[
+        outcome === "updated"
+          ? "updated"
+          : outcome === "skipped"
+            ? "skipped"
+            : "errors"
+      ]++;
+      if (outcome === "updated") {
+        result.details.push(
+          `Partido eliminatoria ${knockoutDbId} actualizado vía detail (BSD ${bsdEventId}): ${event.home_score}-${event.away_score}`,
+        );
+      }
     }
   } catch (err) {
     console.error("[BSD Sync] Error en syncLiveMatches:", err);

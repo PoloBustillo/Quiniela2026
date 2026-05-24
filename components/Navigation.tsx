@@ -30,6 +30,7 @@ export function Navigation() {
 
   const navLinks = [
     { href: "/", icon: Home, label: "Inicio" },
+    { href: "/matches", icon: Calendar, label: "Partidos" },
     { href: "/leaderboard", icon: Trophy, label: "Tabla" },
     { href: "/rules", icon: BookOpen, label: "Reglas" },
   ];
@@ -45,7 +46,10 @@ export function Navigation() {
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="flex h-14 items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 font-bold text-lg">
+            <Link
+              href="/"
+              className="flex items-center gap-2 font-bold text-lg"
+            >
               <span className="text-2xl">⚽</span>
               <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                 Quiniela 2026
@@ -64,7 +68,7 @@ export function Navigation() {
                       "flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium",
                       isActive(link.href)
                         ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -77,10 +81,17 @@ export function Navigation() {
             {/* User */}
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={session.user?.image || ""} alt={session.user?.name || "User"} />
-                <AvatarFallback>{session.user?.name?.[0] || "U"}</AvatarFallback>
+                <AvatarImage
+                  src={session.user?.image || ""}
+                  alt={session.user?.name || "User"}
+                />
+                <AvatarFallback>
+                  {session.user?.name?.[0] || "U"}
+                </AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium max-w-[120px] truncate">{session.user?.name}</span>
+              <span className="text-sm font-medium max-w-[120px] truncate">
+                {session.user?.name}
+              </span>
               <Button
                 variant="ghost"
                 size="icon"
@@ -105,8 +116,13 @@ export function Navigation() {
           </Link>
           <div className="flex items-center gap-2">
             <Avatar className="h-7 w-7">
-              <AvatarImage src={session.user?.image || ""} alt={session.user?.name || "User"} />
-              <AvatarFallback className="text-xs">{session.user?.name?.[0] || "U"}</AvatarFallback>
+              <AvatarImage
+                src={session.user?.image || ""}
+                alt={session.user?.name || "User"}
+              />
+              <AvatarFallback className="text-xs">
+                {session.user?.name?.[0] || "U"}
+              </AvatarFallback>
             </Avatar>
             <Button
               variant="ghost"
@@ -132,7 +148,7 @@ export function Navigation() {
                 href={link.href}
                 className={cn(
                   "flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors text-xs font-medium",
-                  active ? "text-primary" : "text-muted-foreground"
+                  active ? "text-primary" : "text-muted-foreground",
                 )}
               >
                 <Icon className={cn("h-5 w-5", active && "stroke-[2.5]")} />

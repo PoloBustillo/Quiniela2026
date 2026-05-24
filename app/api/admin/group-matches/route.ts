@@ -140,16 +140,19 @@ export async function PUT(request: Request) {
     if (homeScore !== undefined) updateData.homeScore = homeScore;
     if (awayScore !== undefined) updateData.awayScore = awayScore;
     if (matchDate !== undefined) updateData.matchDate = parsedMatchDate;
-    // Marcar como override manual para que BSD no sobrescriba
-    updateData.manualOverride = true;
-    updateData.syncSource = "manual";
+    // manualOverride solo cuando se cambia el score — no para fecha/estadio
+    const isScoreUpdate = homeScore !== undefined || awayScore !== undefined;
+    if (isScoreUpdate) {
+      updateData.manualOverride = true;
+      updateData.syncSource = "manual";
+    }
 
     const createData: any = {
       matchId: matchId,
       homeScore: homeScore ?? null,
       awayScore: awayScore ?? null,
-      manualOverride: true,
-      syncSource: "manual",
+      manualOverride: isScoreUpdate,
+      syncSource: isScoreUpdate ? "manual" : null,
     };
     if (matchDate !== undefined) createData.matchDate = parsedMatchDate;
 
@@ -164,40 +167,54 @@ export async function PUT(request: Request) {
 
     // Si se actualizaron los marcadores, calcular puntos para todas las predicciones
     if (homeScore !== undefined && awayScore !== undefined) {
-      const activeRules = await prisma.pointsRule.findFirst({
-        where: { isActive: true },
-        orderBy: { createdAt: "desc" },
-        select: {
-          exactScore: true,
-          correctWinner: true,
-          correctDraw: true,
-        },
-      });
       const predictionMatchId = `match_${matchId}`;
-
       const predictions = await prisma.prediction.findMany({
         where: { matchId: predictionMatchId },
       });
 
-      // Actualizar puntos para cada predicción
-      for (const prediction of predictions) {
-        const points = calculatePoints(
-          prediction.homeScore,
-          prediction.awayScore,
-          homeScore,
-          awayScore,
-          activeRules ?? undefined,
-        );
+      // Si se borró el score (null), resetear puntos a 0; si hay score, calcular
+      const hasValidScore = homeScore !== null && awayScore !== null;
 
-        await prisma.prediction.update({
-          where: { id: prediction.id },
-          data: { points },
+      if (!hasValidScore) {
+        // Borrar puntos: reset a 0
+        await prisma.prediction.updateMany({
+          where: { matchId: predictionMatchId },
+          data: { points: 0 },
         });
-      }
+        console.log(
+          `🔄 Reset puntos a 0 para ${predictions.length} predicciones del partido de grupos ${matchId} (score borrado)`,
+        );
+      } else {
+        const activeRules = await prisma.pointsRule.findFirst({
+          where: { isActive: true },
+          orderBy: { createdAt: "desc" },
+          select: {
+            exactScore: true,
+            correctWinner: true,
+            correctDraw: true,
+          },
+        });
 
-      console.log(
-        `✅ Actualizados puntos para ${predictions.length} predicciones del partido de grupos ${matchId}`,
-      );
+        // Actualizar puntos para cada predicción
+        for (const prediction of predictions) {
+          const points = calculatePoints(
+            prediction.homeScore,
+            prediction.awayScore,
+            homeScore,
+            awayScore,
+            activeRules ?? undefined,
+          );
+
+          await prisma.prediction.update({
+            where: { id: prediction.id },
+            data: { points },
+          });
+        }
+
+        console.log(
+          `✅ Actualizados puntos para ${predictions.length} predicciones del partido de grupos ${matchId}`,
+        );
+      }
     }
 
     // Retornar el partido con los datos actualizados

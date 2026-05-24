@@ -21,10 +21,20 @@ const DEFAULT_POINTS_RULES: PointsRuleValues = {
 export function calculatePoints(
   predictedHome: number,
   predictedAway: number,
-  actualHome: number,
-  actualAway: number,
+  actualHome: number | null | undefined,
+  actualAway: number | null | undefined,
   rules: PointsRuleValues = DEFAULT_POINTS_RULES,
 ): number {
+  // Si el partido no tiene resultado, no hay puntos
+  if (
+    actualHome === null ||
+    actualHome === undefined ||
+    actualAway === null ||
+    actualAway === undefined
+  ) {
+    return 0;
+  }
+
   // Convertir explícitamente a números para evitar problemas de tipo
   const predHome = Number(predictedHome);
   const predAway = Number(predictedAway);

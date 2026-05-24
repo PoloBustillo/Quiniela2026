@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
@@ -359,18 +360,35 @@ export default function PredictionCard({
               {match.group ? `Grupo ${match.group}` : match.stage} ·{" "}
               {translateCity(match.city)}
             </span>
-            <span className="flex-shrink-0">
-              {matchDate.toLocaleDateString("es-MX", {
-                month: "short",
-                day: "numeric",
-                timeZone: "America/Mexico_City",
-              })}{" "}
-              {matchDate.toLocaleTimeString("es-MX", {
-                hour: "2-digit",
-                minute: "2-digit",
-                timeZone: "America/Mexico_City",
-              })}
-            </span>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span>
+                {matchDate.toLocaleDateString("es-MX", {
+                  month: "short",
+                  day: "numeric",
+                  timeZone: "America/Mexico_City",
+                })}{" "}
+                {matchDate.toLocaleTimeString("es-MX", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: "America/Mexico_City",
+                })}
+              </span>
+              {(() => {
+                const numId = parseInt(match.id.replace("match_", ""));
+                if (!isNaN(numId) && numId >= 1 && numId <= 72) {
+                  return (
+                    <Link
+                      href={`/matches/${numId}`}
+                      className="text-primary font-medium hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Stats →
+                    </Link>
+                  );
+                }
+                return null;
+              })()}
+            </div>
           </div>
           {error && (
             <p className="mt-1 text-[11px] text-destructive">{error}</p>

@@ -244,7 +244,13 @@ export default function ClientHomePage({
 
       {/* Matches */}
       <div className="space-y-5">
-        {Object.entries(filteredMatches).map(([key, groupMatches]) => (
+        {(viewMode === "date"
+          ? Object.entries(filteredMatches).sort(
+              ([, a], [, b]) =>
+                new Date(a[0].date).getTime() - new Date(b[0].date).getTime(),
+            )
+          : Object.entries(filteredMatches)
+        ).map(([key, groupMatches]) => (
           <div key={key}>
             <div className="flex items-center gap-2 mb-2 sticky top-12 md:top-14 z-10 bg-background/95 backdrop-blur py-1">
               {viewMode === "date" ? (

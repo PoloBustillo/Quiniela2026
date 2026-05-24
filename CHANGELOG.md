@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-05-25
+
+### Fixed
+
+- **`lib/bsd-sync.ts`** — `syncLiveMatches` ya no abandona si no hay eventos WC en vivo; sigue revisando los partidos de eliminatoria con `bsdEventId` explícito llamando `getEventDetail()` directamente. Esto permite sincronizar eventos de ligas distintas a WC (útil para pruebas) y partidos que BSD retiró del feed en vivo pero ya tienen score.
+- **`app/api/admin/matches/route.ts`** — `manualOverride` y `syncSource:"manual"` solo se activan cuando se envía `homeScore` o `awayScore`. Cambios de fecha, estadio o ciudad ya no marcan el partido como override manual.
+- **`app/api/admin/group-matches/route.ts`** — Mismo fix: `manualOverride` solo al cambiar scores; cambios de fecha/hora del partido no lo activan.
+- **`components/ClientHomePage.tsx`** — La vista "Por fecha" ahora ordena los bloques de fecha cronológicamente usando la fecha real del primer partido de cada bloque. Antes dependía del orden de inserción del `reduce`, que podía ser incorrecto cuando los partidos de grupos y eliminatorias estaban mezclados.
+
 ## 2026-05-24
 
 ### Added — BSD Sports API Integration (incremental, non-invasive)

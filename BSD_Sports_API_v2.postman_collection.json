@@ -1,0 +1,1814 @@
+{
+  "info": {
+    "_postman_id": "quiniela2026-bsd-api-v2",
+    "name": "BSD Sports API v2 — Quiniela 2026",
+    "description": "Colección completa para integrar y probar la BSD Sports API v2 con la app Quiniela 2026.\n\n### Cómo empezar\n1. Selecciona la colección → Edit → Variables\n2. `token` ya está configurado (tu API key)\n3. `appBaseUrl` = http://localhost:3000 para pruebas locales\n4. `cronSecret` = el valor de CRON_SECRET en tu .env\n\n### Flujo de testing pre-Mundial\n1. Usa la carpeta 🔑 para verificar que el token funciona\n2. Usa 🔴 Live para ver partidos en vivo ahora mismo (cualquier liga)\n3. Usa 🧪 Testing Sync para probar el pipeline con partidos reales no-WC\n4. WC2026 empieza Jun 11 → a partir de ahí todos los endpoints devuelven datos reales\n\n### IDs clave\n- WC2026: league_id=27, season_id=188\n- Premier League (v2): league_id=17\n- La Liga (v2): league_id=8\n- J1 League: league_id=49\n- Partidos WC2026: event_id 8287-8358 (grupo), 8359+ (eliminatoria)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://sports.bzzoiro.com/api/v2",
+      "type": "string",
+      "description": "BSD API v2 base URL"
+    },
+    {
+      "key": "token",
+      "value": "667ccb4b29ade16c6863e4ebdfa03268f3882dff",
+      "type": "string",
+      "description": "Tu BSD API key"
+    },
+    {
+      "key": "wcLeagueId",
+      "value": "27",
+      "type": "string",
+      "description": "FIFA World Cup 2026"
+    },
+    {
+      "key": "wcSeasonId",
+      "value": "188",
+      "type": "string",
+      "description": "WC2026 season_id"
+    },
+    {
+      "key": "wcEventId",
+      "value": "8287",
+      "type": "string",
+      "description": "WC2026 Match 1: MEX vs RSA (no empezado)"
+    },
+    {
+      "key": "plLeagueId",
+      "value": "17",
+      "type": "string",
+      "description": "Premier League (league_id v2)"
+    },
+    {
+      "key": "j1LeagueId",
+      "value": "49",
+      "type": "string",
+      "description": "J1 League Japan — ligas con partidos HOY"
+    },
+    {
+      "key": "laLigaId",
+      "value": "8",
+      "type": "string",
+      "description": "La Liga Spain"
+    },
+    {
+      "key": "testEventId",
+      "value": "204851",
+      "type": "string",
+      "description": "Partido de prueba: Kashiwa vs FC Tokyo (finalizado, J1)"
+    },
+    {
+      "key": "liveEventId",
+      "value": "204863",
+      "type": "string",
+      "description": "Actualiza con un ID real de live/"
+    },
+    {
+      "key": "appBaseUrl",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "Tu app local (Next.js)"
+    },
+    {
+      "key": "cronSecret",
+      "value": "CHANGE_ME",
+      "type": "string",
+      "description": "Valor de CRON_SECRET en .env"
+    }
+  ],
+
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      { "key": "key", "value": "Authorization", "type": "string" },
+      { "key": "value", "value": "Token {{token}}", "type": "string" },
+      { "key": "in", "value": "header", "type": "string" }
+    ]
+  },
+
+  "item": [
+    {
+      "name": "🔑 Verificar Token",
+      "description": "Confirma que tu API key funciona antes de cualquier otra prueba.",
+      "item": [
+        {
+          "name": "GET Auth — Ligas activas",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/leagues/",
+              "host": ["{{baseUrl}}"],
+              "path": ["leagues", ""]
+            },
+            "description": "Prueba básica de autenticación. Devuelve todas las ligas activas. Si ves 401 → verifica el token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Token válido — tiene ligas', () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.count).to.be.above(0);",
+                  "  pm.expect(b.results[0]).to.have.property('name');",
+                  "  console.log('✅ BSD token OK —', b.count, 'ligas disponibles');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET WC2026 — Liga Detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/leagues/{{wcLeagueId}}/",
+              "host": ["{{baseUrl}}"],
+              "path": ["leagues", "{{wcLeagueId}}", ""]
+            },
+            "description": "Detalle de la liga WC2026. Confirma league_id=27 y season_id=188."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Es World Cup 2026', () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.name).to.include('World Cup');",
+                  "  console.log('Liga:', b.name, '| Season ID:', b.current_season?.id);",
+                  "  if (b.current_season) pm.collectionVariables.set('wcSeasonId', String(b.current_season.id));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET WC2026 — Current Season",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/leagues/{{wcLeagueId}}/season/",
+              "host": ["{{baseUrl}}"],
+              "path": ["leagues", "{{wcLeagueId}}", "season", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log('WC2026 season_id:', b.season?.id, '| start:', b.season?.start_date);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "⚽ Eventos (Partidos)",
+      "description": "Búsqueda y listado de partidos. En v2 sin filtros de fecha devuelve TODOS los 60k+ partidos — siempre filtra por liga o fecha.",
+      "item": [
+        {
+          "name": "GET Hoy — Todas las ligas",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/?date_from={{$isoTimestamp}}&date_to={{$isoTimestamp}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", ""],
+              "query": [
+                { "key": "date_from", "value": "2026-05-24" },
+                { "key": "date_to", "value": "2026-05-24" }
+              ]
+            },
+            "description": "Partidos de hoy en todas las ligas. Cambia las fechas al día que quieras."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log('Partidos hoy:', b.count);",
+                  "if (b.results?.length > 0) {",
+                  "  const e = b.results[0];",
+                  "  console.log('Primer partido:', e.home_team, 'vs', e.away_team, '| ID:', e.id, '| liga:', e.league_id);",
+                  "  pm.collectionVariables.set('testEventId', String(e.id));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET WC2026 — Fase de Grupos (Jun 11 – Jul 2)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/?league_id={{wcLeagueId}}&date_from=2026-06-11&date_to=2026-07-02&limit=200",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", ""],
+              "query": [
+                { "key": "league_id", "value": "{{wcLeagueId}}" },
+                { "key": "date_from", "value": "2026-06-11" },
+                { "key": "date_to", "value": "2026-07-02" },
+                { "key": "limit", "value": "200" }
+              ]
+            },
+            "description": "Todos los 72 partidos de la fase de grupos del WC2026."
+          }
+        },
+        {
+          "name": "GET WC2026 — Toda la temporada (season_id)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/?season_id={{wcSeasonId}}&limit=200",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", ""],
+              "query": [
+                { "key": "season_id", "value": "{{wcSeasonId}}" },
+                { "key": "limit", "value": "200" }
+              ]
+            },
+            "description": "Todos los partidos WC2026 (grupos + eliminatoria). Usa season_id=188 para bypasear el filtro de fechas."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log('Total partidos WC2026:', b.count);",
+                  "const ids = b.results?.slice(0,5).map(e => e.id + ' (' + e.home_team + ' vs ' + e.away_team + ')');",
+                  "console.log('Primeros 5 IDs:', ids);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET WC2026 — Match 1: MEX vs RSA",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{wcEventId}}/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{wcEventId}}", ""]
+            },
+            "description": "Partido #1 del WC2026 (MEX vs RSA, Jun 11). Verifica que BSD_EVENT_ID=8287 está bien mapeado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test('Es partido WC', () => pm.expect(b.league_id).to.equal(27));",
+                  "console.log('Status:', b.status, '| Score:', b.home_score, '-', b.away_score, '| Date:', b.event_date);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Premier League — Próximos 7 días",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/?league_id={{plLeagueId}}&status=notstarted&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", ""],
+              "query": [
+                { "key": "league_id", "value": "{{plLeagueId}}" },
+                { "key": "status", "value": "notstarted" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Próximos partidos de Premier League. Útil para obtener bsdEventId para testing de sync."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log('Próximos PL:', b.count);",
+                  "b.results?.slice(0,5).forEach(e => {",
+                  "  console.log('ID:', e.id, '|', e.home_team, 'vs', e.away_team, '|', e.event_date.substring(0,10));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET J1 League — Recientes/Próximos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/?league_id={{j1LeagueId}}&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", ""],
+              "query": [
+                { "key": "league_id", "value": "{{j1LeagueId}}" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "J1 League (Japón) — suele tener partidos en vivo los fines de semana. Usa estos IDs para probar sync."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "b.results?.slice(0,5).forEach(e => {",
+                  "  console.log('J1 ID:', e.id, '|', e.home_team, 'vs', e.away_team, '| status:', e.status, '|', e.home_score, '-', e.away_score);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Buscar por equipo (team_name)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/?team_name=Barcelona&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", ""],
+              "query": [
+                { "key": "team_name", "value": "Barcelona" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Busca partidos por nombre de equipo (parcial, case-insensitive)."
+          }
+        },
+        {
+          "name": "GET Partidos finalizados ayer",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/?date_from=2026-05-23&date_to=2026-05-23&status=finished&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", ""],
+              "query": [
+                { "key": "date_from", "value": "2026-05-23" },
+                { "key": "date_to", "value": "2026-05-23" },
+                { "key": "status", "value": "finished" },
+                { "key": "limit", "value": "50" }
+              ]
+            },
+            "description": "Partidos ya finalizados — tienen scores reales para verificar sync."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log('Finalizados ayer:', b.count);",
+                  "b.results?.slice(0,3).forEach(e => {",
+                  "  console.log('ID:', e.id, '|', e.home_team, e.home_score, '-', e.away_score, e.away_team, '| liga:', e.league_id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "🔴 Live",
+      "description": "Partidos en curso ahora mismo. TTL Redis = 30s — no hagas polling más rápido. Tip: J1 League (Japón) y K League (Korea) tienen partidos los sábados AM hora México.",
+      "item": [
+        {
+          "name": "GET Live — Solo WC2026",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/live/?league_id={{wcLeagueId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "live", ""],
+              "query": [{ "key": "league_id", "value": "{{wcLeagueId}}" }]
+            },
+            "description": "Solo partidos WC2026 en vivo. Hasta Jun 11 devuelve count:0 — eso es CORRECTO."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log('WC2026 en vivo:', b.count, 'partidos');",
+                  "if (b.count === 0) console.log('✅ Normal — WC2026 no ha empezado todavía (Jun 11, 2026)');",
+                  "b.events?.forEach(e => {",
+                  "  pm.collectionVariables.set('liveEventId', String(e.id));",
+                  "  console.log('LIVE:', e.id, e.home_team, e.home_score, '-', e.away_score, e.away_team, '| min:', e.current_minute);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Live — Todas las ligas",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/live/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "live", ""]
+            },
+            "description": "Todos los partidos en vivo ahora mismo (sin filtro de liga). Confirma que la API responde aunque WC no haya empezado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log('En vivo ahora:', b.count, 'partidos en total');",
+                  "b.events?.slice(0,5).forEach(e => {",
+                  "  console.log('  Liga', e.league_id, '|', e.home_team, e.home_score, '-', e.away_score, e.away_team, '| min:', e.current_minute, '| status:', e.status);",
+                  "  if (!pm.collectionVariables.get('liveEventId') || pm.collectionVariables.get('liveEventId') === '204863')",
+                  "    pm.collectionVariables.set('liveEventId', String(e.id));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Live — J1 League",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/live/?league_id={{j1LeagueId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "live", ""],
+              "query": [{ "key": "league_id", "value": "{{j1LeagueId}}" }]
+            },
+            "description": "Partidos en vivo de J1 League (Japón). Hora local Japan = UTC+9. Partidos suelen ser 12:00-15:00 JST = 03:00-06:00 UTC."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📋 Match Detail + Facts",
+      "description": "En API v2 cada tipo de dato es un sub-resource separado. Carga el detalle core primero, luego los sub-resources en tabs (stats, incidents, lineups, player-stats, odds, metadata).",
+      "item": [
+        {
+          "name": "GET Event Core — /events/{id}/",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", ""]
+            },
+            "description": "Core del partido: equipos, status, score, referee_id, venue_id, weather, etc."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const e = pm.response.json();",
+                  "pm.test('Tiene campos esenciales', () => {",
+                  "  pm.expect(e).to.have.all.keys('id','home_team','away_team','status','event_date');",
+                  "});",
+                  "console.log('Match:', e.home_team, e.home_score, '-', e.away_score, e.away_team);",
+                  "console.log('Status:', e.status, '| Period:', e.period, '| Weather:', e.weather?.description);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Stats — Posesión, tiros, xG, crosses",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/stats/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "stats", ""]
+            },
+            "description": "Stats del partido: posesión, tiros, xG, disparos al arco, duelos, faltas. También incluye shotmap y momentum."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "if (b.stats) {",
+                  "  console.log('Home possession:', b.stats.home?.ball_possession, '% |', 'xG:', b.stats.home?.xg?.actual);",
+                  "  console.log('Away possession:', b.stats.away?.ball_possession, '% |', 'xG:', b.stats.away?.xg?.actual);",
+                  "  console.log('Shotmap entries:', b.shotmap?.length ?? 0);",
+                  "  console.log('Momentum entries:', b.momentum?.length ?? 0);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Incidents — Goles, tarjetas, cambios",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/incidents/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "incidents", ""]
+            },
+            "description": "Timeline cronológico: goles (con secuencia de pases), tarjetas, sustituciones, VAR, tiempo extra."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "const goals = b.incidents?.filter(i => i.type === 'goal') || [];",
+                  "const cards = b.incidents?.filter(i => i.type === 'card') || [];",
+                  "console.log('Goles:', goals.length, '| Tarjetas:', cards.length);",
+                  "goals.forEach(g => console.log('  GOL min', g.minute, '-', g.player, g.is_home ? '(local)' : '(visitante)'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Lineups — XI confirmado o predicho",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/lineups/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "lineups", ""]
+            },
+            "description": "lineup_status: 'confirmed' (oficial ~1h antes), 'predicted' (IA, beta), 'unavailable'. En v2 un solo endpoint."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log('Lineup status:', b.lineup_status, '| beta:', b.beta);",
+                  "if (b.lineups) {",
+                  "  console.log('Local:', b.lineups.home?.team_name, '| Formación:', b.lineups.home?.formation);",
+                  "  console.log('Visitante:', b.lineups.away?.team_name, '| Formación:', b.lineups.away?.formation);",
+                  "  console.log('Jugadores no disponibles home:', b.unavailable_players?.home?.length ?? 0);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Player Stats — Rating + stats por jugador",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/player-stats/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "player-stats", ""]
+            },
+            "description": "Stats individuales de todos los jugadores del partido. Rating 1-10, goles, asistencias, pases, duelos, etc."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log('Total jugadores con stats:', b.count);",
+                  "const topRated = (b.player_stats || []).sort((a,b) => (b.rating||0) - (a.rating||0)).slice(0,3);",
+                  "topRated.forEach(p => console.log('  Top:', p.player_id, '| rating:', p.rating, '| goles:', p.goals, '| min:', p.minutes_played));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Odds — Consenso cuotas (1X2, O/U, BTTS)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/odds/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "odds", ""]
+            },
+            "description": "Cuotas consenso entre ~15 casas de apuestas. Formato decimal europeo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "if (b.odds) {",
+                  "  console.log('1X2 →', '1:', b.odds.home_win, '| X:', b.odds.draw, '| 2:', b.odds.away_win);",
+                  "  console.log('Over/Under →', 'O2.5:', b.odds.over_25_goals, '| U2.5:', b.odds.under_25_goals);",
+                  "  console.log('BTTS → Sí:', b.odds.btts_yes, '| No:', b.odds.btts_no);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Odds Comparison — Todas las casas lado a lado",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/odds/comparison/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "odds", "comparison", ""]
+            },
+            "description": "Vista comparativa de todas las casas de apuestas. Llaves = outcome codes (HOME/DRAW/AWAY), no nombres de equipo."
+          }
+        },
+        {
+          "name": "GET Metadata — Fun Facts + AI Preview",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/metadata/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "metadata", ""]
+            },
+            "description": "Nueva en v2: jerseys, funfacts pre-partido ('Bayern no ha perdido en 19 juegos'), AI preview text para partidos en las próximas 24h."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log('Fun facts:', b.funfacts?.length ?? 0);",
+                  "b.funfacts?.forEach(f => console.log('  -', f.sentence));",
+                  "if (b.ai_preview) console.log('AI preview generado:', b.ai_preview.generated_at);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Social Media del partido",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/social/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "social", ""]
+            },
+            "description": "Tweets oficiales y highlight videos vinculados al partido."
+          }
+        },
+        {
+          "name": "GET Broadcasts — Dónde se transmite",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/broadcasts/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "broadcasts", ""]
+            },
+            "description": "Canales de TV que transmiten este partido, por país."
+          }
+        },
+        {
+          "name": "GET Polymarket — Mercados de predicción",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/polymarket/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "polymarket", ""]
+            },
+            "description": "Probabilidades de Polymarket (mercado de predicción). 404 si el partido no tiene cobertura en Polymarket."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🤖 ML Predictions",
+      "description": "Predicciones CatBoost v5. Campos principales: markets.match_result (prob_home/draw/away), markets.expected_goals (home/away), markets.over_under, markets.btts, markets.score.most_likely. Confidence 0–1.",
+      "item": [
+        {
+          "name": "GET Predicciones — Próximos partidos (todos)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/predictions/?status=upcoming&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["predictions", ""],
+              "query": [
+                { "key": "status", "value": "upcoming" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Predicciones para partidos próximos de todas las ligas."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log('Predicciones disponibles:', b.count);",
+                  "b.results?.slice(0,3).forEach(p => {",
+                  "  const mr = p.markets?.match_result;",
+                  "  console.log(p.event.home_team, 'vs', p.event.away_team, '| Pred:', mr?.predicted, '| H:', mr?.prob_home, 'D:', mr?.prob_draw, 'A:', mr?.prob_away);",
+                  "  console.log('  xG:', p.markets?.expected_goals?.home, '-', p.markets?.expected_goals?.away, '| Confidence:', p.model?.confidence);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Predicciones — WC2026",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/predictions/?league_id={{wcLeagueId}}&status=upcoming&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["predictions", ""],
+              "query": [
+                { "key": "league_id", "value": "{{wcLeagueId}}" },
+                { "key": "status", "value": "upcoming" },
+                { "key": "limit", "value": "50" }
+              ]
+            },
+            "description": "Predicciones del Mundial 2026. Antes de Jun 11 puede estar vacío."
+          }
+        },
+        {
+          "name": "GET Predicciones — Premier League",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/predictions/?league_id={{plLeagueId}}&status=upcoming&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["predictions", ""],
+              "query": [
+                { "key": "league_id", "value": "{{plLeagueId}}" },
+                { "key": "status", "value": "upcoming" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Predicciones — Solo alta confianza (≥0.7)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/predictions/?status=upcoming&min_confidence=0.7&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["predictions", ""],
+              "query": [
+                { "key": "status", "value": "upcoming" },
+                { "key": "min_confidence", "value": "0.7" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Predicciones — Pasadas (con resultado real)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/predictions/?status=past&league_id={{plLeagueId}}&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["predictions", ""],
+              "query": [
+                { "key": "status", "value": "past" },
+                { "key": "league_id", "value": "{{plLeagueId}}" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Predicciones ya resueltas — puedes comparar la predicción vs el resultado real para evaluar el modelo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "b.results?.slice(0,3).forEach(p => {",
+                  "  const mr = p.markets?.match_result;",
+                  "  const e = p.event;",
+                  "  const result = e.home_score !== null ? e.home_score + '-' + e.away_score : '?';",
+                  "  const acertó = (e.home_score > e.away_score && mr.predicted === 'H') ||",
+                  "                 (e.home_score === e.away_score && mr.predicted === 'D') ||",
+                  "                 (e.home_score < e.away_score && mr.predicted === 'A');",
+                  "  console.log(e.home_team, result, e.away_team, '| Pred:', mr.predicted, acertó ? '✅' : '❌');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Predicción — Por event_id (directo)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/prediction/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "prediction", ""]
+            },
+            "description": "Predicción para un partido específico. 404 si no hay predicción disponible para ese evento."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const status = pm.response.code;",
+                  "if (status === 200) {",
+                  "  const b = pm.response.json();",
+                  "  const mr = b.markets?.match_result;",
+                  "  const eg = b.markets?.expected_goals;",
+                  "  console.log('Resultado predicho:', mr?.predicted, '| H:', mr?.prob_home?.toFixed(1), '% D:', mr?.prob_draw?.toFixed(1), '% A:', mr?.prob_away?.toFixed(1), '%');",
+                  "  console.log('xG esperada:', eg?.home?.toFixed(2), '-', eg?.away?.toFixed(2));",
+                  "  console.log('Marcador probable:', b.markets?.score?.most_likely);",
+                  "  console.log('Confianza modelo:', b.model?.confidence, '| Versión:', b.model?.version);",
+                  "  console.log('Recomendaciones:', JSON.stringify(b.recommendations));",
+                  "} else if (status === 404) {",
+                  "  console.log('Sin predicción para este partido (normal para partidos muy lejanos o ligas sin cobertura)');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Predicciones — Recomendadas (bet_favorite=true)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/predictions/?recommended=true&status=upcoming&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["predictions", ""],
+              "query": [
+                { "key": "recommended", "value": "true" },
+                { "key": "status", "value": "upcoming" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Solo predicciones donde el modelo recomienda una apuesta (al menos un recommend=true)."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🌍 Copa del Mundo 2026",
+      "description": "Endpoints específicos del WC2026. league_id=27, season_id=188.",
+      "item": [
+        {
+          "name": "GET WC2026 — Standings por grupo",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/leagues/{{wcLeagueId}}/standings/?season_id={{wcSeasonId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["leagues", "{{wcLeagueId}}", "standings", ""],
+              "query": [{ "key": "season_id", "value": "{{wcSeasonId}}" }]
+            },
+            "description": "Tabla de posiciones por grupo. Actualiza en tiempo real conforme avance el torneo."
+          }
+        },
+        {
+          "name": "GET WC2026 — Venues (estadios)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/leagues/{{wcLeagueId}}/seasons/{{wcSeasonId}}/venues/",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "leagues",
+                "{{wcLeagueId}}",
+                "seasons",
+                "{{wcSeasonId}}",
+                "venues",
+                ""
+              ]
+            },
+            "description": "Estadios usados en el WC2026 (USA, México, Canadá)."
+          }
+        },
+        {
+          "name": "GET WC2026 — Venue Final",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/leagues/{{wcLeagueId}}/seasons/{{wcSeasonId}}/venues/?round=F",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "leagues",
+                "{{wcLeagueId}}",
+                "seasons",
+                "{{wcSeasonId}}",
+                "venues",
+                ""
+              ],
+              "query": [{ "key": "round", "value": "F" }]
+            },
+            "description": "Estadio de la Final. Filtros disponibles: R32, R16, QF, SF, 3RD, F."
+          }
+        },
+        {
+          "name": "GET WC2026 — Venue USA (host_country_code=US)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/leagues/{{wcLeagueId}}/seasons/{{wcSeasonId}}/venues/?host_country_code=US",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "leagues",
+                "{{wcLeagueId}}",
+                "seasons",
+                "{{wcSeasonId}}",
+                "venues",
+                ""
+              ],
+              "query": [{ "key": "host_country_code", "value": "US" }]
+            }
+          }
+        },
+        {
+          "name": "GET WC2026 — Squads (todos los equipos)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/worldcup/squads/?status=official&limit=200",
+              "host": ["{{baseUrl}}"],
+              "path": ["worldcup", "squads", ""],
+              "query": [
+                { "key": "status", "value": "official" },
+                { "key": "limit", "value": "200" }
+              ]
+            },
+            "description": "Todos los convocados oficiales (26 jugadores × 48 equipos)."
+          }
+        },
+        {
+          "name": "GET WC2026 — Squad México (grupo A)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/worldcup/squads/?group=A&status=official&limit=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["worldcup", "squads", ""],
+              "query": [
+                { "key": "group", "value": "A" },
+                { "key": "status", "value": "official" },
+                { "key": "limit", "value": "100" }
+              ]
+            },
+            "description": "Grupo A: México, Czechia, South Africa, South Korea. Busca el team_id de México aquí."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "const mexPlayers = b.results?.filter(p => p.team_id && b.results.some(x => x.team_id === p.team_id)) || [];",
+                  "const teams = [...new Set(b.results?.map(p => p.team_id + ' (del grupo A)'))];",
+                  "console.log('Equipos Grupo A team_ids:', teams.join(', '));",
+                  "console.log('Total convocados grupo A:', b.count);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET WC2026 — Equipos clasificados",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/teams/?league_id={{wcLeagueId}}&in_competition=true&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", ""],
+              "query": [
+                { "key": "league_id", "value": "{{wcLeagueId}}" },
+                { "key": "in_competition", "value": "true" },
+                { "key": "limit", "value": "50" }
+              ]
+            },
+            "description": "Los 48 equipos del WC2026 con sus internal team_ids."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const b = pm.response.json();",
+                  "b.results?.forEach(t => console.log('team_id:', t.id, '|', t.name, '|', t.country));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "👤 Jugadores",
+      "description": "Players endpoint v2. Nuevo: national_team_id, specific_position (AM/CM/LW etc), availability, market_value_eur.",
+      "item": [
+        {
+          "name": "GET Players — Buscar por nombre",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/players/?name=Mbappe&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["players", ""],
+              "query": [
+                { "key": "name", "value": "Mbappe" },
+                { "key": "limit", "value": "5" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Players — Por equipo (team_id)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/players/?team_id=267&limit=30",
+              "host": ["{{baseUrl}}"],
+              "path": ["players", ""],
+              "query": [
+                { "key": "team_id", "value": "267" },
+                { "key": "limit", "value": "30" }
+              ]
+            },
+            "description": "Squad de Manchester City (team_id=267). Cambia el team_id según el equipo que quieras."
+          }
+        },
+        {
+          "name": "GET Player — Career totales por temporada",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/players/5821/career/",
+              "host": ["{{baseUrl}}"],
+              "path": ["players", "5821", "career", ""]
+            },
+            "description": "Historial de temporadas: goles, asistencias, minutos, partidos, rating promedio."
+          }
+        },
+        {
+          "name": "GET Player — Stats en partido específico",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/players/5821/stats/?season_id=243&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["players", "5821", "stats", ""],
+              "query": [
+                { "key": "season_id", "value": "243" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Player Stats del partido (todos)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/player-stats/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "player-stats", ""]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "💰 Cuotas (Odds)",
+      "description": "~15 casas de apuestas. oddssafari-consensus = promedio sintético. Mercados: 1x2, btts, over_under_15/25/35, double_chance, draw_no_bet.",
+      "item": [
+        {
+          "name": "GET Odds — Por partido 1X2",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/odds/?event_id={{testEventId}}&market=1x2",
+              "host": ["{{baseUrl}}"],
+              "path": ["odds", ""],
+              "query": [
+                { "key": "event_id", "value": "{{testEventId}}" },
+                { "key": "market", "value": "1x2" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log('Total odds rows:', b.count);",
+                  "const pinnacle = b.results?.find(o => o.bookmaker_slug === 'pinnacle' && o.outcome === 'HOME');",
+                  "if (pinnacle) console.log('Pinnacle local:', pinnacle.decimal_odds, '| movement:', pinnacle.movement);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Odds — Over/Under 2.5",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/odds/?event_id={{testEventId}}&market=over_under_25",
+              "host": ["{{baseUrl}}"],
+              "path": ["odds", ""],
+              "query": [
+                { "key": "event_id", "value": "{{testEventId}}" },
+                { "key": "market", "value": "over_under_25" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Odds — BTTS (ambos equipos marcan)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/odds/?event_id={{testEventId}}&market=btts",
+              "host": ["{{baseUrl}}"],
+              "path": ["odds", ""],
+              "query": [
+                { "key": "event_id", "value": "{{testEventId}}" },
+                { "key": "market", "value": "btts" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Odds — Mejores cuotas upcoming (WC2026)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/odds/best/?market=1x2&league_id={{wcLeagueId}}&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["odds", "best", ""],
+              "query": [
+                { "key": "market", "value": "1x2" },
+                { "key": "league_id", "value": "{{wcLeagueId}}" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Bookmakers disponibles",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/bookmakers/",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookmakers", ""]
+            },
+            "description": "Lista de todas las casas de apuestas con slug y nombre. Usa el slug en ?bookmaker_slug=pinnacle."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🧠 Técnicos (Managers)",
+      "description": "Técnicos con perfil táctico calculado automáticamente: pressing_intensity, defensive_line, preferred_formation, team_style.",
+      "item": [
+        {
+          "name": "GET Managers — Por equipo (team_id)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/managers/?team_id=267",
+              "host": ["{{baseUrl}}"],
+              "path": ["managers", ""],
+              "query": [{ "key": "team_id", "value": "267" }]
+            },
+            "description": "Técnico actual del equipo. Cambia team_id según necesites."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const b = pm.response.json();",
+                  "const m = b.results?.[0];",
+                  "if (m) {",
+                  "  console.log('Técnico:', m.name, '| Perfil:', m.tactical_profile, '| Estilo:', m.team_style);",
+                  "  console.log('Formación favorita:', m.preferred_formation, '| Win%:', m.win_pct);",
+                  "  console.log('xG a favor:', m.avg_xg_for, '| xG en contra:', m.avg_xg_against);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Managers — Top por win_pct",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/managers/?ordering=-win_pct&min_matches=20&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["managers", ""],
+              "query": [
+                { "key": "ordering", "value": "-win_pct" },
+                { "key": "min_matches", "value": "20" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Manager — Career/historial de equipos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/managers/214/career/",
+              "host": ["{{baseUrl}}"],
+              "path": ["managers", "214", "career", ""]
+            },
+            "description": "Historial de equipos entrenados con fechas y récord por tenencia."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🏟️ Ligas, Equipos, Venues, Árbitros",
+      "item": [
+        {
+          "name": "GET Todas las ligas activas",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/leagues/",
+              "host": ["{{baseUrl}}"],
+              "path": ["leagues", ""]
+            },
+            "description": "Devuelve todos los league_ids disponibles. Útil para verificar los IDs correctos (v2 cambió algunos vs v1)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const b = pm.response.json();",
+                  "const wc = b.results?.find(l => l.id === 27);",
+                  "const pl = b.results?.find(l => l.name.includes('Premier League'));",
+                  "if (wc) console.log('WC2026: league_id=', wc.id, '|', wc.name);",
+                  "if (pl) console.log('Premier League: league_id=', pl.id, '|', pl.name, '| season_id:', pl.current_season?.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Team — Fixtures próximos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/teams/267/fixtures/?status=notstarted&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "267", "fixtures", ""],
+              "query": [
+                { "key": "status", "value": "notstarted" },
+                { "key": "limit", "value": "5" }
+              ]
+            },
+            "description": "Próximos partidos del equipo (team_id=267 = Manchester City)."
+          }
+        },
+        {
+          "name": "GET Team — Squad actual",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/teams/267/squad/",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "267", "squad", ""]
+            }
+          }
+        },
+        {
+          "name": "GET Venues — Estadios USA grande (>50k)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/venues/?country_code=US&min_capacity=50000",
+              "host": ["{{baseUrl}}"],
+              "path": ["venues", ""],
+              "query": [
+                { "key": "country_code", "value": "US" },
+                { "key": "min_capacity", "value": "50000" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Árbitros — WC2026",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/referees/?league_id={{wcLeagueId}}&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["referees", ""],
+              "query": [
+                { "key": "league_id", "value": "{{wcLeagueId}}" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Árbitros con estadísticas de tarjetas y goles promedio."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📺 TV & Broadcasts",
+      "item": [
+        {
+          "name": "GET TV Channels — México (MX)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tv-channels/?country_code=MX",
+              "host": ["{{baseUrl}}"],
+              "path": ["tv-channels", ""],
+              "query": [{ "key": "country_code", "value": "MX" }]
+            }
+          }
+        },
+        {
+          "name": "GET Broadcasts — Por partido",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/broadcasts/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "broadcasts", ""]
+            }
+          }
+        },
+        {
+          "name": "GET Broadcasts — WC2026 próximos (México)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/broadcasts/?league_id={{wcLeagueId}}&country_code=MX&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["broadcasts", ""],
+              "query": [
+                { "key": "league_id", "value": "{{wcLeagueId}}" },
+                { "key": "country_code", "value": "MX" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📡 Social Media",
+      "item": [
+        {
+          "name": "GET Social — Por partido (tweets + videos)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/social/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "social", ""]
+            }
+          }
+        },
+        {
+          "name": "GET Social — Videos de highlights",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/social/?event_id={{testEventId}}&type=video",
+              "host": ["{{baseUrl}}"],
+              "path": ["social", ""],
+              "query": [
+                { "key": "event_id", "value": "{{testEventId}}" },
+                { "key": "type", "value": "video" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Social — Tweets por equipo",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/teams/267/social/?type=tweet&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "267", "social", ""],
+              "query": [
+                { "key": "type", "value": "tweet" },
+                { "key": "limit", "value": "5" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🧪 TEST SYNC — Partidos No-WC",
+      "description": "## Objetivo\nProbar el pipeline de sync ANTES del Mundial (Jun 11). Strategy: importar un partido de J1 League o Premier League a la app y verificar que el cron lo sincroniza correctamente.\n\n## Pasos\n1. **PASO 1**: Usa un GET para buscar un partido reciente o en vivo de J1 League\n2. **PASO 2**: Copia el `id` del partido de BSD → este es tu `bsdEventId`\n3. **PASO 3**: En la app, ve al Admin Panel → tab Early KO o Finals → crea/edita un partido y escribe el `bsdEventId`\n4. **PASO 4**: Verifica el detalle del partido en BSD (score, status)\n5. **PASO 5**: Llama al API de tu app para forzar sync\n6. **PASO 6** (opcional): Dispara el cron manualmente\n7. **PASO 7**: Verifica que el score se actualizó en tu DB",
+      "item": [
+        {
+          "name": "PASO 1 — Buscar partidos J1 League (finalizados)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/?league_id={{j1LeagueId}}&status=finished&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", ""],
+              "query": [
+                { "key": "league_id", "value": "{{j1LeagueId}}" },
+                { "key": "status", "value": "finished" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Busca partidos J1 finalizados recientes. Tienen scores reales. Copia un 'id' para usarlo como bsdEventId en el admin."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log('--- Partidos J1 finalizados ---');",
+                  "b.results?.slice(0,5).forEach((e, i) => {",
+                  "  console.log(i+1, '| BSD ID:', e.id, '|', e.home_team, e.home_score, '-', e.away_score, e.away_team, '|', e.event_date.substring(0,10));",
+                  "});",
+                  "if (b.results?.length > 0) {",
+                  "  const first = b.results[0];",
+                  "  pm.collectionVariables.set('testEventId', String(first.id));",
+                  "  console.log('\\n→ testEventId actualizado a:', first.id, '(' + first.home_team, 'vs', first.away_team + ')');",
+                  "  console.log('→ Copia este bsdEventId y ponlo en el admin panel de tu app');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PASO 1b — Buscar partidos Premier League próximos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/?league_id={{plLeagueId}}&status=notstarted&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", ""],
+              "query": [
+                { "key": "league_id", "value": "{{plLeagueId}}" },
+                { "key": "status", "value": "notstarted" },
+                { "key": "limit", "value": "5" }
+              ]
+            },
+            "description": "Alternativa: próximos partidos de PL. Asigna uno en el admin ANTES de que empiece y verifica que el sync lo actualiza cuando termine."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const b = pm.response.json();",
+                  "b.results?.slice(0,5).forEach((e, i) => {",
+                  "  console.log(i+1, '| BSD ID:', e.id, '|', e.home_team, 'vs', e.away_team, '|', e.event_date.substring(0,10));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PASO 2 — Ver detalle del partido elegido",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", ""]
+            },
+            "description": "Verifica el score real del partido. Estos son los valores que debería tener tu DB después del sync."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const e = pm.response.json();",
+                  "console.log('=== Datos BSD del partido ===');",
+                  "console.log('BSD Event ID:', e.id);",
+                  "console.log('Home:', e.home_team, '| Away:', e.away_team);",
+                  "console.log('Status:', e.status, '| Period:', e.period);",
+                  "console.log('Score:', e.home_score, '-', e.away_score);",
+                  "console.log('HT score:', e.home_score_ht, '-', e.away_score_ht);",
+                  "console.log('Date:', e.event_date);",
+                  "if (e.penalty_shootout) console.log('Penaltis:', JSON.stringify(e.penalty_shootout));",
+                  "console.log('\\n→ Tu DB debería mostrar exactamente estos valores después del sync');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PASO 3 — Stats del partido",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/stats/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "stats", ""]
+            },
+            "description": "Stats detallados: posesión, tiros, xG, shotmap, momentum. Para una futura página de 'Match Facts'."
+          }
+        },
+        {
+          "name": "PASO 4 — Predicción del partido",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/prediction/",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "prediction", ""]
+            },
+            "description": "Para partidos finalizados, puedes ver si el modelo acertó comparando el resultado real vs la predicción."
+          }
+        },
+        {
+          "name": "PASO 5 — [APP] Admin BSD sync — sync_match",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"sync_match\",\n  \"matchId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{appBaseUrl}}/api/admin/bsd",
+              "host": ["{{appBaseUrl}}"],
+              "path": ["api", "admin", "bsd"]
+            },
+            "description": "Llama al endpoint de tu app para sincronizar un match específico. Cambia 'matchId' al ID LOCAL (no bsdEventId) del match en tu DB.\n\nRequiere sesión de admin activa (cookies). Ejecuta primero con el navegador abierto en tu app."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const s = pm.response.code;",
+                  "if (s === 200) {",
+                  "  const b = pm.response.json();",
+                  "  console.log('Sync result:', JSON.stringify(b));",
+                  "} else if (s === 401) {",
+                  "  console.log('⚠️ 401 — Necesitas estar logueado como admin en la app. Abre el navegador con la sesión activa.');",
+                  "} else {",
+                  "  console.log('HTTP', s, pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PASO 6 — [APP] Forzar cron manualmente",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{cronSecret}}" }
+            ],
+            "url": {
+              "raw": "{{appBaseUrl}}/api/cron/sync-bsd",
+              "host": ["{{appBaseUrl}}"],
+              "path": ["api", "cron", "sync-bsd"]
+            },
+            "description": "Dispara el cron de sync manualmente. Requiere el header 'Authorization: Bearer {CRON_SECRET}'.\n\nActualiza la variable 'cronSecret' en esta colección con el valor de CRON_SECRET en tu .env"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const b = pm.response.json();",
+                  "console.log('Cron result:', JSON.stringify(b, null, 2));",
+                  "if (b.matchesUpdated > 0) console.log('✅ Se actualizaron', b.matchesUpdated, 'partidos');",
+                  "if (b.matchesSkipped > 0) console.log('ℹ️ Skipped:', b.matchesSkipped, '(sin scores aún o manualOverride)');",
+                  "if (b.errors > 0)        console.log('⚠️ Errors:', b.errors);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PASO 7 — [APP] Ver status BSD sync",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{appBaseUrl}}/api/admin/bsd",
+              "host": ["{{appBaseUrl}}"],
+              "path": ["api", "admin", "bsd"]
+            },
+            "description": "Consulta el estado del sync en tu app: últimas 5 entradas de BsdSyncLog y overrides activos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const b = pm.response.json();",
+                  "  console.log('BSD enabled:', b.bsdEnabled);",
+                  "  console.log('Últimas sync logs:');",
+                  "  b.recentLogs?.forEach(l => {",
+                  "    console.log(' ', l.createdAt?.substring(0,19), '| type:', l.syncType, '| status:', l.status, '| updated:', l.matchesUpdated, '| duration:', l.durationMs, 'ms');",
+                  "  });",
+                  "} else if (pm.response.code === 401) {",
+                  "  console.log('⚠️ Necesitas sesión de admin activa en la app');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PASO 8 — [APP] Test connection (token check)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"test_connection\",\n  \"matchId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{appBaseUrl}}/api/admin/bsd",
+              "host": ["{{appBaseUrl}}"],
+              "path": ["api", "admin", "bsd"]
+            },
+            "description": "Prueba el token BSD desde tu app. Llama a getEventDetail(bsdEventId mapeado para match local #1) y devuelve JSON raw. Si funciona → token y lib/bsd-client.ts están OK."
+          }
+        },
+        {
+          "name": "PASO 9 — [APP] Test live any (cualquier liga)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"test_live_any\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{appBaseUrl}}/api/admin/bsd",
+              "host": ["{{appBaseUrl}}"],
+              "path": ["api", "admin", "bsd"]
+            },
+            "description": "Obtiene todos los partidos live desde tu app (sin filtro de liga). Confirma conectividad aunque WC no haya empezado."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🖼️ Static Images (sin auth)",
+      "description": "URLs directas para imágenes. No requieren token. Cacheable 1 año. Úsalas en <img src=>.",
+      "item": [
+        {
+          "name": "GET Imagen — Jugador (player_id)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "https://sports.bzzoiro.com/img/player/5821/",
+              "raw": "https://sports.bzzoiro.com/img/player/5821/"
+            },
+            "description": "Foto del jugador. Reemplaza 5821 con el player_id de BSD."
+          }
+        },
+        {
+          "name": "GET Imagen — Escudo equipo (team_id)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "https://sports.bzzoiro.com/img/team/267/" }
+          }
+        },
+        {
+          "name": "GET Imagen — Liga (league_id)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "https://sports.bzzoiro.com/img/league/27/" },
+            "description": "Escudo del WC2026 (league_id=27)."
+          }
+        }
+      ]
+    }
+  ]
+}
