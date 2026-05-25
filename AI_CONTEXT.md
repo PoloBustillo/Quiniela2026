@@ -30,7 +30,14 @@
 	(jobs frecuentes fallan en deploy).
 - El endpoint `/api/cron/sync-bsd` se mantiene y debe ser llamado por scheduler externo.
 - Script helper disponible: `npm run cron:bsd-sync` (usa `APP_URL` + `CRON_SECRET`).
+- Script bash para servidores (DigitalOcean Droplet):
+	`scripts/trigger-bsd-sync-cron.sh` y comando `npm run cron:bsd-sync:bash`.
 - Seguridad: siempre requiere `Authorization: Bearer CRON_SECRET`.
+- Opción implementada: GitHub Actions `/.github/workflows/bsd-sync-cron.yml`
+	con ejecución cada 10 minutos y compuerta por ventana de Mundial/horario CDMX.
+	Además valida que el día actual tenga partidos en `data/matches.json`
+	(timezone `America/Mexico_City`) antes de disparar el sync.
+	Usa secrets de repositorio: `APP_URL` y `CRON_SECRET`.
 
 ## Variables de entorno requeridas
 

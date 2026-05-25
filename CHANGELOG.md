@@ -6,8 +6,12 @@
 
 - **`vercel.json`** — Se eliminó la sección `crons` para evitar fallos de deploy en Vercel Hobby (no permite cron de alta frecuencia).
 - **`scripts/trigger-bsd-sync-cron.js`** — Nuevo runner de cron externo que dispara `GET /api/cron/sync-bsd` con `Authorization: Bearer CRON_SECRET`.
+- **`scripts/trigger-bsd-sync-cron.sh`** — Runner bash (curl) para servidores Linux/DigitalOcean sin depender de Node en el scheduler.
 - **`package.json`** — Nuevo comando `npm run cron:bsd-sync` para usar desde servidor/scheduler externo.
+- **`package.json`** — Nuevo comando `npm run cron:bsd-sync:bash` para usar el runner bash en cron de Droplet.
 - **`app/api/cron/sync-bsd/route.ts`** — Actualizada la documentación del endpoint para reflejar arquitectura de scheduler externo.
+- **`.github/workflows/bsd-sync-cron.yml`** — Nuevo scheduler con GitHub Actions cada 10 minutos, con compuerta por fecha/hora (CDMX) para ejecutar solo en ventana útil del Mundial y evitar llamadas innecesarias.
+- **`.github/workflows/bsd-sync-cron.yml`** — La compuerta ahora también valida día con partido (leyendo `data/matches.json` en zona horaria CDMX) antes de disparar el endpoint.
 
 ### Fixed
 

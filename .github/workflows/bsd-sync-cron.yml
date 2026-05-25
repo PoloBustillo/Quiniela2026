@@ -1,0 +1,123 @@
+name: BSD Sync Cron
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: bsd-sync-cron
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Decide if sync is needed now
+        id: gate
+        env:
+          TZ: America/Mexico_City
+          WC_START_DATE: "2026-06-11"
+          WC_END_DATE: "2026-07-19"
+          WC_START_HOUR: "10"
+          WC_END_HOUR: "23"
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          # Always run when triggered manually.
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "reason=manual_dispatch" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          today=$(date +%F)
+          hour=$(date +%H)
+
+          in_date_range=false
+          if [[ "$today" > "$WC_START_DATE" || "$today" == "$WC_START_DATE" ]]; then
+            if [[ "$today" < "$WC_END_DATE" || "$today" == "$WC_END_DATE" ]]; then
+              in_date_range=true
+            fi
+          fi
+
+          in_hour_range=false
+          if [ "$hour" -ge "$WC_START_HOUR" ] && [ "$hour" -le "$WC_END_HOUR" ]; then
+            in_hour_range=true
+          fi
+
+          has_matchday=$(node -e '
+            const fs = require("fs");
+            const path = "data/matches.json";
+            const tz = "America/Mexico_City";
+
+            const today = new Intl.DateTimeFormat("en-CA", {
+              timeZone: tz,
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }).format(new Date());
+
+            const raw = fs.readFileSync(path, "utf8");
+            const json = JSON.parse(raw);
+            const matches = Array.isArray(json.matches) ? json.matches : [];
+
+            const isMatchDay = matches.some((m) => {
+              if (!m?.date) return false;
+              const d = new Date(String(m.date).replace(" ", "T"));
+              if (Number.isNaN(d.getTime())) return false;
+              const localDay = new Intl.DateTimeFormat("en-CA", {
+                timeZone: tz,
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+              }).format(d);
+              return localDay === today;
+            });
+
+            process.stdout.write(isMatchDay ? "true" : "false");
+          ')
+
+          if [ "$in_date_range" = "true" ] && [ "$in_hour_range" = "true" ] && [ "$has_matchday" = "true" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "reason=inside_wc_window_matchday" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "reason=outside_window_or_no_matchday" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip info
+        if: steps.gate.outputs.should_run != 'true'
+        run: |
+          echo "Skipping BSD sync: ${{ steps.gate.outputs.reason }}"
+
+      - name: Trigger BSD sync endpoint
+        if: steps.gate.outputs.should_run == 'true'
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Missing APP_URL or CRON_SECRET repository secret"
+            exit 1
+          fi
+
+          endpoint="${APP_URL%/}/api/cron/sync-bsd"
+          echo "Calling $endpoint"
+
+          http_code=$(curl -sS -o response.json -w "%{http_code}" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$endpoint")
+
+          echo "HTTP $http_code"
+          cat response.json
+
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            exit 1
+          fi

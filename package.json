@@ -18,7 +18,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "cron:bsd-sync": "node scripts/trigger-bsd-sync-cron.js"
+    "cron:bsd-sync": "node scripts/trigger-bsd-sync-cron.js",
+    "cron:bsd-sync:bash": "bash scripts/trigger-bsd-sync-cron.sh"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
