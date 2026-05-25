@@ -22,13 +22,30 @@ import { MatchDetailTabs } from "../../../components/MatchDetailTabs";
 export const revalidate = 30;
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
-  const matchId = parseInt(params.id);
-  const match = (matchesData as any).matches?.find(
-    (m: any) => m.id === matchId,
-  );
-  if (!match) return { title: "Partido | Quiniela 2026" };
+  const rawId = params.id;
+  const numericId = Number(rawId);
+
+  if (Number.isInteger(numericId) && numericId > 0) {
+    const match = (matchesData as any).matches?.find(
+      (m: any) => m.id === numericId,
+    );
+    if (!match) return { title: "Partido | Quiniela 2026" };
+    return {
+      title: `${match.homeTeam.name} vs ${match.awayTeam.name} | Quiniela 2026`,
+    };
+  }
+
+  const knockoutMatch = await prisma.match.findUnique({
+    where: { id: rawId },
+    include: {
+      homeTeam: { select: { name: true } },
+      awayTeam: { select: { name: true } },
+    },
+  });
+
+  if (!knockoutMatch) return { title: "Partido | Quiniela 2026" };
   return {
-    title: `${match.homeTeam.name} vs ${match.awayTeam.name} | Quiniela 2026`,
+    title: `${knockoutMatch.homeTeam.name} vs ${knockoutMatch.awayTeam.name} | Quiniela 2026`,
   };
 }
 
@@ -40,28 +57,113 @@ export default async function MatchDetailPage({
   const session = await getServerSession(authOptions);
   if (!session) redirect("/auth/signin");
 
-  const matchId = parseInt(params.id);
-  if (isNaN(matchId) || matchId < 1) notFound();
+  const rawId = params.id;
+  const numericId = Number(rawId);
+  const isGroupMatchId = Number.isInteger(numericId) && numericId > 0;
 
-  const allMatches = (matchesData as any).matches as any[];
-  const match = allMatches.find((m) => m.id === matchId);
-  if (!match) notFound();
+  let localMatch: {
+    id: number;
+    homeTeamName: string;
+    awayTeamName: string;
+    homeTeamCode: string;
+    awayTeamCode: string;
+    homeTeamFlag: string | null;
+    awayTeamFlag: string | null;
+    date: string;
+    stadium: string;
+    city: string;
+    group: string;
+    stage: string;
+  };
 
-  // ── DB data ──────────────────────────────────────────────────────────────────
-  const [dbScore, userPrediction] = await Promise.all([
-    prisma.groupMatchScore.findUnique({ where: { matchId } }),
-    prisma.prediction.findUnique({
-      where: {
-        userId_matchId: {
+  let currentScore: { home: number | null; away: number | null } | null = null;
+  let userPrediction: { homeScore: number; awayScore: number } | null = null;
+  let bsdEventId: number | undefined;
+
+  if (isGroupMatchId) {
+    const matchId = numericId;
+    const allMatches = (matchesData as any).matches as any[];
+    const match = allMatches.find((m) => m.id === matchId);
+    if (!match) notFound();
+
+    const [dbScore, prediction] = await Promise.all([
+      prisma.groupMatchScore.findUnique({ where: { matchId } }),
+      prisma.prediction.findFirst({
+        where: {
           userId: session.user.id,
-          matchId: String(matchId),
+          OR: [{ matchId: `match_${matchId}` }, { matchId: String(matchId) }],
         },
+      }),
+    ]);
+
+    localMatch = {
+      id: match.id,
+      homeTeamName: match.homeTeam.name,
+      awayTeamName: match.awayTeam.name,
+      homeTeamCode: match.homeTeam.code,
+      awayTeamCode: match.awayTeam.code,
+      homeTeamFlag: match.homeTeam.flag ?? null,
+      awayTeamFlag: match.awayTeam.flag ?? null,
+      date: match.date,
+      stadium: match.stadium,
+      city: match.city,
+      group: match.group,
+      stage: match.stage,
+    };
+
+    currentScore = dbScore
+      ? { home: dbScore.homeScore, away: dbScore.awayScore }
+      : null;
+    userPrediction = prediction
+      ? {
+          homeScore: prediction.homeScore,
+          awayScore: prediction.awayScore,
+        }
+      : null;
+    bsdEventId = getBsdEventIdForGroupMatch(matchId) ?? undefined;
+  } else {
+    const knockout = await prisma.match.findUnique({
+      where: { id: rawId },
+      include: { homeTeam: true, awayTeam: true },
+    });
+    if (!knockout) notFound();
+
+    const prediction = await prisma.prediction.findFirst({
+      where: {
+        userId: session.user.id,
+        OR: [{ matchId: `match_${knockout.id}` }, { matchId: knockout.id }],
       },
-    }),
-  ]);
+    });
+
+    localMatch = {
+      id: 1000,
+      homeTeamName: knockout.homeTeam.name,
+      awayTeamName: knockout.awayTeam.name,
+      homeTeamCode: knockout.homeTeam.code,
+      awayTeamCode: knockout.awayTeam.code,
+      homeTeamFlag: knockout.homeTeam.flag ?? null,
+      awayTeamFlag: knockout.awayTeam.flag ?? null,
+      date: knockout.matchDate.toISOString(),
+      stadium: knockout.stadium ?? "Por definir",
+      city: knockout.city ?? "Por definir",
+      group: "",
+      stage: knockout.phase,
+    };
+
+    currentScore = {
+      home: knockout.homeScore,
+      away: knockout.awayScore,
+    };
+    userPrediction = prediction
+      ? {
+          homeScore: prediction.homeScore,
+          awayScore: prediction.awayScore,
+        }
+      : null;
+    bsdEventId = knockout.bsdEventId ?? undefined;
+  }
 
   // ── BSD data (best-effort, never blocks render) ───────────────────────────
-  const bsdEventId = getBsdEventIdForGroupMatch(matchId);
 
   let bsdCore = null,
     bsdStats = null,
@@ -127,31 +229,9 @@ export default async function MatchDetailPage({
       </Link>
 
       <MatchDetailTabs
-        localMatch={{
-          id: match.id,
-          homeTeamName: match.homeTeam.name,
-          awayTeamName: match.awayTeam.name,
-          homeTeamCode: match.homeTeam.code,
-          awayTeamCode: match.awayTeam.code,
-          homeTeamFlag: match.homeTeam.flag ?? null,
-          awayTeamFlag: match.awayTeam.flag ?? null,
-          date: match.date,
-          stadium: match.stadium,
-          city: match.city,
-          group: match.group,
-          stage: match.stage,
-        }}
-        currentScore={
-          dbScore ? { home: dbScore.homeScore, away: dbScore.awayScore } : null
-        }
-        userPrediction={
-          userPrediction
-            ? {
-                homeScore: userPrediction.homeScore,
-                awayScore: userPrediction.awayScore,
-              }
-            : null
-        }
+        localMatch={localMatch}
+        currentScore={currentScore}
+        userPrediction={userPrediction}
         bsd={{
           status: (bsdCore as any)?.status ?? null,
           period: (bsdCore as any)?.period ?? null,

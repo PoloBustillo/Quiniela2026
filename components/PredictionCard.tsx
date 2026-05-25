@@ -374,11 +374,12 @@ export default function PredictionCard({
                 })}
               </span>
               {(() => {
-                const numId = parseInt(match.id.replace("match_", ""));
-                if (!isNaN(numId) && numId >= 1 && numId <= 72) {
+                if (match.id.startsWith("match_")) {
+                  const detailId = match.id.replace("match_", "");
+                  if (!detailId) return null;
                   return (
                     <Link
-                      href={`/matches/${numId}`}
+                      href={`/matches/${encodeURIComponent(detailId)}`}
                       className="text-primary font-medium hover:underline"
                       onClick={(e) => e.stopPropagation()}
                     >
