@@ -1,15 +1,14 @@
 /**
- * Vercel Cron Job — BSD Live Sync
+ * External Cron Trigger — BSD Live Sync
  *
  * Endpoint: GET /api/cron/sync-bsd
  *
- * Configurado en vercel.json para ejecutarse cada minuto durante
- * las horas de partidos del Mundial.
+ * Debe ser llamado por un scheduler externo (Railway/Render/GitHub Actions/cron-job.org)
+ * para planes Vercel Hobby donde no se permite frecuencia alta de cron.
  *
- * Seguridad: protegido por CRON_SECRET (Vercel lo inyecta automáticamente
- * en el header Authorization cuando lo llama el cron scheduler).
+ * Seguridad: protegido por CRON_SECRET vía header Authorization: Bearer <secret>.
  *
- * Si BSD falla → retorna 200 igualmente (el cron no debe reintentar por errores BSD).
+ * Si BSD falla → retorna 200 igualmente (el scheduler no debe reintentar por errores BSD).
  */
 
 import { NextResponse } from "next/server";

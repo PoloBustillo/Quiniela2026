@@ -26,9 +26,11 @@
 
 ## Vercel Cron
 
-- Configurado en `vercel.json`: `* * * * *` (cada minuto)
-- Llama a `/api/cron/sync-bsd` con `Authorization: Bearer CRON_SECRET`
-- Solo disponible en plan Hobby+ de Vercel
+- Refactor 2026-05-24: removido de `vercel.json` por limitación de Vercel Hobby
+	(jobs frecuentes fallan en deploy).
+- El endpoint `/api/cron/sync-bsd` se mantiene y debe ser llamado por scheduler externo.
+- Script helper disponible: `npm run cron:bsd-sync` (usa `APP_URL` + `CRON_SECRET`).
+- Seguridad: siempre requiere `Authorization: Bearer CRON_SECRET`.
 
 ## Variables de entorno requeridas
 

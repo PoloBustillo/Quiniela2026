@@ -2,6 +2,13 @@
 
 ## 2026-05-25
 
+### Changed
+
+- **`vercel.json`** — Se eliminó la sección `crons` para evitar fallos de deploy en Vercel Hobby (no permite cron de alta frecuencia).
+- **`scripts/trigger-bsd-sync-cron.js`** — Nuevo runner de cron externo que dispara `GET /api/cron/sync-bsd` con `Authorization: Bearer CRON_SECRET`.
+- **`package.json`** — Nuevo comando `npm run cron:bsd-sync` para usar desde servidor/scheduler externo.
+- **`app/api/cron/sync-bsd/route.ts`** — Actualizada la documentación del endpoint para reflejar arquitectura de scheduler externo.
+
 ### Fixed
 
 - **`lib/bsd-sync.ts`** — `syncLiveMatches` ya no abandona si no hay eventos WC en vivo; sigue revisando los partidos de eliminatoria con `bsdEventId` explícito llamando `getEventDetail()` directamente. Esto permite sincronizar eventos de ligas distintas a WC (útil para pruebas) y partidos que BSD retiró del feed en vivo pero ya tienen score.
