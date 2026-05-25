@@ -32,6 +32,7 @@
 - Script helper disponible: `npm run cron:bsd-sync` (usa `APP_URL` + `CRON_SECRET`).
 - Script bash para servidores (DigitalOcean Droplet):
 	`scripts/trigger-bsd-sync-cron.sh` y comando `npm run cron:bsd-sync:bash`.
+	Soporta `ENV_FILE=.env` para cargar variables y fallback `NEXTAUTH_URL -> APP_URL`.
 - Seguridad: siempre requiere `Authorization: Bearer CRON_SECRET`.
 - Opción implementada: GitHub Actions `/.github/workflows/bsd-sync-cron.yml`
 	con ejecución cada 10 minutos y compuerta por ventana de Mundial/horario CDMX.

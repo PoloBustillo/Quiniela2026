@@ -9,6 +9,7 @@
 - **`scripts/trigger-bsd-sync-cron.sh`** — Runner bash (curl) para servidores Linux/DigitalOcean sin depender de Node en el scheduler.
 - **`package.json`** — Nuevo comando `npm run cron:bsd-sync` para usar desde servidor/scheduler externo.
 - **`package.json`** — Nuevo comando `npm run cron:bsd-sync:bash` para usar el runner bash en cron de Droplet.
+- **`scripts/trigger-bsd-sync-cron.sh`** — Soporta `ENV_FILE=.env` y fallback `NEXTAUTH_URL -> APP_URL` para facilitar ejecución en Droplet.
 - **`app/api/cron/sync-bsd/route.ts`** — Actualizada la documentación del endpoint para reflejar arquitectura de scheduler externo.
 - **`.github/workflows/bsd-sync-cron.yml`** — Nuevo scheduler con GitHub Actions cada 10 minutos, con compuerta por fecha/hora (CDMX) para ejecutar solo en ventana útil del Mundial y evitar llamadas innecesarias.
 - **`.github/workflows/bsd-sync-cron.yml`** — La compuerta ahora también valida día con partido (leyendo `data/matches.json` en zona horaria CDMX) antes de disparar el endpoint.
@@ -19,6 +20,7 @@
 - **`app/api/admin/matches/route.ts`** — `manualOverride` y `syncSource:"manual"` solo se activan cuando se envía `homeScore` o `awayScore`. Cambios de fecha, estadio o ciudad ya no marcan el partido como override manual.
 - **`app/api/admin/group-matches/route.ts`** — Mismo fix: `manualOverride` solo al cambiar scores; cambios de fecha/hora del partido no lo activan.
 - **`components/ClientHomePage.tsx`** — La vista "Por fecha" ahora ordena los bloques de fecha cronológicamente usando la fecha real del primer partido de cada bloque. Antes dependía del orden de inserción del `reduce`, que podía ser incorrecto cuando los partidos de grupos y eliminatorias estaban mezclados.
+- **`components/PredictionCard.tsx`** — Link compacto cambiado de "Stats →" a "Detalles →".
 
 ## 2026-05-24
 

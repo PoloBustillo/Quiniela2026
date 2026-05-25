@@ -382,7 +382,7 @@ export default function PredictionCard({
                       className="text-primary font-medium hover:underline"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      Stats →
+                      Detalles →
                     </Link>
                   );
                 }
