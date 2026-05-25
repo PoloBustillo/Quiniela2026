@@ -1002,9 +1002,12 @@ export function AllMatchesManager() {
                             type="number"
                             placeholder="ej: 8390"
                             value={
-                              knockoutEdits[match.id]?.bsdEventId ??
-                              match.bsdEventId ??
-                              ""
+                              Object.prototype.hasOwnProperty.call(
+                                knockoutEdits[match.id] ?? {},
+                                "bsdEventId",
+                              )
+                                ? (knockoutEdits[match.id]?.bsdEventId ?? "")
+                                : (match.bsdEventId ?? "")
                             }
                             onChange={(e) =>
                               updateKnockoutMatch(match.id, {
@@ -1016,7 +1019,10 @@ export function AllMatchesManager() {
                             }
                           />
                           {match.bsdEventId &&
-                            !knockoutEdits[match.id]?.bsdEventId && (
+                            !Object.prototype.hasOwnProperty.call(
+                              knockoutEdits[match.id] ?? {},
+                              "bsdEventId",
+                            ) && (
                               <div className="flex items-center gap-3 mt-1">
                                 <p className="text-xs text-green-600">
                                   ✓ Sync BSD activo · ID: {match.bsdEventId}
@@ -1500,9 +1506,12 @@ export function AllMatchesManager() {
                             type="number"
                             placeholder="ej: 8390"
                             value={
-                              knockoutEdits[match.id]?.bsdEventId ??
-                              match.bsdEventId ??
-                              ""
+                              Object.prototype.hasOwnProperty.call(
+                                knockoutEdits[match.id] ?? {},
+                                "bsdEventId",
+                              )
+                                ? (knockoutEdits[match.id]?.bsdEventId ?? "")
+                                : (match.bsdEventId ?? "")
                             }
                             onChange={(e) =>
                               updateKnockoutMatch(match.id, {
@@ -1514,7 +1523,10 @@ export function AllMatchesManager() {
                             }
                           />
                           {match.bsdEventId &&
-                            !knockoutEdits[match.id]?.bsdEventId && (
+                            !Object.prototype.hasOwnProperty.call(
+                              knockoutEdits[match.id] ?? {},
+                              "bsdEventId",
+                            ) && (
                               <div className="flex items-center gap-3 mt-1">
                                 <p className="text-xs text-green-600">
                                   ✓ Sync BSD activo · ID: {match.bsdEventId}
