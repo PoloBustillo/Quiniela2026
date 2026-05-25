@@ -16,7 +16,7 @@ import {
   getEventPrediction,
   getEventMetadata,
 } from "@/lib/bsd-client";
-import { MatchDetailTabs } from "@/components/MatchDetailTabs";
+import { MatchDetailTabs } from "../../../components/MatchDetailTabs";
 
 // ISR: re-render every 30s — keeps live scores fresh without SSE
 export const revalidate = 30;
