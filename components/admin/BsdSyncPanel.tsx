@@ -109,7 +109,8 @@ export function BsdSyncPanel() {
           <p className="text-xs text-muted-foreground">
             Cuando editas un marcador manualmente, ese partido queda protegido
             de sobrescrituras automáticas (override activo). Para reactivar el
-            sync automático en un partido, usa &quot;Reset Override&quot; en esa fila.
+            sync automático en un partido, usa &quot;Reset Override&quot; en esa
+            fila.
           </p>
         </CardContent>
       </Card>
