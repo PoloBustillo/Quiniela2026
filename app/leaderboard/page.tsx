@@ -114,6 +114,29 @@ export default async function LeaderboardPage() {
     ...finishedKnockoutIds,
     ...legacyFinishedKnockoutIds,
   ];
+  const finishedMatchDayMap: Record<string, string> = {};
+
+  const toMexDay = (d: Date) =>
+    d.toLocaleDateString("sv-SE", {
+      timeZone: "America/Mexico_City",
+    });
+
+  const groupById = new Map(matchesData.matches.map((m) => [m.id, m]));
+  for (const finished of finishedGroupScores) {
+    const gm = groupById.get(finished.matchId);
+    if (!gm) continue;
+    const overrideDate = groupDateOverrideMap.get(finished.matchId);
+    const matchDate = overrideDate || parseMatchDate(gm.date);
+    finishedMatchDayMap[`match_${finished.matchId}`] = toMexDay(matchDate);
+  }
+
+  knockoutMatches.forEach((match, index) => {
+    if (match.status !== "FINISHED") return;
+    const day = toMexDay(match.matchDate);
+    finishedMatchDayMap[`match_${match.id}`] = day;
+    finishedMatchDayMap[`match_${1000 + index}`] = day;
+  });
+
   const startedKnockoutIds = knockoutMatches
     .filter((match) => match.matchDate <= now)
     .map((match) => `match_${match.id}`);
@@ -261,6 +284,7 @@ export default async function LeaderboardPage() {
           matchMap={matchMap}
           currentUserId={session.user?.id ?? ""}
           finishedMatchIds={finishedMatchIdSet}
+          finishedMatchDayMap={finishedMatchDayMap}
         />
       )}
     </div>

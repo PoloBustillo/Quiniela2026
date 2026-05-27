@@ -16,6 +16,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { translateCountry } from "@/lib/translations";
+import LeaderboardRaceChart from "@/components/LeaderboardRaceChart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface MatchInfo {
   home: string;
@@ -53,6 +55,7 @@ interface LeaderboardByPhaseProps {
   matchMap: Record<string, MatchInfo>;
   currentUserId: string;
   finishedMatchIds: string[];
+  finishedMatchDayMap?: Record<string, string>;
 }
 
 /** The 3 torneos + "All" */
@@ -151,8 +154,10 @@ export default function LeaderboardByPhase({
   matchMap,
   currentUserId,
   finishedMatchIds,
+  finishedMatchDayMap = {},
 }: LeaderboardByPhaseProps) {
   const [selectedTorneo, setSelectedTorneo] = useState("ALL");
+  const [viewTab, setViewTab] = useState<"tabla" | "grafica">("tabla");
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
 
   const finishedSet = useMemo(
@@ -187,6 +192,100 @@ export default function LeaderboardByPhase({
 
   const myEntry = leaderboard.find((u) => u.id === currentUserId);
   const myRank = leaderboard.findIndex((u) => u.id === currentUserId) + 1;
+  const raceFrames = useMemo(() => {
+    const phasesForTorneo = TORNEO_PHASES[selectedTorneo] ?? [];
+    const dayKeys = Array.from(new Set(Object.values(finishedMatchDayMap))).sort();
+
+    if (dayKeys.length === 0) {
+      return [
+        {
+          label: "Sin jornadas",
+          rows: leaderboard.map((u) => ({
+            id: u.id,
+            name: u.name,
+            image: u.image,
+            value: u.points,
+          })),
+        },
+      ];
+    }
+
+    // Build day buckets with backend points for finished matches.
+    const dayBuckets: Record<string, Record<string, number>> = {};
+    for (const day of dayKeys) dayBuckets[day] = {};
+
+    for (const user of users) {
+      for (const pred of user.predictions) {
+        if (!finishedSet.has(pred.matchId)) continue;
+        const matchDay = finishedMatchDayMap[pred.matchId];
+        if (!matchDay || !dayBuckets[matchDay]) continue;
+        if (
+          selectedTorneo !== "ALL" &&
+          (!pred.phase || !phasesForTorneo.includes(pred.phase))
+        ) {
+          continue;
+        }
+        dayBuckets[matchDay][user.id] =
+          (dayBuckets[matchDay][user.id] || 0) + pred.points;
+      }
+    }
+
+    // Incremental cumulative frames: every user appears every jornada.
+    const runningTotals = new Map<string, number>();
+    users.forEach((u) => runningTotals.set(u.id, 0));
+
+    const frames = dayKeys.map((day) => {
+      const bucket = dayBuckets[day];
+      for (const user of users) {
+        const add = bucket[user.id] || 0;
+        runningTotals.set(user.id, (runningTotals.get(user.id) || 0) + add);
+      }
+
+      const rows = users
+        .map((user) => ({
+          id: user.id,
+          name: user.name,
+          image: user.image,
+          value: runningTotals.get(user.id) || 0,
+        }))
+        .sort((a, b) => b.value - a.value);
+
+      return { label: day, rows };
+    });
+
+    // Parity check: last frame totals must equal backend sums under same filter.
+    const expectedTotals = new Map<string, number>();
+    users.forEach((u) => {
+      const total = u.predictions.reduce((acc, p) => {
+        if (!finishedSet.has(p.matchId)) return acc;
+        const hasDay = !!finishedMatchDayMap[p.matchId];
+        if (!hasDay) return acc;
+        if (
+          selectedTorneo !== "ALL" &&
+          (!p.phase || !phasesForTorneo.includes(p.phase))
+        ) {
+          return acc;
+        }
+        return acc + p.points;
+      }, 0);
+      expectedTotals.set(u.id, total);
+    });
+
+    const last = frames[frames.length - 1];
+    const mismatch = last.rows.find(
+      (r) => (expectedTotals.get(r.id) || 0) !== r.value,
+    );
+    if (mismatch) {
+      console.warn("Race parity mismatch detected", {
+        selectedTorneo,
+        userId: mismatch.id,
+        expected: expectedTotals.get(mismatch.id) || 0,
+        actual: mismatch.value,
+      });
+    }
+
+    return frames;
+  }, [users, leaderboard, selectedTorneo, finishedSet, finishedMatchDayMap]);
 
   /** Drop last surname when 4+ words; hard-cap at 28 chars. */
   const formatDisplayName = (n: string) => {
@@ -197,6 +296,17 @@ export default function LeaderboardByPhase({
 
   return (
     <div className="space-y-3">
+      <Tabs
+        value={viewTab}
+        onValueChange={(v) => setViewTab(v as "tabla" | "grafica")}
+        className="space-y-3"
+      >
+        <TabsList className="grid w-full max-w-xs grid-cols-2">
+          <TabsTrigger value="tabla">Tabla</TabsTrigger>
+          <TabsTrigger value="grafica">Grafica</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="tabla" className="space-y-3">
       {/* Torneo filter */}
       <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-1">
         {TORNEOS.map((t) => (
@@ -577,6 +687,31 @@ export default function LeaderboardByPhase({
           );
         })}
       </div>
+        </TabsContent>
+
+        <TabsContent value="grafica" className="space-y-3">
+          <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-1">
+            {TORNEOS.map((t) => (
+              <button
+                key={`graph-${t.value}`}
+                onClick={() => setSelectedTorneo(t.value)}
+                className={cn(
+                  "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap",
+                  selectedTorneo === t.value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Datos reales acumulados por jornada (cada jornada = día con partidos).
+          </p>
+          <LeaderboardRaceChart key={`race-${selectedTorneo}`} frames={raceFrames} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
