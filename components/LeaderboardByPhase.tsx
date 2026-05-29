@@ -108,6 +108,7 @@ const PHASE_ORDER = [
 ];
 
 const MEDAL = ["🥇", "🥈", "🥉"];
+const WORLD_CUP_START_DAY = "2026-06-11";
 
 const getPredictionOrder = (
   matchId: string,
@@ -194,7 +195,9 @@ export default function LeaderboardByPhase({
   const myRank = leaderboard.findIndex((u) => u.id === currentUserId) + 1;
   const raceFrames = useMemo(() => {
     const phasesForTorneo = TORNEO_PHASES[selectedTorneo] ?? [];
-    const dayKeys = Array.from(new Set(Object.values(finishedMatchDayMap))).sort();
+    const dayKeys = Array.from(new Set(Object.values(finishedMatchDayMap)))
+      .filter((day) => day >= WORLD_CUP_START_DAY)
+      .sort();
 
     if (dayKeys.length === 0) {
       return [
