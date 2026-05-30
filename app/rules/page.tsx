@@ -107,8 +107,8 @@ export default async function RulesPage() {
             <p className="text-blue-800 dark:text-blue-200">
               Se toma en cuenta el resultado al final del tiempo reglamentario:{" "}
               <strong>90 minutos en grupos</strong>, y{" "}
-              <strong>hasta 120 minutos (tiempo extra)</strong> en eliminatorias.
-              Los penales no cuentan para el marcador.
+              <strong>hasta 120 minutos (tiempo extra)</strong> en
+              eliminatorias. Los penales no cuentan para el marcador.
             </p>
           </div>
         </CardContent>
