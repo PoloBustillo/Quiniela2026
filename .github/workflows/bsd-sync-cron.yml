@@ -70,15 +70,10 @@ jobs:
 
             const isMatchDay = matches.some((m) => {
               if (!m?.date) return false;
-              const d = new Date(String(m.date).replace(" ", "T"));
-              if (Number.isNaN(d.getTime())) return false;
-              const localDay = new Intl.DateTimeFormat("en-CA", {
-                timeZone: tz,
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-              }).format(d);
-              return localDay === today;
+              // matches.json ya trae fechas en hora de Mexico con prefijo YYYY-MM-DD.
+              // Evitamos Date parsing porque "...-06" (sin minutos) puede ser invalido en Node.
+              const dateText = String(m.date).trim();
+              return dateText.slice(0, 10) === today;
             });
 
             process.stdout.write(isMatchDay ? "true" : "false");

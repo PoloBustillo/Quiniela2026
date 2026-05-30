@@ -21,6 +21,7 @@
 - **`app/api/admin/group-matches/route.ts`** — Mismo fix: `manualOverride` solo al cambiar scores; cambios de fecha/hora del partido no lo activan.
 - **`components/ClientHomePage.tsx`** — La vista "Por fecha" ahora ordena los bloques de fecha cronológicamente usando la fecha real del primer partido de cada bloque. Antes dependía del orden de inserción del `reduce`, que podía ser incorrecto cuando los partidos de grupos y eliminatorias estaban mezclados.
 - **`components/PredictionCard.tsx`** — Link compacto cambiado de "Stats →" a "Detalles →".
+- **`.github/workflows/bsd-sync-cron.yml`** — Corregido bug de parseo de fechas de `data/matches.json` (`...-06`) que podía marcar falsamente `has_matchday=false` y saltar syncs válidos.
 
 ## 2026-05-24
 

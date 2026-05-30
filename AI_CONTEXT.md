@@ -38,6 +38,8 @@
 	con ejecución cada 10 minutos y compuerta por ventana de Mundial/horario CDMX.
 	Además valida que el día actual tenga partidos en `data/matches.json`
 	(timezone `America/Mexico_City`) antes de disparar el sync.
+	Bugfix: la validación de matchday compara prefijo `YYYY-MM-DD` directo del
+	calendario para evitar fallos de parseo de fecha (`...-06`) en Node.
 	Usa secrets de repositorio: `APP_URL` y `CRON_SECRET`.
 
 ## Variables de entorno requeridas
