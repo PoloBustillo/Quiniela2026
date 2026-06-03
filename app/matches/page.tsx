@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Calendar } from "lucide-react";
 import { MatchCard } from "@/components/MatchCard";
 import matchesData from "@/data/matches.json";
+import { parseMatchDate } from "@/lib/points";
 
 export default async function MatchesPage() {
   const session = await getServerSession(authOptions);
@@ -15,7 +16,7 @@ export default async function MatchesPage() {
   // Agrupar partidos por fecha
   const matchesByDate = matchesData.matches.reduce(
     (acc, match) => {
-      const date = new Date(match.date).toLocaleDateString("es-MX", {
+      const date = parseMatchDate(match.date).toLocaleDateString("es-MX", {
         weekday: "long",
         day: "numeric",
         month: "long",

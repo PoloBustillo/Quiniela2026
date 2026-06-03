@@ -376,9 +376,11 @@ export function MatchDetailTabs({
                 </span>
               )}
             </div>
-            <Badge variant="outline" className="text-xs">
-              Grupo {m.group}
-            </Badge>
+            {m.group && (
+              <Badge variant="outline" className="text-xs">
+                Grupo {m.group}
+              </Badge>
+            )}
           </div>
 
           {/* Teams + Score */}

@@ -127,7 +127,7 @@ export default async function RulesPage() {
             {
               fase: "Fase de Grupos",
               precio: "$100",
-              desc: "Partidos del grupo A al H",
+              desc: "Partidos del grupo A al L",
             },
             {
               fase: "16avos + 8avos",

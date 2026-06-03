@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { Calendar, MapPin, Clock } from "lucide-react";
+import { parseMatchDate } from "@/lib/points";
 
 interface MatchTeam {
   id: number;
@@ -34,7 +35,7 @@ export function MatchCard({ match }: MatchCardProps) {
   const homeTeam = match.homeTeam;
   const awayTeam = match.awayTeam;
 
-  const matchDate = new Date(match.date);
+  const matchDate = parseMatchDate(match.date);
 
   // Formatear fecha en zona horaria de Ciudad de México (CST/UTC-6)
   const dateStr = matchDate.toLocaleDateString("es-MX", {

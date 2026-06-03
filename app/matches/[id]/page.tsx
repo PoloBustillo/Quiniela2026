@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import matchesData from "@/data/matches.json";
 import { prisma } from "@/lib/prisma";
+import { parseMatchDate } from "@/lib/points";
 import { getBsdEventIdForGroupMatch } from "@/lib/bsd-mapping";
 import {
   getEventDetail,
@@ -104,7 +105,7 @@ export default async function MatchDetailPage({
       awayTeamCode: match.awayTeam.code,
       homeTeamFlag: match.homeTeam.flag ?? null,
       awayTeamFlag: match.awayTeam.flag ?? null,
-      date: match.date,
+      date: parseMatchDate(match.date).toISOString(),
       stadium: match.stadium,
       city: match.city,
       group: match.group,

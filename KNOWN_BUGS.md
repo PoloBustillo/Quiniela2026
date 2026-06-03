@@ -2,6 +2,20 @@
 
 ## Open
 
+1. Client-side date parsing uses non-ISO match strings directly
+
+- Scope: [components/PredictionCard.tsx](components/PredictionCard.tsx), [components/ClientHomePage.tsx](components/ClientHomePage.tsx), [components/MatchCard.tsx](components/MatchCard.tsx), [components/MatchDetailTabs.tsx](components/MatchDetailTabs.tsx), [app/matches/page.tsx](app/matches/page.tsx), [components/admin/AllMatchesManager.tsx](components/admin/AllMatchesManager.tsx)
+- Detail: UI calls `new Date(match.date)` on strings like `2026-06-11 13:00:00-06`; backend uses `parseMatchDate()` because that format needs normalization.
+- Risk: Medium-high. Safari/iOS or strict parsing can show `Invalid Date`, break date grouping/sorting, or leave lock UI inaccurate.
+- Recommendation: Normalize dates to ISO before client render or use shared parser/formatter everywhere.
+
+1. Typecheck currently fails in leaderboard race chart
+
+- Scope: [components/LeaderboardRaceChart.tsx](components/LeaderboardRaceChart.tsx), dependency install state
+- Detail: `npx tsc --noEmit` reports missing `d3` declarations and implicit `any` errors in the chart.
+- Risk: Medium. Build/typecheck confidence is reduced; deploy can fail if dependencies are not installed consistently.
+- Recommendation: Reinstall/lock dependencies and type D3 callbacks; keep a chart smoke test.
+
 1. Legacy synthetic knockout predictions still exist in DB rows (fix disponible)
 
 - Scope: [app/api/predictions/route.ts](app/api/predictions/route.ts), [app/leaderboard/page.tsx](app/leaderboard/page.tsx), [app/leaderboard/compare/page.tsx](app/leaderboard/compare/page.tsx)
@@ -10,6 +24,21 @@
 - Recommendation: Ejecutar `bun run db:migrate-legacy-predictions` para reescribir todas las predicciones knockout a `match_<real_cuid>`.
 
 ## Closed in this cycle
+
+1. BSD knockout sync did not recalculate points — wrong matchId prefix
+
+- Previous behavior: `recalcKnockoutMatchPredictions()` queried with raw DB cuid; predictions use `match_<cuid>` so the lookup always returned 0 rows.
+- Status: Fixed in [lib/bsd-sync.ts](lib/bsd-sync.ts). Now queries `match_${matchDbId}` with legacy `match_1000+` OR fallback.
+
+1. Prediction API accepted out-of-range and non-integer scores
+
+- Previous behavior: server only validated `typeof score === "number"`; direct API calls could send floats, negatives, or values > 20.
+- Status: Fixed in [app/api/predictions/route.ts](app/api/predictions/route.ts). Server now rejects unless `Number.isInteger(score) && score >= 0 && score <= 20`.
+
+1. Rules page showed group stage covering groups A–H
+
+- Previous behavior: inscription section read `Partidos del grupo A al H`; Mundial 2026 uses A–L.
+- Status: Fixed in [app/rules/page.tsx](app/rules/page.tsx).
 
 1. Suspect `ROUND_OF_8` DB row created duplicate quarter-final bucket
 

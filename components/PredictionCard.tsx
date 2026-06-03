@@ -44,12 +44,15 @@ interface PredictionCardProps {
     awayScore: number;
   };
   compact?: boolean;
+  /** Pre-fetched server-time offset in ms. If provided, skips the per-card /api/server-time request. */
+  serverOffset?: number;
 }
 
 export default function PredictionCard({
   match,
   existingPrediction,
   compact = false,
+  serverOffset: initialServerOffset,
 }: PredictionCardProps) {
   const router = useRouter();
   const [homeScore, setHomeScore] = useState(
@@ -61,14 +64,16 @@ export default function PredictionCard({
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(!!existingPrediction);
   const [error, setError] = useState<string | null>(null);
+  // UI-REC #3: brief success ring — remove this line (and its usages below) to disable
+  const [justSaved, setJustSaved] = useState(false);
 
   const matchDate = new Date(match.date);
 
-  // Server-time offset (anti-cheat): fetch once per card mount.
-  // Prevents users from changing their system clock to unlock closed matches.
-  // The server validates independently — this just keeps the UI honest.
-  const [serverOffset, setServerOffset] = useState(0); // ms
+  // Server-time offset (anti-cheat): keeps UI lock in sync with server clock.
+  // If a parent passes the offset (recommended), skip the per-card fetch.
+  const [serverOffset, setServerOffset] = useState(initialServerOffset ?? 0); // ms
   useEffect(() => {
+    if (initialServerOffset !== undefined) return;
     fetch("/api/server-time", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
@@ -78,7 +83,7 @@ export default function PredictionCard({
       .catch(() => {
         // Silently ignore; server-side validation is the real gate.
       });
-  }, []);
+  }, [initialServerOffset]);
 
   const isPast = matchDate < new Date(Date.now() + serverOffset);
 
@@ -104,8 +109,14 @@ export default function PredictionCard({
   }, [homeScore, awayScore, existingPrediction, saved]);
 
   const handleSave = async () => {
-    setIsSaving(true);
+    if (isSaving || isDisabled) return;
     setError(null);
+    // UI-REC #7: optimistic save — UI commits instantly, rolls back on error.
+    // To revert: move setSaved(true) + setJustSaved block back inside the `if (response.ok)` branch.
+    setSaved(true);
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 1200);
+    setIsSaving(true);
     try {
       const response = await fetch("/api/predictions", {
         method: "POST",
@@ -118,15 +129,19 @@ export default function PredictionCard({
       });
 
       if (response.ok) {
-        setSaved(true);
-        // Refrescar la página para actualizar las estadísticas
+        // Silent background refresh — doesn't block the UI
         router.refresh();
       } else {
+        // UI-REC #7: rollback — remove the next 2 lines if reverting optimistic save
+        setSaved(false);
+        setJustSaved(false);
         const data = await response.json();
         setError(data.error || "Error al guardar la predicción");
       }
-    } catch (error) {
-      console.error("Error saving prediction:", error);
+    } catch {
+      // UI-REC #7: rollback — remove the next 2 lines if reverting optimistic save
+      setSaved(false);
+      setJustSaved(false);
       setError("Error al guardar la predicción");
     } finally {
       setIsSaving(false);
@@ -175,6 +190,8 @@ export default function PredictionCard({
         type="button"
         onClick={() => decrementScore(team)}
         disabled={isDisabled || isSaving || value === 0}
+        // UI-REC #2: aria-label — remove this line if not needed
+        aria-label={`Reducir goles ${team === "home" ? "local" : "visitante"}`}
         className="h-9 w-9 flex items-center justify-center rounded-l-lg border border-border bg-background active:bg-muted disabled:opacity-30 transition-colors touch-manipulation select-none"
       >
         <Minus className="h-3.5 w-3.5" />
@@ -196,6 +213,8 @@ export default function PredictionCard({
         type="button"
         onClick={() => incrementScore(team)}
         disabled={isDisabled || isSaving || value === 20}
+        // UI-REC #2: aria-label — remove this line if not needed
+        aria-label={`Aumentar goles ${team === "home" ? "local" : "visitante"}`}
         className="h-9 w-9 flex items-center justify-center rounded-r-lg border border-border bg-background active:bg-muted disabled:opacity-30 transition-colors touch-manipulation select-none"
       >
         <Plus className="h-3.5 w-3.5" />
@@ -233,6 +252,8 @@ export default function PredictionCard({
           "overflow-hidden transition-all",
           !isPast && saved && "border-green-500/50 bg-green-500/5",
           isPast && "opacity-70",
+          // UI-REC #3: brief success ring — remove this line to disable
+          justSaved && "ring-2 ring-green-500/60 ring-offset-background ring-offset-1",
         )}
       >
         <CardContent className="px-3 py-3">
@@ -278,8 +299,11 @@ export default function PredictionCard({
               type="button"
               onClick={handleSave}
               disabled={isDisabled || isSaving}
+              // UI-REC #2: aria-label — remove this line if not needed
+              aria-label={isPast ? "Predicción cerrada" : saved ? "Predicción guardada" : "Guardar predicción"}
               className={cn(
-                "flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center transition-colors touch-manipulation font-bold text-sm select-none border",
+                // UI-REC #8: h-10 w-10 (40px) touch target + scale tap feedback — revert to "h-9 w-9 transition-colors" to undo
+                "flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center transition-all active:scale-95 touch-manipulation font-bold text-sm select-none border",
                 isPast
                   ? "bg-muted text-muted-foreground cursor-not-allowed border-transparent"
                   : saved

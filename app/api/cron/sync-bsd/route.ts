@@ -15,8 +15,18 @@ import { NextResponse } from "next/server";
 import { syncLiveMatches } from "@/lib/bsd-sync";
 
 export async function GET(request: Request) {
-  // Verificar CRON_SECRET si está configurado
   const cronSecret = process.env.CRON_SECRET;
+
+  // Fail closed: in production, always require CRON_SECRET.
+  // In dev without CRON_SECRET set, allow through so local testing works.
+  if (process.env.NODE_ENV === "production" && !cronSecret) {
+    console.error("CRON_SECRET env var is not set — denying cron request.");
+    return NextResponse.json(
+      { error: "Server misconfiguration: CRON_SECRET not configured" },
+      { status: 503 },
+    );
+  }
+
   if (cronSecret) {
     const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${cronSecret}`) {

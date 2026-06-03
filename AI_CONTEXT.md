@@ -2,7 +2,15 @@
 
 ## Date
 
-- 2026-05-24
+- 2026-05-31
+
+## Latest Audit
+
+- Audit doc: `AUDIT_BUGS_UI_UX_2026-05-31.md`.
+- Highest-priority bug: `lib/bsd-sync.ts` recalculates knockout predictions with raw DB id instead of `match_<Match.id>`.
+- Client date parsing risk: several UI components use `new Date(match.date)` on `YYYY-MM-DD HH:mm:ss-06`; backend parser is safer.
+- Server validation gap: `/api/predictions` should reject non-integer/out-of-range scores server-side.
+- Typecheck currently fails around `components/LeaderboardRaceChart.tsx`/D3 install state in local npm environment.
 
 ## BSD Sports API Integration
 
@@ -80,7 +88,8 @@
 
 ## Scoring Rules
 
-- `calculatePoints` accepts active rule values and defaults to 5 exact / 3 winner / 3 draw / 2 goal difference.
+- `calculatePoints` accepts active rule values and defaults to 5 exact / 3 winner / 3 draw.
+- No goal-difference bonus is currently applied, even though `PointsRule.correctGoalDifference` still exists in schema history.
 - Admin score updates fetch the active `PointsRule` before recalculating predictions.
 
 ## Knockout ID Mapping

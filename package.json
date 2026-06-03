@@ -12,6 +12,7 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "db:migrate-legacy-predictions": "tsx scripts/migrate-legacy-knockout-prediction-ids.ts",
+    "db:recalculate-points": "tsx scripts/recalculate-all-points.ts",
     "download:flags": "node scripts/download-flags.js",
     "test": "vitest run",
     "test:watch": "vitest",

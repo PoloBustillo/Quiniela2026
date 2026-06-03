@@ -71,8 +71,22 @@ async function recalcKnockoutMatchPredictions(
   awayScore: number,
 ) {
   const rules = await getActivePointsRules();
+  const stableMatchId = `match_${matchDbId}`;
+  // Legacy fallback: rows saved before stable-ID migration use match_1000+ format.
+  const allKnockoutMatches = await prisma.match.findMany({
+    where: { phase: { not: "GROUP_STAGE" } },
+    orderBy: { matchDate: "asc" },
+    select: { id: true },
+  });
+  const matchIndex = allKnockoutMatches.findIndex((m) => m.id === matchDbId);
+  const legacyMatchId = matchIndex >= 0 ? `match_${1000 + matchIndex}` : null;
   const predictions = await prisma.prediction.findMany({
-    where: { matchId: matchDbId },
+    where: {
+      OR: [
+        { matchId: stableMatchId },
+        ...(legacyMatchId ? [{ matchId: legacyMatchId }] : []),
+      ],
+    },
   });
   for (const p of predictions) {
     const points = calculatePoints(

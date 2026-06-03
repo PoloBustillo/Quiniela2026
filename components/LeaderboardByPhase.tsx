@@ -306,7 +306,8 @@ export default function LeaderboardByPhase({
       >
         <TabsList className="grid w-full max-w-xs grid-cols-2">
           <TabsTrigger value="tabla">Tabla</TabsTrigger>
-          <TabsTrigger value="grafica">Grafica</TabsTrigger>
+          {/* UI-REC #1: typo fix — revert to "Grafica" (no accent) if preferred */}
+          <TabsTrigger value="grafica">Gráfica</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tabla" className="space-y-3">

@@ -50,7 +50,13 @@ export async function POST(req: NextRequest) {
     if (
       !normalizedMatchId ||
       typeof homeScore !== "number" ||
-      typeof awayScore !== "number"
+      typeof awayScore !== "number" ||
+      !Number.isInteger(homeScore) ||
+      !Number.isInteger(awayScore) ||
+      homeScore < 0 ||
+      homeScore > 20 ||
+      awayScore < 0 ||
+      awayScore > 20
     ) {
       return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
     }

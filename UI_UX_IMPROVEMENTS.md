@@ -1,5 +1,25 @@
 # 📱 Mejoras UI/UX - Quiniela Mundial 2026
 
+## Auditoría 2026-05-31 — Hallazgos Prioritarios
+
+Ver reporte amplio en [AUDIT_BUGS_UI_UX_2026-05-31.md](AUDIT_BUGS_UI_UX_2026-05-31.md).
+
+### P0/P1
+
+- Predicciones: mostrar cuota pendiente antes de permitir edición/guardado; hoy el usuario descubre el bloqueo hasta recibir 403 al guardar.
+- Predicciones: mover `/api/server-time` a un fetch único en el padre; hoy cada tarjeta puede disparar su propia request.
+- Predicciones: evitar `router.refresh()` completo después de cada save; preferir optimistic update/debounce para no hacer lento el flujo móvil.
+- Fechas: usar parser compartido en cliente; `new Date(match.date)` sobre `YYYY-MM-DD HH:mm:ss-06` puede romper iOS/Safari.
+- Leaderboard: corregir `Grafica` → `Gráfica`, dar fallback si D3 no carga, y adaptar el chart a tema dark/responsive.
+- Admin: reemplazar `alert()`/`confirm()` por toasts/dialogs consistentes; acciones destructivas necesitan confirmación clara.
+
+### P2
+
+- Añadir progreso por torneo: `12/72 guardadas`, `faltantes`, `cerradas`, `hoy`.
+- Añadir `aria-label` a botones compactos de guardar/cerrar/stepper y controles de gráfica.
+- Reducir padding inferior duplicado en móvil entre `RootLayout` y spacer de `Navigation`.
+- Quitar o completar `/settings`, que hoy muestra placeholder.
+
 ## 🎯 Mejoras Prioritarias (Simples pero Efectivas)
 
 ### 1. 🎨 Tarjeta de Predicción (PredictionCard)

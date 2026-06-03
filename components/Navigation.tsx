@@ -159,8 +159,8 @@ export function Navigation() {
         </div>
       </nav>
 
-      {/* Bottom spacer so content clears the tab bar on mobile */}
-      <div className="md:hidden h-14" aria-hidden />
+      {/* UI-REC: bottom nav spacer removed — pb-20 on RootLayout handles bottom clearance.
+          Restore with: <div className="md:hidden h-14" aria-hidden /> if content hides behind the tab bar */}
     </>
   );
 }

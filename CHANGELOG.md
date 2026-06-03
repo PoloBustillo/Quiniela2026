@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-05-31
+
+### Fixed
+
+- **`lib/bsd-sync.ts`** — `recalcKnockoutMatchPredictions()` now queries predictions with `match_${matchDbId}` (stable ID) plus a legacy `match_1000+` OR fallback. Previous behavior queried raw DB cuid so points were never updated after BSD live sync on knockout matches.
+- **`app/api/predictions/route.ts`** — Server now validates that both scores are integers in the range 0–20. Previously only `typeof score === "number"` was checked.
+- **`app/rules/page.tsx`** — Group stage description changed from `A al H` to `A al L` to match actual Mundial 2026 structure.
+- **`components/PredictionCard.tsx`** — Added optional `serverOffset` prop. When provided by a parent, the per-card `/api/server-time` fetch is skipped entirely.
+- **`components/ClientHomePage.tsx`** — Now fetches `/api/server-time` once at mount and passes the offset to every `PredictionCard`. Reduces N concurrent requests (one per card) to a single shared request.
+
+### Documentation
+
+- **`KNOWN_BUGS.md`** — Moved BSD sync, score validation and rules copy bugs to Closed.
+- **`AUDIT_BUGS_UI_UX_2026-05-31.md`** — Added 2026-05-31 audit report.
+
 ## 2026-05-25
 
 ### Changed

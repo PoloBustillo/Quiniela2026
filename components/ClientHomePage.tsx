@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import PredictionCard from "@/components/PredictionCard";
 import { Calendar, Trophy, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -64,6 +64,17 @@ export default function ClientHomePage({
   const [selectedGroup, setSelectedGroup] = useState<string>("all");
   const [groupSectionOpen, setGroupSectionOpen] = useState(true);
   const [knockoutSectionOpen, setKnockoutSectionOpen] = useState(true);
+  const [serverOffset, setServerOffset] = useState(0);
+  // UI-REC #6: quick filter state — remove this line (and filter chips + filteredMatches change below) to disable
+  const [quickFilter, setQuickFilter] = useState<"all" | "today" | "missing">("all");
+  useEffect(() => {
+    fetch("/api/server-time", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        setServerOffset(new Date(d.serverTime).getTime() - Date.now());
+      })
+      .catch(() => {});
+  }, []);
 
   const matchesByDate = useMemo(() => {
     return matches.reduce(
@@ -103,11 +114,41 @@ export default function ClientHomePage({
     return { groupStage, knockout };
   }, [matchesByGroup]);
 
+  // UI-REC #6: quick filter applied in date mode — revert to `return matchesByDate` in the date branch to disable
   const filteredMatches = useMemo(() => {
-    if (viewMode === "date") return matchesByDate;
-    if (selectedGroup === "all") return matchesByGroup;
-    return { [selectedGroup]: matchesByGroup[selectedGroup] || [] };
-  }, [viewMode, selectedGroup, matchesByDate, matchesByGroup]);
+    if (viewMode === "group") {
+      if (selectedGroup === "all") return matchesByGroup;
+      return { [selectedGroup]: matchesByGroup[selectedGroup] || [] };
+    }
+    if (quickFilter === "today") {
+      const todayKey = new Date(Date.now() + serverOffset).toLocaleDateString(
+        "es-MX",
+        {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          timeZone: "America/Mexico_City",
+        },
+      );
+      const todayMatches = matchesByDate[todayKey] ?? [];
+      return todayMatches.length > 0 ? { [todayKey]: todayMatches } : {};
+    }
+    if (quickFilter === "missing") {
+      const nowWithOffset = Date.now() + serverOffset;
+      const result: Record<string, Match[]> = {};
+      for (const [day, dayMatches] of Object.entries(matchesByDate)) {
+        const open = dayMatches.filter(
+          (m) =>
+            !predictionMap[m.id] &&
+            new Date(m.date).getTime() > nowWithOffset,
+        );
+        if (open.length > 0) result[day] = open;
+      }
+      return result;
+    }
+    return matchesByDate;
+  }, [viewMode, selectedGroup, matchesByDate, matchesByGroup, quickFilter, serverOffset, predictionMap]);
 
   const getGroupLabel = (key: string) => {
     if (key.startsWith("Grupo ")) return key;
@@ -119,8 +160,10 @@ export default function ClientHomePage({
       {/* Header */}
       <div className="mb-3">
         <h1 className="text-xl font-bold">Mis Predicciones</h1>
+        {/* UI-REC #5: progress counter — revert to `{matches.length} partidos` to disable */}
         <p className="text-xs text-muted-foreground">
-          Mundial 2026 · {matches.length} partidos
+          Mundial 2026 · {Object.keys(predictionMap).length}/{matches.length}{" "}
+          guardadas
         </p>
       </div>
 
@@ -151,6 +194,26 @@ export default function ClientHomePage({
           Por fase
         </button>
       </div>
+
+      {/* UI-REC #6: quick filter chips for date view — remove this block to disable */}
+      {viewMode === "date" && (
+        <div className="flex gap-2 mb-3 overflow-x-auto [&::-webkit-scrollbar]:hidden">
+          {(["all", "today", "missing"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setQuickFilter(f)}
+              className={cn(
+                "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                quickFilter === f
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-border text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {f === "all" ? "Todos" : f === "today" ? "Hoy" : "Sin guardar"}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Group/phase filter — two collapsible sections */}
       {viewMode === "group" && (
@@ -272,6 +335,7 @@ export default function ClientHomePage({
                   match={match}
                   existingPrediction={predictionMap[match.id]}
                   compact
+                  serverOffset={serverOffset}
                 />
               ))}
             </div>
