@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Trophy,
   ChevronDown,
@@ -110,6 +110,18 @@ const PHASE_ORDER = [
 const MEDAL = ["🥇", "🥈", "🥉"];
 const WORLD_CUP_START_DAY = "2026-06-11";
 
+const getMexicoSystemDay = (date: Date) =>
+  date.toLocaleDateString("sv-SE", {
+    timeZone: "America/Mexico_City",
+  });
+
+const formatMexicoSystemDateTime = (date: Date) =>
+  date.toLocaleString("es-MX", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "America/Mexico_City",
+  });
+
 const getPredictionOrder = (
   matchId: string,
   matchMap: Record<string, MatchInfo>,
@@ -160,6 +172,21 @@ export default function LeaderboardByPhase({
   const [selectedTorneo, setSelectedTorneo] = useState("ALL");
   const [viewTab, setViewTab] = useState<"tabla" | "grafica">("tabla");
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+  const [systemNow, setSystemNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setSystemNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const currentSystemDay = useMemo(
+    () => getMexicoSystemDay(systemNow),
+    [systemNow],
+  );
+  const systemDateLabel = useMemo(
+    () => formatMexicoSystemDateTime(systemNow),
+    [systemNow],
+  );
 
   const finishedSet = useMemo(
     () => new Set(finishedMatchIds),
@@ -196,13 +223,13 @@ export default function LeaderboardByPhase({
   const raceFrames = useMemo(() => {
     const phasesForTorneo = TORNEO_PHASES[selectedTorneo] ?? [];
     const dayKeys = Array.from(new Set(Object.values(finishedMatchDayMap)))
-      .filter((day) => day >= WORLD_CUP_START_DAY)
+      .filter((day) => day >= WORLD_CUP_START_DAY && day <= currentSystemDay)
       .sort();
 
     if (dayKeys.length === 0) {
       return [
         {
-          label: "Sin jornadas",
+          label: "Torneo por iniciar",
           rows: leaderboard.map((u) => ({
             id: u.id,
             name: u.name,
@@ -288,7 +315,7 @@ export default function LeaderboardByPhase({
     }
 
     return frames;
-  }, [users, leaderboard, selectedTorneo, finishedSet, finishedMatchDayMap]);
+  }, [users, leaderboard, selectedTorneo, finishedSet, finishedMatchDayMap, currentSystemDay]);
 
   /** Drop last surname when 4+ words; hard-cap at 28 chars. */
   const formatDisplayName = (n: string) => {
@@ -710,10 +737,11 @@ export default function LeaderboardByPhase({
               </button>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground">
-            Datos reales acumulados por jornada (cada jornada = día con partidos).
-          </p>
           <LeaderboardRaceChart key={`race-${selectedTorneo}`} frames={raceFrames} />
+          <div className="space-y-0.5 text-xs text-muted-foreground">
+            <p>Puntos acumulados por jornada (cada jornada = día con partidos).</p>
+            <p style={{ display: "none" }}>Ciudad de Mexico {systemDateLabel}</p>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

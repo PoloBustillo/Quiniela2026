@@ -60,7 +60,7 @@ export default function LeaderboardRaceChart({ frames }: LeaderboardRaceChartPro
     if (!svgRef.current || raceData.length === 0) return;
 
     const width = 900;
-    const height = 700;
+    const height = 760;
     const margin = { top: 56, right: 40, bottom: 28, left: 210 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
@@ -82,14 +82,13 @@ export default function LeaderboardRaceChart({ frames }: LeaderboardRaceChartPro
       .attr("height", height)
       .attr("fill", "#faf9f4");
 
-    const logoWidth = innerWidth * 0.1;
     root
       .append("image")
       .attr("href", "/fwc2026.png")
-      .attr("x", innerWidth - logoWidth - 12)
-      .attr("y", innerHeight - logoWidth - 10)
-      .attr("width", logoWidth)
-      .attr("height", logoWidth)
+      .attr("x", 566)
+      .attr("y", 572)
+      .attr("width", 70)
+      .attr("height", 70)
       .attr("preserveAspectRatio", "xMidYMid meet");
 
     root
@@ -131,7 +130,7 @@ export default function LeaderboardRaceChart({ frames }: LeaderboardRaceChartPro
     if (raceData.length === 0) return;
 
     const width = 900;
-    const height = 700;
+    const height = 760;
     const margin = { top: 56, right: 40, bottom: 28, left: 210 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
@@ -152,7 +151,11 @@ export default function LeaderboardRaceChart({ frames }: LeaderboardRaceChartPro
     const durationBySpeed = { slow: 1400, medium: 900, fast: 550 } as const;
     const t = d3.transition().duration(durationBySpeed[speed]).ease(d3.easeCubicInOut);
 
-    jornadaRef.current.text(`Jornada ${journey} · ${frame.label}`);
+    jornadaRef.current.text(
+      frame.label === "Torneo por iniciar"
+        ? "Torneo por iniciar"
+        : `Jornada ${journey} · ${frame.label}`,
+    );
 
     axisRef.current
       .transition(t)
