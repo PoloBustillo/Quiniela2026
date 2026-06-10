@@ -32,7 +32,16 @@ import {
   MapPin,
   Users,
   Hash,
+  AlertTriangle,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PointsRulesManager } from "./PointsRulesManager";
@@ -138,6 +147,9 @@ export function AllMatchesManager() {
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
 
   const showToast = (
     message: string,
@@ -145,6 +157,27 @@ export function AllMatchesManager() {
   ) => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleResetPoints = async () => {
+    setResetLoading(true);
+    try {
+      const res = await fetch("/api/admin/reset-points", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message, "success");
+        setResetDialogOpen(false);
+        setResetConfirmText("");
+      } else {
+        showToast(data.error || "Error al resetear", "error");
+      }
+    } catch {
+      showToast("Error de conexión", "error");
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   // Estado unificado para ediciones de knockout
@@ -574,28 +607,58 @@ export function AllMatchesManager() {
         <Button
           variant="destructive"
           size="sm"
-          onClick={async () => {
-            if (
-              !confirm(
-                "¿Resetear TODOS los puntos a 0? Esta acción no se puede deshacer.",
-              )
-            )
-              return;
-            try {
-              const res = await fetch("/api/admin/reset-points", {
-                method: "POST",
-              });
-              const data = await res.json();
-              if (res.ok) showToast(data.message, "success");
-              else showToast(data.error || "Error al resetear", "error");
-            } catch {
-              showToast("Error de conexión", "error");
-            }
-          }}
+          onClick={() => setResetDialogOpen(true)}
         >
           Resetear todos los puntos
         </Button>
       </div>
+
+      {/* Dialog de confirmación para reset */}
+      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Resetear Todos los Puntos
+            </DialogTitle>
+            <DialogDescription>
+              Esta acción pondrá todos los puntos de predicciones a 0. No se
+              puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Escribe <span className="font-bold text-foreground">RESETEAR</span>{" "}
+              para confirmar:
+            </p>
+            <input
+              type="text"
+              value={resetConfirmText}
+              onChange={(e) => setResetConfirmText(e.target.value)}
+              placeholder="RESETEAR"
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-destructive/50"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setResetDialogOpen(false);
+                setResetConfirmText("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={resetConfirmText !== "RESETEAR" || resetLoading}
+              onClick={handleResetPoints}
+            >
+              {resetLoading ? "Reseteando..." : "Reseteear Todo"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Tabs
         value={selectedTab}

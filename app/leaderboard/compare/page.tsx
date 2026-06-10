@@ -32,8 +32,9 @@ export default async function ComparePage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/auth/signin");
 
-  // Get all users with predictions
+  // Get all active users with predictions
   const users = await prisma.user.findMany({
+    where: { isActive: true },
     include: {
       predictions: {
         select: {

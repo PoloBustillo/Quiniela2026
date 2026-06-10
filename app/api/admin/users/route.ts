@@ -32,6 +32,7 @@ export async function GET(request: Request) {
         paidKnockoutAt: true,
         paidFinals: true,
         paidFinalsAt: true,
+        isActive: true,
         createdAt: true,
         _count: {
           select: {
@@ -69,10 +70,52 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { userId, hasPaid, phase } = body;
+    const { userId, hasPaid, phase, action } = body;
 
-    // Si se especifica una fase, actualizar esa fase específica
-    // Si no, actualizar el campo legacy hasPaid
+    // Acción: toggleActive - Solo permitir si no tiene pagos ni predicciones
+    if (action === "toggleActive") {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          isActive: true,
+          paidGroupStage: true,
+          paidKnockout: true,
+          paidFinals: true,
+          _count: { select: { predictions: true } },
+        },
+      });
+
+      if (!user) {
+        return NextResponse.json(
+          { error: "Usuario no encontrado" },
+          { status: 404 },
+        );
+      }
+
+      const hasAnyPayment =
+        user.paidGroupStage || user.paidKnockout || user.paidFinals;
+
+      // Solo permitir desactivar si no tiene pagos
+      if (user.isActive && hasAnyPayment) {
+        return NextResponse.json(
+          {
+            error:
+              "No se puede desactivar: el usuario tiene pagos registrados",
+          },
+          { status: 400 },
+        );
+      }
+
+      const updated = await prisma.user.update({
+        where: { id: userId },
+        data: { isActive: !user.isActive },
+      });
+
+      return NextResponse.json(updated);
+    }
+
+    // Acción original: actualizar pago
     let updateData: any = {};
 
     if (phase === "groupStage") {
@@ -85,7 +128,6 @@ export async function PUT(request: Request) {
       updateData.paidFinals = hasPaid;
       updateData.paidFinalsAt = hasPaid ? new Date() : null;
     } else {
-      // Legacy: actualizar hasPaid
       updateData.hasPaid = hasPaid;
       updateData.paidAt = hasPaid ? new Date() : null;
     }

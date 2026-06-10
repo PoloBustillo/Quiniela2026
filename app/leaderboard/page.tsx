@@ -35,6 +35,7 @@ export default async function LeaderboardPage() {
   if (!session) redirect("/auth/signin");
 
   const users = await prisma.user.findMany({
+    where: { isActive: true },
     include: {
       predictions: {
         select: {
@@ -49,9 +50,12 @@ export default async function LeaderboardPage() {
     orderBy: { name: "asc" },
   });
 
-  const totalUsers = await prisma.user.count();
+  const totalUsers = await prisma.user.count({
+    where: { isActive: true },
+  });
   const paidUsers = await prisma.user.count({
     where: {
+      isActive: true,
       OR: [
         { hasPaid: true },
         { paidGroupStage: true },

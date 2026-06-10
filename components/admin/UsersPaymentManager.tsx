@@ -16,6 +16,9 @@ import {
   CheckCircle,
   CheckCircle2,
   XCircle,
+  MessageCircle,
+  Copy,
+  Check,
 } from "lucide-react";
 import Image from "next/image";
 import { AdminTableSkeleton } from "@/components/ui/skeletons";
@@ -34,6 +37,7 @@ interface User {
   paidKnockoutAt: string | null;
   paidFinals: boolean;
   paidFinalsAt: string | null;
+  isActive: boolean;
   createdAt: string;
   _count: {
     predictions: number;
@@ -70,6 +74,8 @@ const PHASES = [
 export function UsersPaymentManager() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const [copiedPayment, setCopiedPayment] = useState(false);
+  const [copiedPredictions, setCopiedPredictions] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -80,7 +86,7 @@ export function UsersPaymentManager() {
     try {
       const response = await fetch("/api/admin/users");
       const data = await response.json();
-      setUsers(data);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error loading users:", error);
     } finally {
@@ -93,22 +99,64 @@ export function UsersPaymentManager() {
     phase: string,
     currentStatus: boolean,
   ) => {
+    const newStatus = !currentStatus;
+    // Update locally first
+    setUsers((prev) =>
+      prev.map((u) => {
+        if (u.id !== userId) return u;
+        const updated = { ...u };
+        if (phase === "groupStage") {
+          updated.paidGroupStage = newStatus;
+          updated.paidGroupStageAt = newStatus ? new Date().toISOString() : null;
+        } else if (phase === "knockout") {
+          updated.paidKnockout = newStatus;
+          updated.paidKnockoutAt = newStatus ? new Date().toISOString() : null;
+        } else if (phase === "finals") {
+          updated.paidFinals = newStatus;
+          updated.paidFinalsAt = newStatus ? new Date().toISOString() : null;
+        }
+        return updated;
+      }),
+    );
+    try {
+      await fetch("/api/admin/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          phase,
+          hasPaid: newStatus,
+        }),
+      });
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      loadUsers();
+    }
+  };
+
+  const toggleActive = async (userId: string) => {
+    // Update locally first
+    setUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, isActive: !u.isActive } : u)),
+    );
     try {
       const response = await fetch("/api/admin/users", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId,
-          phase,
-          hasPaid: !currentStatus,
+          action: "toggleActive",
         }),
       });
 
-      if (response.ok) {
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.error || "Error al cambiar estado del usuario");
         loadUsers();
       }
     } catch (error) {
-      console.error("Error updating payment status:", error);
+      console.error("Error toggling user active state:", error);
+      loadUsers();
     }
   };
 
@@ -120,19 +168,89 @@ export function UsersPaymentManager() {
     return total;
   };
 
+  const canDeactivate = (user: User) => {
+    const hasAnyPayment =
+      user.paidGroupStage || user.paidKnockout || user.paidFinals;
+    return !hasAnyPayment && user.role !== "ADMIN";
+  };
+
   const fullyPaidUsers = users.filter(
-    (u) => u.paidGroupStage && u.paidKnockout && u.paidFinals,
+    (u) => u.isActive && u.paidGroupStage && u.paidKnockout && u.paidFinals,
   );
   const partiallyPaidUsers = users.filter(
     (u) =>
+      u.isActive &&
       (u.paidGroupStage || u.paidKnockout || u.paidFinals) &&
       !(u.paidGroupStage && u.paidKnockout && u.paidFinals),
   );
   const unpaidUsers = users.filter(
-    (u) => !u.paidGroupStage && !u.paidKnockout && !u.paidFinals,
+    (u) =>
+      u.isActive &&
+      !u.paidGroupStage &&
+      !u.paidKnockout &&
+      !u.paidFinals,
   );
 
   const totalRevenue = users.reduce((acc, u) => acc + getTotalPaid(u), 0);
+
+  const noPredictionsUsers = users.filter(
+    (u) =>
+      u.isActive &&
+      u._count.predictions === 0 &&
+      (u.paidGroupStage || u.paidKnockout || u.paidFinals),
+  );
+
+  const copyToClipboard = async (text: string, type: "payment" | "predictions") => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+    if (type === "payment") {
+      setCopiedPayment(true);
+      setTimeout(() => setCopiedPayment(false), 2000);
+    } else {
+      setCopiedPredictions(true);
+      setTimeout(() => setCopiedPredictions(false), 2000);
+    }
+  };
+
+  const paymentMessage = `⚽ *Quiniela Mundial 2026* ⚽
+
+📋 *Recordatorio de Pago*
+
+Estamos a 1 día de la próxima ronda. Los siguientes participantes tienen pendiente su pago:
+
+${unpaidUsers.map((u) => `• ${u.email || u.name || "Sin nombre"}`).join("\n")}
+
+💳 *Opciones de pago:*
+• Fase de Grupos: $100
+• 16vos + 8vos: $100
+• Fases Finales: $100
+
+🏦 *Datos para depósito:*
+CLABE: 002320700942203419
+Nombre: Mario Leopoldo Bustillo Eguiluz
+Tel: 3317700339
+
+💰 Favor de realizar su depósito y confirmar en el grupo 🙏`;
+
+  const predictionsMessage = `⚽ *Quiniela Mundial 2026* ⚽
+
+📝 *Recordatorio de Predicciones*
+
+Estamos a 1 día de la próxima ronda. Los siguientes participantes *no han metido predicciones*:
+
+${noPredictionsUsers.map((u) => `• ${u.email || u.name || "Sin nombre"}`).join("\n")}
+
+⚠️ *Recuerden ingresar sus predicciones antes de que comiencen los partidos!*
+
+¡No se queden sin participar! 🏆`;
 
   return (
     <Card>
@@ -207,11 +325,13 @@ export function UsersPaymentManager() {
                 <div
                   key={user.id}
                   className={`p-4 rounded-xl border-2 transition-all ${
-                    totalPaid === 300
-                      ? "bg-green-500/5 border-green-500/30"
-                      : totalPaid > 0
-                        ? "bg-yellow-500/5 border-yellow-500/30"
-                        : "bg-card border-border hover:border-primary/30"
+                    !user.isActive
+                      ? "bg-muted/30 border-border opacity-60"
+                      : totalPaid === 300
+                        ? "bg-green-500/5 border-green-500/30"
+                        : totalPaid > 0
+                          ? "bg-yellow-500/5 border-yellow-500/30"
+                          : "bg-card border-border hover:border-primary/30"
                   }`}
                 >
                   {/* User info row */}
@@ -239,6 +359,11 @@ export function UsersPaymentManager() {
                             Admin
                           </Badge>
                         )}
+                        {!user.isActive && (
+                          <Badge variant="secondary" className="text-xs">
+                            Inactivo
+                          </Badge>
+                        )}
                         <Badge variant="outline" className="text-xs">
                           {user._count.predictions} pred
                         </Badge>
@@ -247,18 +372,48 @@ export function UsersPaymentManager() {
                         {user.email}
                       </p>
                     </div>
-                    <div className="flex-shrink-0 text-right">
-                      <p
-                        className={`text-sm font-bold ${
-                          totalPaid === 300
-                            ? "text-green-600"
-                            : totalPaid > 0
-                              ? "text-yellow-600"
-                              : "text-muted-foreground"
-                        }`}
-                      >
-                        ${totalPaid}/300
-                      </p>
+                    <div className="flex-shrink-0 flex items-center gap-3">
+                      {user.role !== "ADMIN" && (
+                        <button
+                          disabled={!canDeactivate(user) && user.isActive}
+                          onClick={() => toggleActive(user.id)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            user.isActive
+                              ? "bg-primary"
+                              : "bg-muted"
+                          } ${
+                            (!canDeactivate(user) && user.isActive)
+                              ? "opacity-50 cursor-not-allowed"
+                              : "cursor-pointer"
+                          }`}
+                          title={
+                            !canDeactivate(user) && user.isActive
+                              ? "No se puede desactivar: tiene pagos"
+                              : user.isActive
+                                ? "Ocultar usuario"
+                                : "Reactivar usuario"
+                          }
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              user.isActive ? "translate-x-6" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      )}
+                      <div className="text-right">
+                        <p
+                          className={`text-sm font-bold ${
+                            totalPaid === 300
+                              ? "text-green-600"
+                              : totalPaid > 0
+                                ? "text-yellow-600"
+                                : "text-muted-foreground"
+                          }`}
+                        >
+                          ${totalPaid}/300
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -308,6 +463,45 @@ export function UsersPaymentManager() {
             })}
           </div>
         )}
+
+        {/* WhatsApp Buttons */}
+        <div className="border-t pt-4 mt-4 space-y-3">
+          <p className="text-sm font-medium text-muted-foreground">
+            Mensajes WhatsApp para el grupo:
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button
+              variant="outline"
+              onClick={() => copyToClipboard(paymentMessage, "payment")}
+              disabled={unpaidUsers.length === 0}
+              className="justify-start"
+            >
+              {copiedPayment ? (
+                <Check className="h-4 w-4 mr-2 text-green-500" />
+              ) : (
+                <MessageCircle className="h-4 w-4 mr-2 text-green-500" />
+              )}
+              {copiedPayment
+                ? "¡Copiado!"
+                : `Copiar recordatorio de pagos (${unpaidUsers.length})`}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => copyToClipboard(predictionsMessage, "predictions")}
+              disabled={noPredictionsUsers.length === 0}
+              className="justify-start"
+            >
+              {copiedPredictions ? (
+                <Check className="h-4 w-4 mr-2 text-green-500" />
+              ) : (
+                <MessageCircle className="h-4 w-4 mr-2 text-blue-500" />
+              )}
+              {copiedPredictions
+                ? "¡Copiado!"
+                : `Copiar recordatorio de predicciones (${noPredictionsUsers.length})`}
+            </Button>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
