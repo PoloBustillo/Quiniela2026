@@ -56,6 +56,7 @@ interface LeaderboardByPhaseProps {
   currentUserId: string;
   finishedMatchIds: string[];
   finishedMatchDayMap?: Record<string, string>;
+  paidCounts: { T1: number; T2: number; T3: number };
 }
 
 /** The 3 torneos + "All" */
@@ -106,6 +107,9 @@ const PHASE_ORDER = [
   "THIRD_PLACE",
   "FINAL",
 ];
+
+const isUserPaid = (u: UserWithPoints) =>
+  u.hasPaid || u.paidGroupStage || u.paidKnockout || u.paidFinals;
 
 const MEDAL = ["🥇", "🥈", "🥉"];
 const WORLD_CUP_START_DAY = "2026-06-11";
@@ -162,16 +166,28 @@ const getQuotaLabel = (selectedTorneo: string, user: UserWithPoints) => {
   return "0/3 cuotas";
 };
 
+const PRIZE_PER_ENTRY = 100;
+
+const calculatePrize = (paidCount: number, position: number): number | null => {
+  const bote = paidCount * PRIZE_PER_ENTRY;
+  if (position === 1) return Math.round(bote * 0.70 - 50);
+  if (position === 2) return Math.round(bote * 0.30 - 50);
+  if (position === 3) return 100;
+  return null;
+};
+
 export default function LeaderboardByPhase({
   users,
   matchMap,
   currentUserId,
   finishedMatchIds,
   finishedMatchDayMap = {},
+  paidCounts,
 }: LeaderboardByPhaseProps) {
   const [selectedTorneo, setSelectedTorneo] = useState("ALL");
   const [viewTab, setViewTab] = useState<"tabla" | "grafica">("tabla");
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+  const [showUnpaidUsers, setShowUnpaidUsers] = useState(false);
   const [systemNow, setSystemNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -195,7 +211,10 @@ export default function LeaderboardByPhase({
 
   const leaderboard = useMemo(() => {
     const phasesForTorneo = TORNEO_PHASES[selectedTorneo] ?? [];
-    return users
+    const visibleUsers = showUnpaidUsers
+      ? users
+      : users.filter(isUserPaid);
+    return visibleUsers
       .map((user) => {
         const preds =
           selectedTorneo === "ALL"
@@ -216,12 +235,15 @@ export default function LeaderboardByPhase({
         return { ...user, points, preds, exact, correct, wrong, pending };
       })
       .sort((a, b) => b.points - a.points);
-  }, [users, selectedTorneo, finishedSet]);
+  }, [users, selectedTorneo, finishedSet, showUnpaidUsers]);
 
   const myEntry = leaderboard.find((u) => u.id === currentUserId);
   const myRank = leaderboard.findIndex((u) => u.id === currentUserId) + 1;
   const raceFrames = useMemo(() => {
     const phasesForTorneo = TORNEO_PHASES[selectedTorneo] ?? [];
+    const visibleUsers = showUnpaidUsers
+      ? users
+      : users.filter(isUserPaid);
     const dayKeys = Array.from(new Set(Object.values(finishedMatchDayMap)))
       .filter((day) => day >= WORLD_CUP_START_DAY && day <= currentSystemDay)
       .sort();
@@ -244,7 +266,7 @@ export default function LeaderboardByPhase({
     const dayBuckets: Record<string, Record<string, number>> = {};
     for (const day of dayKeys) dayBuckets[day] = {};
 
-    for (const user of users) {
+    for (const user of visibleUsers) {
       for (const pred of user.predictions) {
         if (!finishedSet.has(pred.matchId)) continue;
         const matchDay = finishedMatchDayMap[pred.matchId];
@@ -262,16 +284,16 @@ export default function LeaderboardByPhase({
 
     // Incremental cumulative frames: every user appears every jornada.
     const runningTotals = new Map<string, number>();
-    users.forEach((u) => runningTotals.set(u.id, 0));
+    visibleUsers.forEach((u) => runningTotals.set(u.id, 0));
 
     const frames = dayKeys.map((day) => {
       const bucket = dayBuckets[day];
-      for (const user of users) {
+      for (const user of visibleUsers) {
         const add = bucket[user.id] || 0;
         runningTotals.set(user.id, (runningTotals.get(user.id) || 0) + add);
       }
 
-      const rows = users
+      const rows = visibleUsers
         .map((user) => ({
           id: user.id,
           name: user.name,
@@ -285,7 +307,7 @@ export default function LeaderboardByPhase({
 
     // Parity check: last frame totals must equal backend sums under same filter.
     const expectedTotals = new Map<string, number>();
-    users.forEach((u) => {
+    visibleUsers.forEach((u) => {
       const total = u.predictions.reduce((acc, p) => {
         if (!finishedSet.has(p.matchId)) return acc;
         const hasDay = !!finishedMatchDayMap[p.matchId];
@@ -315,7 +337,7 @@ export default function LeaderboardByPhase({
     }
 
     return frames;
-  }, [users, leaderboard, selectedTorneo, finishedSet, finishedMatchDayMap, currentSystemDay]);
+  }, [users, leaderboard, selectedTorneo, finishedSet, finishedMatchDayMap, currentSystemDay, showUnpaidUsers]);
 
   /** Drop last surname when 4+ words; hard-cap at 28 chars. */
   const formatDisplayName = (n: string) => {
@@ -358,6 +380,19 @@ export default function LeaderboardByPhase({
           </button>
         ))}
       </div>
+
+      {/* Show/hide unpaid users toggle */}
+      <button
+        onClick={() => setShowUnpaidUsers((v) => !v)}
+        className={cn(
+          "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap",
+          showUnpaidUsers
+            ? "bg-amber-50 text-amber-700 border-amber-300/60"
+            : "border-border text-muted-foreground hover:text-foreground",
+        )}
+      >
+        {showUnpaidUsers ? "Ocultar sin pagar" : "Mostrar sin pagar"}
+      </button>
 
       {/* Compare CTA */}
       <Link
@@ -402,6 +437,11 @@ export default function LeaderboardByPhase({
                 user.paidFinals
               : (TORNEO_TIER[selectedTorneo] ?? (() => true))(user);
           const quotaLabel = getQuotaLabel(selectedTorneo, user);
+
+          const prizeAmount =
+            idx < 3 && selectedTorneo !== "ALL"
+              ? calculatePrize(paidCounts[selectedTorneo as keyof typeof paidCounts], idx + 1)
+              : null;
 
           return (
             <div
@@ -481,7 +521,7 @@ export default function LeaderboardByPhase({
                         "text-[9px] h-4 px-1.5 py-0",
                         paidForCurrentTorneo
                           ? "bg-emerald-600/15 text-emerald-700"
-                          : "text-muted-foreground",
+                          : "bg-amber-100/60 text-amber-700 border border-amber-300/40",
                       )}
                     >
                       {quotaLabel}
@@ -506,6 +546,18 @@ export default function LeaderboardByPhase({
 
                 {/* Points + expand */}
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  {prizeAmount != null && prizeAmount > 0 && (
+                    <span
+                      className={cn(
+                        "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                        idx === 0 && "bg-yellow-500/15 text-yellow-700",
+                        idx === 1 && "bg-slate-400/15 text-slate-600",
+                        idx === 2 && "bg-amber-700/15 text-amber-800",
+                      )}
+                    >
+                      ${prizeAmount}
+                    </span>
+                  )}
                   <span className="text-lg font-black text-primary">
                     {user.points}
                   </span>

@@ -64,6 +64,15 @@ export default async function LeaderboardPage() {
       ],
     },
   });
+  const paidGroupStageCount = await prisma.user.count({
+    where: { isActive: true, OR: [{ hasPaid: true }, { paidGroupStage: true }] },
+  });
+  const paidKnockoutCount = await prisma.user.count({
+    where: { isActive: true, OR: [{ hasPaid: true }, { paidKnockout: true }] },
+  });
+  const paidFinalsCount = await prisma.user.count({
+    where: { isActive: true, OR: [{ hasPaid: true }, { paidFinals: true }] },
+  });
   const totalPredictions = await prisma.prediction.count();
   const now = new Date();
 
@@ -289,6 +298,7 @@ export default async function LeaderboardPage() {
           currentUserId={session.user?.id ?? ""}
           finishedMatchIds={finishedMatchIdSet}
           finishedMatchDayMap={finishedMatchDayMap}
+          paidCounts={{ T1: paidGroupStageCount, T2: paidKnockoutCount, T3: paidFinalsCount }}
         />
       )}
     </div>

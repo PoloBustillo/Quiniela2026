@@ -5,30 +5,7 @@ import { prisma } from "@/lib/prisma";
 import matchesData from "@/data/matches.json";
 import { parseMatchDate, isPredictionClosed } from "@/lib/points";
 
-const canPredictPhase = (
-  phase: string | null,
-  user: {
-    hasPaid: boolean;
-    paidGroupStage: boolean;
-    paidKnockout: boolean;
-    paidFinals: boolean;
-  },
-) => {
-  if (user.hasPaid) return true;
-  if (phase === "GROUP_STAGE") return user.paidGroupStage;
-  if (phase === "ROUND_OF_32" || phase === "ROUND_OF_16") {
-    return user.paidKnockout;
-  }
-  if (
-    phase === "QUARTER_FINAL" ||
-    phase === "SEMI_FINAL" ||
-    phase === "THIRD_PLACE" ||
-    phase === "FINAL"
-  ) {
-    return user.paidFinals;
-  }
-  return false;
-};
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -165,24 +142,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const userPayment = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        hasPaid: true,
-        paidGroupStage: true,
-        paidKnockout: true,
-        paidFinals: true,
-      },
-    });
-
-    if (!userPayment || !canPredictPhase(matchPhase, userPayment)) {
-      return NextResponse.json(
-        {
-          error: "Tu cuota para esta quiniela aún no está marcada como pagada.",
-        },
-        { status: 403 },
-      );
-    }
+    // Payment check removed — all users can now save predictions.
+    // Unpaid users are visually distinguished in the leaderboard.
 
     const prediction = await prisma.prediction.upsert({
       where: {
