@@ -114,6 +114,29 @@ const isUserPaid = (u: UserWithPoints) =>
 const MEDAL = ["🥇", "🥈", "🥉"];
 const WORLD_CUP_START_DAY = "2026-06-11";
 
+/** Competition ranking: empatados comparten la misma posición, la siguiente es P+N */
+const getCompetitionRank = (
+  sorted: { id: string; points: number }[],
+): Map<string, number> => {
+  const ranks = new Map<string, number>();
+  let i = 0;
+  while (i < sorted.length) {
+    let j = i;
+    while (
+      j < sorted.length &&
+      sorted[j].points === sorted[i].points
+    ) {
+      j++;
+    }
+    const rank = i + 1;
+    for (let k = i; k < j; k++) {
+      ranks.set(sorted[k].id, rank);
+    }
+    i = j;
+  }
+  return ranks;
+};
+
 const getMexicoSystemDay = (date: Date) =>
   date.toLocaleDateString("sv-SE", {
     timeZone: "America/Mexico_City",
@@ -168,12 +191,30 @@ const getQuotaLabel = (selectedTorneo: string, user: UserWithPoints) => {
 
 const PRIZE_PER_ENTRY = 100;
 
-const calculatePrize = (paidCount: number, position: number): number | null => {
-  const bote = paidCount * PRIZE_PER_ENTRY;
+/** Premio base por posición (sin empate) */
+const basePrize = (bote: number, position: number): number => {
   if (position === 1) return Math.round(bote * 0.70 - 50);
   if (position === 2) return Math.round(bote * 0.30 - 50);
   if (position === 3) return 100;
-  return null;
+  return 0;
+};
+
+/**
+ * Calcula el premio considerando empates.
+ * Si N usuarios empatan en posición P, combinan los premios de P, P+1, ..., P+N-1
+ */
+const calculatePrize = (
+  paidCount: number,
+  rank: number,
+  tiedCount: number,
+): number | null => {
+  const bote = paidCount * PRIZE_PER_ENTRY;
+  let total = 0;
+  for (let i = 0; i < tiedCount; i++) {
+    total += basePrize(bote, rank + i);
+  }
+  const prize = Math.round(total / tiedCount);
+  return prize > 0 ? prize : null;
 };
 
 export default function LeaderboardByPhase({
@@ -214,7 +255,7 @@ export default function LeaderboardByPhase({
     const visibleUsers = showUnpaidUsers
       ? users
       : users.filter(isUserPaid);
-    return visibleUsers
+    const sorted = visibleUsers
       .map((user) => {
         const preds =
           selectedTorneo === "ALL"
@@ -235,10 +276,13 @@ export default function LeaderboardByPhase({
         return { ...user, points, preds, exact, correct, wrong, pending };
       })
       .sort((a, b) => b.points - a.points);
+
+    const rankMap = getCompetitionRank(sorted);
+    return sorted.map((u) => ({ ...u, rank: rankMap.get(u.id) ?? 0 }));
   }, [users, selectedTorneo, finishedSet, showUnpaidUsers]);
 
   const myEntry = leaderboard.find((u) => u.id === currentUserId);
-  const myRank = leaderboard.findIndex((u) => u.id === currentUserId) + 1;
+  const myRank = myEntry?.rank ?? 0;
   const raceFrames = useMemo(() => {
     const phasesForTorneo = TORNEO_PHASES[selectedTorneo] ?? [];
     const visibleUsers = showUnpaidUsers
@@ -438,9 +482,10 @@ export default function LeaderboardByPhase({
               : (TORNEO_TIER[selectedTorneo] ?? (() => true))(user);
           const quotaLabel = getQuotaLabel(selectedTorneo, user);
 
+          const tiedCount = leaderboard.filter((u) => u.rank === user.rank).length;
           const prizeAmount =
-            idx < 3 && selectedTorneo !== "ALL"
-              ? calculatePrize(paidCounts[selectedTorneo as keyof typeof paidCounts], idx + 1)
+            user.rank <= 3 && selectedTorneo !== "ALL"
+              ? calculatePrize(paidCounts[selectedTorneo as keyof typeof paidCounts], user.rank, tiedCount)
               : null;
 
           return (
@@ -468,10 +513,10 @@ export default function LeaderboardByPhase({
               >
                 {/* Position */}
                 <span className="w-7 text-center text-sm font-bold flex-shrink-0">
-                  {idx < 3 ? (
-                    MEDAL[idx]
+                  {user.rank <= 3 ? (
+                    MEDAL[user.rank - 1]
                   ) : (
-                    <span className="text-muted-foreground">#{idx + 1}</span>
+                    <span className="text-muted-foreground">#{user.rank}</span>
                   )}
                 </span>
 
@@ -550,9 +595,9 @@ export default function LeaderboardByPhase({
                     <span
                       className={cn(
                         "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
-                        idx === 0 && "bg-yellow-500/15 text-yellow-700",
-                        idx === 1 && "bg-slate-400/15 text-slate-600",
-                        idx === 2 && "bg-amber-700/15 text-amber-800",
+                        user.rank === 1 && "bg-yellow-500/15 text-yellow-700",
+                        user.rank === 2 && "bg-slate-400/15 text-slate-600",
+                        user.rank === 3 && "bg-amber-700/15 text-amber-800",
                       )}
                     >
                       ${prizeAmount}
