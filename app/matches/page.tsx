@@ -7,6 +7,8 @@ import matchesData from "@/data/matches.json";
 import { parseMatchDate } from "@/lib/points";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function MatchesPage() {
   const session = await getServerSession(authOptions);
 
