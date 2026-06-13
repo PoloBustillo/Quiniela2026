@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import {
   Trophy,
   ChevronDown,
@@ -9,6 +9,7 @@ import {
   XCircle,
   GitCompare,
   Lock,
+  X,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,8 +17,93 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { translateCountry } from "@/lib/translations";
+import { calculatePoints } from "@/lib/points";
 import LeaderboardRaceChart from "@/components/LeaderboardRaceChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+interface LiveMatchBadgeProps {
+  matchId: string;
+  home: string;
+  away: string;
+  homeFlag?: string;
+  awayFlag?: string;
+  liveScore: { home: number | null; away: number | null } | null;
+}
+
+function LiveMatchBadge({ matchId, home, away, homeFlag, awayFlag, liveScore }: LiveMatchBadgeProps) {
+  const [hidden, setHidden] = useState(false);
+
+  // Cargar estado de ocultamiento de localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("hide-live-badge");
+      if (stored === "true") setHidden(true);
+    } catch { /* ignore */ }
+  }, []);
+
+  const handleClose = () => {
+    setHidden(true);
+    try { localStorage.setItem("hide-live-badge", "true"); } catch { /* ignore */ }
+  };
+
+  const handleShow = () => {
+    setHidden(false);
+    try { localStorage.removeItem("hide-live-badge"); } catch { /* ignore */ }
+  };
+
+  // Badge oculto → mini indicador
+  if (hidden) {
+    return (
+      <button
+        onClick={handleShow}
+        className="fixed bottom-4 right-4 z-50 h-8 w-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg animate-pulse hover:bg-red-600 transition-colors"
+        title="Ver partido en vivo"
+      >
+        <span className="text-xs font-bold">●</span>
+      </button>
+    );
+  }
+
+  // Badge visible
+  return (
+    <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+      <div className="bg-red-50 border border-red-200 rounded-full shadow-lg px-4 py-2 flex items-center gap-2 max-w-[90vw]">
+        <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+        </span>
+        <span className="text-[10px] font-bold text-red-600 uppercase tracking-wide flex-shrink-0">
+          En vivo
+        </span>
+        <Link
+          href={`/matches/${matchId.replace("match_", "")}`}
+          className="flex items-center gap-1.5 min-w-0 hover:opacity-80 transition-opacity"
+        >
+          {homeFlag && (
+            <Image src={homeFlag} alt={home} width={16} height={12} className="rounded-sm flex-shrink-0" unoptimized />
+          )}
+          <span className="text-xs font-semibold text-red-800 truncate">{translateCountry(home)}</span>
+          {liveScore && liveScore.home !== null && liveScore.away !== null && (
+            <span className="text-sm font-black text-red-700 font-mono flex-shrink-0 mx-0.5">
+              {liveScore.home}–{liveScore.away}
+            </span>
+          )}
+          {awayFlag && (
+            <Image src={awayFlag} alt={away} width={16} height={12} className="rounded-sm flex-shrink-0" unoptimized />
+          )}
+          <span className="text-xs font-semibold text-red-800 truncate">{translateCountry(away)}</span>
+        </Link>
+        <button
+          onClick={handleClose}
+          className="ml-1 p-0.5 rounded-full hover:bg-red-100 transition-colors flex-shrink-0"
+          aria-label="Ocultar badge"
+        >
+          <X className="h-3.5 w-3.5 text-red-400" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 interface MatchInfo {
   home: string;
@@ -27,6 +113,7 @@ interface MatchInfo {
   group?: string;
   phase?: string;
   order?: number;
+  date?: string;
 }
 
 interface Prediction {
@@ -57,6 +144,8 @@ interface LeaderboardByPhaseProps {
   finishedMatchIds: string[];
   finishedMatchDayMap?: Record<string, string>;
   paidCounts: { T1: number; T2: number; T3: number };
+  liveMatchIds?: string[];
+  liveScores?: Record<string, { home: number | null; away: number | null }>;
 }
 
 /** The 3 torneos + "All" */
@@ -224,17 +313,102 @@ export default function LeaderboardByPhase({
   finishedMatchIds,
   finishedMatchDayMap = {},
   paidCounts,
+  liveMatchIds = [],
+  liveScores = {},
 }: LeaderboardByPhaseProps) {
   const [selectedTorneo, setSelectedTorneo] = useState("ALL");
   const [viewTab, setViewTab] = useState<"tabla" | "grafica">("tabla");
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [showUnpaidUsers, setShowUnpaidUsers] = useState(false);
   const [systemNow, setSystemNow] = useState(() => new Date());
+  const [prevRanks, setPrevRanks] = useState<Map<string, number>>(new Map());
+  const [prevPredictions, setPrevPredictions] = useState<Map<string, { homeScore: number; awayScore: number }>>(new Map());
 
   useEffect(() => {
     const timer = window.setInterval(() => setSystemNow(new Date()), 60_000);
     return () => window.clearInterval(timer);
   }, []);
+
+  // Cargar posiciones anteriores de localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("leaderboard-prev-ranks");
+      if (stored) {
+        const parsed = JSON.parse(stored) as Record<string, number>;
+        setPrevRanks(new Map(Object.entries(parsed)));
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Cargar predicciones anteriores de localStorage (guardadas por PredictionCard)
+  useEffect(() => {
+    try {
+      const preds = new Map<string, { homeScore: number; awayScore: number }>();
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith("pred-match_")) {
+          const matchId = key.replace("pred-", "");
+          const data = JSON.parse(localStorage.getItem(key) ?? "{}");
+          if (data.homeScore != null && data.awayScore != null) {
+            preds.set(matchId, { homeScore: data.homeScore, awayScore: data.awayScore });
+          }
+        }
+      }
+      setPrevPredictions(preds);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Identificar el partido actual: priorizar EN VIVO, luego el más cercano que no ha terminado
+  const currentMatch = useMemo(() => {
+    const now = systemNow;
+    // Buscar el partido en vivo más cercano al now
+    let liveBest: { id: string; matchId: string; home: string; away: string; homeFlag: string; awayFlag: string; date: Date; isLive: boolean } | null = null;
+    for (const [rawId, info] of Object.entries(matchMap)) {
+      const matchId = `match_${rawId}`;
+      if (!liveMatchIds.includes(matchId)) continue;
+      if (!info.order || !info.date) continue;
+      const matchDate = new Date(info.date);
+      if (isNaN(matchDate.getTime())) continue;
+      if (!liveBest || matchDate < liveBest.date) {
+        liveBest = { id: matchId, matchId: rawId, home: info.home, away: info.away, homeFlag: info.homeFlag, awayFlag: info.awayFlag, date: matchDate, isLive: true };
+      }
+    }
+    if (liveBest) return liveBest;
+
+    // Fallback: partido más cercano que no ha terminado
+    let best: { id: string; matchId: string; home: string; away: string; homeFlag: string; awayFlag: string; date: Date; isLive: boolean } | null = null;
+    for (const [rawId, info] of Object.entries(matchMap)) {
+      if (!info.order || !info.date) continue;
+      const matchDate = new Date(info.date);
+      if (isNaN(matchDate.getTime())) continue;
+      if (finishedMatchIds.includes(`match_${rawId}`)) continue;
+      if (!best || matchDate < best.date) {
+        best = { id: `match_${rawId}`, matchId: rawId, home: info.home, away: info.away, homeFlag: info.homeFlag, awayFlag: info.awayFlag, date: matchDate, isLive: false };
+      }
+    }
+    return best;
+  }, [matchMap, finishedMatchIds, liveMatchIds, systemNow]);
+
+  // Calcular el map de predicciones del partido actual para cada usuario
+  const currentMatchPredMap = useMemo(() => {
+    if (!currentMatch) return new Map<string, { home: number | null; away: number | null }>();
+    const map = new Map<string, { home: number | null; away: number | null }>();
+    for (const user of users) {
+      const pred = user.predictions.find((p) => p.matchId === currentMatch.id);
+      map.set(user.id, {
+        home: pred?.homeScore ?? null,
+        away: pred?.awayScore ?? null,
+      });
+    }
+    return map;
+  }, [currentMatch, users]);
+
+  // Score real del partido en vivo (si existe)
+  const liveScore = currentMatch ? liveScores[currentMatch.id] ?? null : null;
 
   const currentSystemDay = useMemo(
     () => getMexicoSystemDay(systemNow),
@@ -280,6 +454,24 @@ export default function LeaderboardByPhase({
     const rankMap = getCompetitionRank(sorted);
     return sorted.map((u) => ({ ...u, rank: rankMap.get(u.id) ?? 0 }));
   }, [users, selectedTorneo, finishedSet, showUnpaidUsers]);
+
+  // Guardar posiciones actuales en localStorage SOLO una vez al montar
+  // para que en la próxima visita se puedan comparar con las nuevas posiciones
+  const didSaveRanksRef = useRef(false);
+  useEffect(() => {
+    if (didSaveRanksRef.current) return;
+    if (leaderboard.length === 0) return;
+    const rankData: Record<string, number> = {};
+    for (const user of leaderboard) {
+      rankData[user.id] = user.rank;
+    }
+    try {
+      localStorage.setItem("leaderboard-prev-ranks", JSON.stringify(rankData));
+      didSaveRanksRef.current = true;
+    } catch {
+      // ignore
+    }
+  }, [leaderboard]);
 
   const myEntry = leaderboard.find((u) => u.id === currentUserId);
   const myRank = myEntry?.rank ?? 0;
@@ -512,11 +704,23 @@ export default function LeaderboardByPhase({
                 }}
               >
                 {/* Position */}
-                <span className="w-7 text-center text-sm font-bold flex-shrink-0">
+                <span className="w-10 text-center text-sm font-bold flex-shrink-0 flex items-center justify-center gap-0.5">
                   {user.rank <= 3 ? (
                     MEDAL[user.rank - 1]
                   ) : (
                     <span className="text-muted-foreground">#{user.rank}</span>
+                  )}
+                  {prevRanks.has(user.id) && prevRanks.get(user.id) !== user.rank && (
+                    <span
+                      className={cn(
+                        "text-[9px] font-bold",
+                        (prevRanks.get(user.id) ?? 0) > user.rank
+                          ? "text-green-500"
+                          : "text-red-500",
+                      )}
+                    >
+                      {(prevRanks.get(user.id) ?? 0) > user.rank ? "↑" : "↓"}
+                    </span>
                   )}
                 </span>
 
@@ -587,6 +791,83 @@ export default function LeaderboardByPhase({
                     )}
                     <span>{user.preds.length}p</span>
                   </div>
+                  {/* Predicción del partido actual — marcador grande con banderas */}
+                  {currentMatch && (() => {
+                    const pred = currentMatchPredMap.get(user.id);
+                    if (!pred) return null;
+                    const isRevealed = pred.home !== null && pred.away !== null;
+                    const isLive = currentMatch.isLive;
+                    const hasLiveScore = liveScore && liveScore.home !== null && liveScore.away !== null;
+                    const potentialPts = isRevealed && hasLiveScore
+                      ? calculatePoints(pred.home!, pred.away!, liveScore!.home, liveScore!.away)
+                      : null;
+                    const prevPred = user.isCurrentUser ? prevPredictions.get(currentMatch.id) : null;
+                    const wasModified = user.isCurrentUser && prevPred && isRevealed &&
+                      (prevPred.homeScore !== pred.home || prevPred.awayScore !== pred.away);
+                    return (
+                      <div className="flex items-center justify-between gap-1.5 sm:gap-4 mt-1.5 px-2 sm:px-3 py-2 rounded-xl bg-muted/50 border border-border/60">
+                        <div className="flex items-center gap-1 min-w-0 shrink">
+                          <Image
+                            src={currentMatch.homeFlag}
+                            alt=""
+                            width={20}
+                            height={15}
+                            className="rounded-sm flex-shrink-0 sm:hidden"
+                            unoptimized
+                          />
+                          <span className="text-[11px] sm:text-sm text-muted-foreground font-medium truncate hidden sm:inline">
+                            {currentMatch.home.split(" ").pop()}
+                          </span>
+                        </div>
+                        <span
+                          className={cn(
+                            "text-2xl sm:text-3xl font-black font-mono tabular-nums leading-none flex-shrink-0",
+                            isRevealed
+                              ? potentialPts !== null
+                                ? potentialPts === 5
+                                  ? "text-green-600"
+                                  : potentialPts === 3
+                                    ? "text-blue-600"
+                                    : "text-red-500"
+                                : "text-foreground"
+                              : "text-amber-600",
+                          )}
+                        >
+                          {isRevealed ? `${pred.home}–${pred.away}` : "🔒"}
+                        </span>
+                        <div className="flex items-center gap-1 min-w-0 shrink">
+                          <span className="text-[11px] sm:text-sm text-muted-foreground font-medium truncate hidden sm:inline">
+                            {currentMatch.away.split(" ").pop()}
+                          </span>
+                          <Image
+                            src={currentMatch.awayFlag}
+                            alt=""
+                            width={20}
+                            height={15}
+                            className="rounded-sm flex-shrink-0 sm:hidden"
+                            unoptimized
+                          />
+                        </div>
+                        {isRevealed && potentialPts !== null && (
+                          <span
+                            className={cn(
+                              "text-xs sm:text-sm font-bold px-1.5 sm:px-2 py-0.5 rounded-full flex-shrink-0",
+                              potentialPts > 0
+                                ? "bg-green-500/15 text-green-600"
+                                : "bg-muted text-muted-foreground",
+                            )}
+                          >
+                            +{potentialPts}
+                          </span>
+                        )}
+                        {wasModified && (
+                          <span className="text-amber-500 font-bold text-xs sm:text-sm flex-shrink-0" title="Predicción modificada">
+                            ✎
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Points + expand */}
@@ -841,6 +1122,22 @@ export default function LeaderboardByPhase({
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Badge flotante del partido en vivo */}
+      {currentMatch && currentMatch.isLive && (() => {
+        const hasLiveScore = liveScore && liveScore.home !== null && liveScore.away !== null;
+        const homeMatch = matchMap[currentMatch.matchId];
+        return (
+          <LiveMatchBadge
+            matchId={currentMatch.id}
+            home={currentMatch.home}
+            away={currentMatch.away}
+            homeFlag={homeMatch?.homeFlag}
+            awayFlag={homeMatch?.awayFlag}
+            liveScore={hasLiveScore ? liveScore : null}
+          />
+        );
+      })()}
     </div>
   );
 }

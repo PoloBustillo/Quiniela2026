@@ -129,6 +129,15 @@ export default function PredictionCard({
       });
 
       if (response.ok) {
+        // Guardar predicción en localStorage para comparar cambios
+        try {
+          localStorage.setItem(
+            `pred-${match.id}`,
+            JSON.stringify({ homeScore, awayScore, savedAt: Date.now() }),
+          );
+        } catch {
+          // ignore localStorage errors
+        }
         // Silent background refresh — doesn't block the UI
         router.refresh();
       } else {

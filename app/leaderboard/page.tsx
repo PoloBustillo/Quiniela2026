@@ -10,6 +10,8 @@ import LeaderboardByPhase from "@/components/LeaderboardByPhase";
 import matchesData from "@/data/matches.json";
 import { parseMatchDate } from "@/lib/points";
 
+export const revalidate = 30;
+
 const normalizePredictionMatchId = (
   matchId: string,
   knockoutMatches: { id: string }[],
@@ -159,6 +161,55 @@ export default async function LeaderboardPage() {
     .filter(({ match }) => match.matchDate <= now)
     .map(({ legacyId }) => legacyId);
 
+  // ── Detectar partidos en vivo ──────────────────────────────────────────────
+  // Knockout: status === "LIVE" en DB (seteado por BSD sync)
+  const liveKnockoutIds = knockoutMatches
+    .filter((match) => match.status === "LIVE")
+    .map((match) => `match_${match.id}`);
+
+  // Grupos: heurística — empezó hace menos de 3h (ventana típica de un partido)
+  // No usar finishedMatchIds porque BSD escribe scores durante el partido en vivo
+  const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  const liveGroupIds = matchesData.matches
+    .filter((m) => {
+      const overrideDate = groupDateOverrideMap.get(m.id);
+      const matchDate = overrideDate || parseMatchDate(m.date);
+      const started = matchDate <= now;
+      const withinWindow = matchDate > threeHoursAgo;
+      return started && withinWindow;
+    })
+    .map((m) => `match_${m.id}`);
+
+  const liveMatchIdSet = new Set([...liveKnockoutIds, ...liveGroupIds]);
+
+  // Scores reales de partidos en vivo (para mostrar en leaderboard)
+  const liveScoresMap: Record<string, { home: number | null; away: number | null }> = {};
+  // Grupos en vivo
+  const liveGroupScores = await prisma.groupMatchScore.findMany({
+    where: {
+      matchId: {
+        in: liveGroupIds.map((id) => parseInt(id.replace("match_", ""))),
+      },
+    },
+    select: { matchId: true, homeScore: true, awayScore: true },
+  });
+  for (const gs of liveGroupScores) {
+    liveScoresMap[`match_${gs.matchId}`] = {
+      home: gs.homeScore,
+      away: gs.awayScore,
+    };
+  }
+  // Eliminatorias en vivo
+  for (const km of liveKnockoutIds) {
+    const match = knockoutMatches.find((m) => `match_${m.id}` === km);
+    if (match) {
+      liveScoresMap[km] = {
+        home: match.homeScore,
+        away: match.awayScore,
+      };
+    }
+  }
+
   const startedMatchIdSet = new Set([
     ...startedGroupIds,
     ...startedKnockoutIds,
@@ -212,9 +263,15 @@ export default async function LeaderboardPage() {
       group?: string;
       phase?: string;
       order?: number;
+      date?: string;
     }
   > = {};
   for (const m of matchesData.matches) {
+    // Use DB override date if available, otherwise JSON date
+    const overrideDate = groupDateOverrideMap.get(m.id);
+    const matchDate = overrideDate
+      ? overrideDate.toISOString()
+      : m.date;
     matchMap[String(m.id)] = {
       home: m.homeTeam.name,
       away: m.awayTeam.name,
@@ -223,6 +280,7 @@ export default async function LeaderboardPage() {
       group: m.group,
       phase: (m as { phase?: string }).phase,
       order: m.id,
+      date: matchDate,
     };
   }
 
@@ -234,6 +292,7 @@ export default async function LeaderboardPage() {
       awayFlag: m.awayTeam.flag || "/flags/tbd.png",
       phase: m.phase,
       order: 1000 + index,
+      date: m.matchDate.toISOString(),
     };
   });
 
@@ -299,6 +358,8 @@ export default async function LeaderboardPage() {
           finishedMatchIds={finishedMatchIdSet}
           finishedMatchDayMap={finishedMatchDayMap}
           paidCounts={{ T1: paidGroupStageCount, T2: paidKnockoutCount, T3: paidFinalsCount }}
+          liveMatchIds={Array.from(liveMatchIdSet)}
+          liveScores={liveScoresMap}
         />
       )}
     </div>
