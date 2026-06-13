@@ -5,6 +5,7 @@ import { Calendar } from "lucide-react";
 import { MatchCard } from "@/components/MatchCard";
 import matchesData from "@/data/matches.json";
 import { parseMatchDate } from "@/lib/points";
+import { prisma } from "@/lib/prisma";
 
 export default async function MatchesPage() {
   const session = await getServerSession(authOptions);
@@ -13,8 +14,54 @@ export default async function MatchesPage() {
     redirect("/auth/signin");
   }
 
+  // Obtener fechas override de la DB (igual que en predicciones)
+  const groupDateOverrides = await prisma.groupMatchScore.findMany({
+    select: { matchId: true, matchDate: true },
+  });
+  const groupDateOverrideMap = new Map(
+    groupDateOverrides.map((m) => [m.matchId, m.matchDate]),
+  );
+
+  // Aplicar overrides de fecha (igual que en la página de predicciones)
+  const matchesWithOverrides = matchesData.matches.map((match) => {
+    const overrideDate = groupDateOverrideMap.get(match.id);
+    if (overrideDate) {
+      // Formatear como el JSON: "YYYY-MM-DD HH:MM:SS-06"
+      const year = overrideDate.toLocaleString("en-US", {
+        timeZone: "America/Mexico_City",
+        year: "numeric",
+      });
+      const month = overrideDate.toLocaleString("en-US", {
+        timeZone: "America/Mexico_City",
+        month: "2-digit",
+      });
+      const day = overrideDate.toLocaleString("en-US", {
+        timeZone: "America/Mexico_City",
+        day: "2-digit",
+      });
+      const hour = overrideDate
+        .toLocaleString("en-US", {
+          timeZone: "America/Mexico_City",
+          hour: "2-digit",
+          hour12: false,
+        })
+        .padStart(2, "0");
+      const minute = overrideDate
+        .toLocaleString("en-US", {
+          timeZone: "America/Mexico_City",
+          minute: "2-digit",
+        })
+        .padStart(2, "0");
+      return {
+        ...match,
+        date: `${year}-${month}-${day} ${hour}:${minute}:00-06`,
+      };
+    }
+    return match;
+  });
+
   // Agrupar partidos por fecha
-  const matchesByDate = matchesData.matches.reduce(
+  const matchesByDate = matchesWithOverrides.reduce(
     (acc, match) => {
       const date = parseMatchDate(match.date).toLocaleDateString("es-MX", {
         weekday: "long",

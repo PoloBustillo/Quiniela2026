@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { AdminTableSkeleton } from "@/components/ui/skeletons";
+import matchesData from "@/data/matches.json";
 
 interface User {
   id: string;
@@ -42,6 +43,7 @@ interface User {
   _count: {
     predictions: number;
   };
+  predictions: { matchId: string }[];
 }
 
 const PHASES = [
@@ -193,12 +195,27 @@ export function UsersPaymentManager() {
 
   const totalRevenue = users.reduce((acc, u) => acc + getTotalPaid(u), 0);
 
-  const noPredictionsUsers = users.filter(
-    (u) =>
-      u.isActive &&
-      u._count.predictions === 0 &&
-      (u.paidGroupStage || u.paidKnockout || u.paidFinals),
-  );
+  // Calcular partidos de hoy y mañana (usando inicio de día para no perder partidos de hoy)
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const endOfTomorrow = new Date(startOfToday);
+  endOfTomorrow.setDate(endOfTomorrow.getDate() + 2);
+
+  const upcomingMatchIds = matchesData.matches
+    .filter((m) => {
+      const matchDate = new Date(m.date);
+      return matchDate >= startOfToday && matchDate < endOfTomorrow;
+    })
+    .map((m) => `match_${m.id}`);
+
+  // Usuarios que NO han predicho los partidos de hoy y mañana
+  const noPredictionsUsers = users.filter((u) => {
+    if (!u.isActive) return false;
+    if (!(u.paidGroupStage || u.paidKnockout || u.paidFinals)) return false;
+    if (upcomingMatchIds.length === 0) return false;
+    const userPredMatchIds = new Set(u.predictions.map((p) => p.matchId));
+    return upcomingMatchIds.some((matchId) => !userPredMatchIds.has(matchId));
+  });
 
   const copyToClipboard = async (text: string, type: "payment" | "predictions") => {
     try {
@@ -240,15 +257,30 @@ Tel: 3317700339
 
 💰 Favor de realizar su depósito y confirmar en el grupo 🙏`;
 
+  // Nombres de los partidos próximos para el mensaje
+  const upcomingMatchNames = matchesData.matches
+    .filter((m) => {
+      const matchDate = new Date(m.date);
+      return matchDate >= startOfToday && matchDate < endOfTomorrow;
+    })
+    .map((m) => `${m.homeTeam.name} vs ${m.awayTeam.name}`)
+    .join(", ");
+
   const predictionsMessage = `⚽ *Quiniela Mundial 2026* ⚽
 
 📝 *Recordatorio de Predicciones*
 
-Estamos a 1 día de la próxima ronda. Los siguientes participantes *no han metido predicciones*:
+${upcomingMatchIds.length > 0
+  ? `Partidos de hoy y mañana: *${upcomingMatchNames}*
+
+Los siguientes participantes *no han metido predicciones* para estos partidos:`
+  : `No hay partidos programados para hoy ni mañana.`}
 
 ${noPredictionsUsers.map((u) => `• ${u.email || u.name || "Sin nombre"}`).join("\n")}
 
-⚠️ *Recuerden ingresar sus predicciones antes de que comiencen los partidos!*
+${upcomingMatchIds.length > 0
+  ? `⚠️ *Recuerden ingresar sus predicciones antes de que comiencen los partidos!*`
+  : ""}
 
 ¡No se queden sin participar! 🏆`;
 

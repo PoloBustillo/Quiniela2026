@@ -39,6 +39,11 @@ export async function GET(request: Request) {
             predictions: true,
           },
         },
+        predictions: {
+          select: {
+            matchId: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
