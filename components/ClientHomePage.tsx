@@ -84,6 +84,7 @@ export default function ClientHomePage({
           year: "numeric",
           month: "long",
           day: "numeric",
+          timeZone: "America/Mexico_City",
         });
         if (!acc[date]) acc[date] = [];
         acc[date].push(match);

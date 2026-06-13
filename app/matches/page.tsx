@@ -62,7 +62,7 @@ export default async function MatchesPage() {
     return match;
   });
 
-  // Agrupar partidos por fecha
+  // Agrupar partidos por fecha (usando timezone de México para agrupar correctamente)
   const matchesByDate = matchesWithOverrides.reduce(
     (acc, match) => {
       const date = parseMatchDate(match.date).toLocaleDateString("es-MX", {
@@ -70,6 +70,7 @@ export default async function MatchesPage() {
         day: "numeric",
         month: "long",
         year: "numeric",
+        timeZone: "America/Mexico_City",
       });
       if (!acc[date]) {
         acc[date] = [];
