@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import PredictionCard from "@/components/PredictionCard";
-import { Calendar, Trophy, ChevronDown } from "lucide-react";
+import { Calendar, Trophy, ChevronDown, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Match {
@@ -67,6 +67,7 @@ export default function ClientHomePage({
   const [serverOffset, setServerOffset] = useState(0);
   // UI-REC #6: quick filter state — remove this line (and filter chips + filteredMatches change below) to disable
   const [quickFilter, setQuickFilter] = useState<"all" | "today" | "missing">("all");
+  const [showPast, setShowPast] = useState(false);
   useEffect(() => {
     fetch("/api/server-time", { cache: "no-store" })
       .then((r) => r.json())
@@ -117,12 +118,30 @@ export default function ClientHomePage({
 
   // UI-REC #6: quick filter applied in date mode — revert to `return matchesByDate` in the date branch to disable
   const filteredMatches = useMemo(() => {
+    const nowWithOffset = Date.now() + serverOffset;
+
+    const LIVE_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
+
+    const hidePast = (rec: Record<string, Match[]>) => {
+      if (showPast) return rec;
+      const result: Record<string, Match[]> = {};
+      for (const [day, dayMatches] of Object.entries(rec)) {
+        const filtered = dayMatches.filter(
+          (m) => new Date(m.date).getTime() > nowWithOffset - LIVE_WINDOW_MS,
+        );
+        if (filtered.length > 0) result[day] = filtered;
+      }
+      return result;
+    };
+
     if (viewMode === "group") {
-      if (selectedGroup === "all") return matchesByGroup;
-      return { [selectedGroup]: matchesByGroup[selectedGroup] || [] };
+      if (selectedGroup === "all") return hidePast(matchesByGroup);
+      return hidePast({ [selectedGroup]: matchesByGroup[selectedGroup] || [] });
     }
     if (quickFilter === "today") {
-      const todayKey = new Date(Date.now() + serverOffset).toLocaleDateString(
+      // Esperar a que serverOffset se cargue para no mostrar día incorrecto
+      if (serverOffset === 0) return {};
+      const todayKey = new Date(nowWithOffset).toLocaleDateString(
         "es-MX",
         {
           weekday: "long",
@@ -136,7 +155,6 @@ export default function ClientHomePage({
       return todayMatches.length > 0 ? { [todayKey]: todayMatches } : {};
     }
     if (quickFilter === "missing") {
-      const nowWithOffset = Date.now() + serverOffset;
       const result: Record<string, Match[]> = {};
       for (const [day, dayMatches] of Object.entries(matchesByDate)) {
         const open = dayMatches.filter(
@@ -148,8 +166,8 @@ export default function ClientHomePage({
       }
       return result;
     }
-    return matchesByDate;
-  }, [viewMode, selectedGroup, matchesByDate, matchesByGroup, quickFilter, serverOffset, predictionMap]);
+    return hidePast(matchesByDate);
+  }, [viewMode, selectedGroup, matchesByDate, matchesByGroup, quickFilter, serverOffset, predictionMap, showPast]);
 
   const getGroupLabel = (key: string) => {
     if (key.startsWith("Grupo ")) return key;
@@ -213,6 +231,18 @@ export default function ClientHomePage({
               {f === "all" ? "Todos" : f === "today" ? "Hoy" : "Sin guardar"}
             </button>
           ))}
+          <button
+            onClick={() => setShowPast(!showPast)}
+            className={cn(
+              "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-1",
+              showPast
+                ? "bg-secondary text-secondary-foreground border-secondary"
+                : "border-border text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <History className="h-3 w-3" />
+            Finalizados
+          </button>
         </div>
       )}
 
