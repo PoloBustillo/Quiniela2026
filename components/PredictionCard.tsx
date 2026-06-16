@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -62,6 +62,11 @@ export default function PredictionCard({
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(!!existingPrediction);
   const [error, setError] = useState<string | null>(null);
+  const lastSavedRef = useRef(
+    existingPrediction
+      ? { homeScore: existingPrediction.homeScore, awayScore: existingPrediction.awayScore }
+      : null,
+  );
   // UI-REC #3: brief success ring — remove this line (and its usages below) to disable
   const [justSaved, setJustSaved] = useState(false);
 
@@ -91,12 +96,12 @@ export default function PredictionCard({
   // Deshabilitar predicciones si es TBD o si el partido ya pasó
   const isDisabled = isTBD || isPast;
 
-  // Detectar si los scores han cambiado respecto a la predicción guardada
+  // Detectar si los scores han cambiado respecto al último guardado
   useEffect(() => {
-    if (existingPrediction) {
+    if (lastSavedRef.current) {
       const hasChanged =
-        homeScore !== existingPrediction.homeScore ||
-        awayScore !== existingPrediction.awayScore;
+        homeScore !== lastSavedRef.current.homeScore ||
+        awayScore !== lastSavedRef.current.awayScore;
 
       if (hasChanged && saved) {
         setSaved(false);
@@ -104,11 +109,14 @@ export default function PredictionCard({
         setSaved(true);
       }
     }
-  }, [homeScore, awayScore, existingPrediction, saved]);
+  }, [homeScore, awayScore, saved]);
 
   const handleSave = async () => {
     if (isSaving || isDisabled) return;
     setError(null);
+    // Actualizar ref ANTES del estado para que el efecto vea el nuevo valor
+    const prevSaved = lastSavedRef.current;
+    lastSavedRef.current = { homeScore, awayScore };
     // UI-REC #7: optimistic save — UI commits instantly, rolls back on error.
     // To revert: move setSaved(true) + setJustSaved block back inside the `if (response.ok)` branch.
     setSaved(true);
@@ -138,14 +146,16 @@ export default function PredictionCard({
         }
         // Scroll preservado: no hacemos router.refresh() para evitar recarga y scroll-to-top
       } else {
-        // UI-REC #7: rollback — remove the next 2 lines if reverting optimistic save
+        // Revertir ref y estado
+        lastSavedRef.current = prevSaved;
         setSaved(false);
         setJustSaved(false);
         const data = await response.json();
         setError(data.error || "Error al guardar la predicción");
       }
     } catch {
-      // UI-REC #7: rollback — remove the next 2 lines if reverting optimistic save
+      // Revertir ref y estado
+      lastSavedRef.current = prevSaved;
       setSaved(false);
       setJustSaved(false);
       setError("Error al guardar la predicción");
