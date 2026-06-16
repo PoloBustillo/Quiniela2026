@@ -81,8 +81,12 @@ export function isPredictionClosed(matchDate: Date): boolean {
  * Ejemplo: "2026-06-11 15:00:00-06" -> Date object
  */
 export function parseMatchDate(dateString: string): Date {
-  // El formato es "YYYY-MM-DD HH:mm:ss±HH"
-  // Convertir a formato ISO estándar: "YYYY-MM-DDTHH:mm:ss±HH:mm"
+  // Intentar parseo directo primero (funciona para formatos ISO estándar)
+  const direct = new Date(dateString);
+  if (!isNaN(direct.getTime())) return direct;
+
+  // Fallback: convertir formato no estándar "YYYY-MM-DD HH:mm:ss±HH"
+  // a ISO estándar "YYYY-MM-DDTHH:mm:ss±HH:mm"
   const isoString = dateString
     .replace(" ", "T")
     .replace(/([+-]\d{2})$/, "$1:00");

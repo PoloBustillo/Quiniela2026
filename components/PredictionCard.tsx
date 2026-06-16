@@ -13,7 +13,7 @@ import {
   translateCity,
   translateStadium,
 } from "@/lib/translations";
-import { calculatePoints } from "@/lib/points";
+import { calculatePoints, parseMatchDate } from "@/lib/points";
 
 interface Team {
   id: number | string;
@@ -67,7 +67,7 @@ export default function PredictionCard({
   // UI-REC #3: brief success ring — remove this line (and its usages below) to disable
   const [justSaved, setJustSaved] = useState(false);
 
-  const matchDate = new Date(match.date);
+  const matchDate = parseMatchDate(match.date);
 
   // Server-time offset (anti-cheat): keeps UI lock in sync with server clock.
   // If a parent passes the offset (recommended), skip the per-card fetch.
