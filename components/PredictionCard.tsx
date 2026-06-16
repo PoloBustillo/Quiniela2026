@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { Minus, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   translateCountry,
@@ -54,7 +53,6 @@ export default function PredictionCard({
   compact = false,
   serverOffset: initialServerOffset,
 }: PredictionCardProps) {
-  const router = useRouter();
   const [homeScore, setHomeScore] = useState(
     existingPrediction?.homeScore ?? 0,
   );
@@ -138,8 +136,7 @@ export default function PredictionCard({
         } catch {
           // ignore localStorage errors
         }
-        // Silent background refresh — doesn't block the UI
-        router.refresh();
+        // Scroll preservado: no hacemos router.refresh() para evitar recarga y scroll-to-top
       } else {
         // UI-REC #7: rollback — remove the next 2 lines if reverting optimistic save
         setSaved(false);

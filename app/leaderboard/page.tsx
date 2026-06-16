@@ -179,7 +179,6 @@ export default async function LeaderboardPage() {
       return started && withinWindow;
     })
     .map((m) => `match_${m.id}`);
-
   const liveMatchIdSet = new Set([...liveKnockoutIds, ...liveGroupIds]);
 
   // Scores reales de partidos en vivo (para mostrar en leaderboard)
@@ -193,6 +192,26 @@ export default async function LeaderboardPage() {
     },
     select: { matchId: true, homeScore: true, awayScore: true },
   });
+
+  // Remover partidos que empezaron hace >2h y tienen marcador (ya terminaron)
+  const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+  for (const gs of liveGroupScores) {
+    if (gs.homeScore == null || gs.awayScore == null) continue;
+    const gm = groupById.get(gs.matchId);
+    if (!gm) continue;
+    const overrideDate = groupDateOverrideMap.get(gs.matchId);
+    const matchDate = overrideDate || parseMatchDate(gm.date);
+    if (matchDate <= twoHoursAgo) {
+      liveMatchIdSet.delete(`match_${gs.matchId}`);
+    }
+  }
+  for (const km of liveKnockoutIds) {
+    const match = knockoutMatches.find((m) => `match_${m.id}` === km);
+    if (match && match.status !== "LIVE") {
+      liveMatchIdSet.delete(km);
+    }
+  }
+
   for (const gs of liveGroupScores) {
     liveScoresMap[`match_${gs.matchId}`] = {
       home: gs.homeScore,

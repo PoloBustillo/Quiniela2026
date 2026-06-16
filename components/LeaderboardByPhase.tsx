@@ -17,7 +17,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { translateCountry } from "@/lib/translations";
-import { calculatePoints } from "@/lib/points";
+import { calculatePoints, parseMatchDate } from "@/lib/points";
 import LeaderboardRaceChart from "@/components/LeaderboardRaceChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -28,12 +28,12 @@ interface LiveMatchBadgeProps {
   homeFlag?: string;
   awayFlag?: string;
   liveScore: { home: number | null; away: number | null } | null;
+  matchDate?: string;
 }
 
-function LiveMatchBadge({ matchId, home, away, homeFlag, awayFlag, liveScore }: LiveMatchBadgeProps) {
+function LiveMatchBadge({ matchId, home, away, homeFlag, awayFlag, liveScore, matchDate }: LiveMatchBadgeProps) {
   const [hidden, setHidden] = useState(false);
 
-  // Cargar estado de ocultamiento de localStorage
   useEffect(() => {
     try {
       const stored = localStorage.getItem("hide-live-badge");
@@ -51,20 +51,28 @@ function LiveMatchBadge({ matchId, home, away, homeFlag, awayFlag, liveScore }: 
     try { localStorage.removeItem("hide-live-badge"); } catch { /* ignore */ }
   };
 
-  // Badge oculto → mini indicador
-  if (hidden) {
-    return (
-      <button
-        onClick={handleShow}
-        className="fixed bottom-4 right-4 z-50 h-8 w-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg animate-pulse hover:bg-red-600 transition-colors"
-        title="Ver partido en vivo"
-      >
-        <span className="text-xs font-bold">●</span>
-      </button>
-    );
+  // Safety check: si el partido empezó hace >2h y tiene marcador, ya terminó
+  const isFinished = useMemo(() => {
+    if (!matchDate || !liveScore?.home || !liveScore?.away) return false;
+    const startTime = parseMatchDate(matchDate).getTime();
+    return Date.now() - startTime > 2 * 60 * 60 * 1000;
+  }, [matchDate, liveScore]);
+
+  if (isFinished || hidden) {
+    if (hidden && !isFinished) {
+      return (
+        <button
+          onClick={handleShow}
+          className="fixed bottom-4 right-4 z-50 h-8 w-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg animate-pulse hover:bg-red-600 transition-colors"
+          title="Ver partido en vivo"
+        >
+          <span className="text-xs font-bold">●</span>
+        </button>
+      );
+    }
+    return null;
   }
 
-  // Badge visible
   return (
     <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
       <div className="bg-red-50 border border-red-200 rounded-full shadow-lg px-4 py-2 flex items-center gap-2 max-w-[90vw]">
@@ -1135,6 +1143,7 @@ export default function LeaderboardByPhase({
             homeFlag={homeMatch?.homeFlag}
             awayFlag={homeMatch?.awayFlag}
             liveScore={hasLiveScore ? liveScore : null}
+            matchDate={homeMatch?.date}
           />
         );
       })()}

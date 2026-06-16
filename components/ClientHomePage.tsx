@@ -120,14 +120,12 @@ export default function ClientHomePage({
   const filteredMatches = useMemo(() => {
     const nowWithOffset = Date.now() + serverOffset;
 
-    const LIVE_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
-
     const hidePast = (rec: Record<string, Match[]>) => {
       if (showPast) return rec;
       const result: Record<string, Match[]> = {};
       for (const [day, dayMatches] of Object.entries(rec)) {
         const filtered = dayMatches.filter(
-          (m) => new Date(m.date).getTime() > nowWithOffset - LIVE_WINDOW_MS,
+          (m) => new Date(m.date).getTime() > nowWithOffset,
         );
         if (filtered.length > 0) result[day] = filtered;
       }
@@ -139,9 +137,7 @@ export default function ClientHomePage({
       return hidePast({ [selectedGroup]: matchesByGroup[selectedGroup] || [] });
     }
     if (quickFilter === "today") {
-      // Esperar a que serverOffset se cargue para no mostrar día incorrecto
-      if (serverOffset === 0) return {};
-      const todayKey = new Date(nowWithOffset).toLocaleDateString(
+      const todayKey = new Date().toLocaleDateString(
         "es-MX",
         {
           weekday: "long",
