@@ -193,8 +193,8 @@ export default async function LeaderboardPage() {
     select: { matchId: true, homeScore: true, awayScore: true },
   });
 
-  // Remover partidos que empezaron hace >2h y tienen marcador (ya terminaron)
-  const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+  // Remover partidos que empezaron hace >2.5h y tienen marcador (ya terminaron)
+  const twoHoursAgo = new Date(now.getTime() - 135 * 60 * 1000);
   for (const gs of liveGroupScores) {
     if (gs.homeScore == null || gs.awayScore == null) continue;
     const gm = groupById.get(gs.matchId);

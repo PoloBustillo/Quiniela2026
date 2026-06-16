@@ -116,6 +116,13 @@ export default function ClientHomePage({
     return { groupStage, knockout };
   }, [matchesByGroup]);
 
+  // Forzar re-evaluación periódica para que nowWithOffset sea actual
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 60000);
+    return () => clearInterval(id);
+  }, []);
+
   // UI-REC #6: quick filter applied in date mode — revert to `return matchesByDate` in the date branch to disable
   const filteredMatches = useMemo(() => {
     const nowWithOffset = Date.now() + serverOffset;
@@ -125,7 +132,7 @@ export default function ClientHomePage({
       const result: Record<string, Match[]> = {};
       for (const [day, dayMatches] of Object.entries(rec)) {
         const filtered = dayMatches.filter(
-          (m) => new Date(m.date).getTime() > nowWithOffset,
+          (m) => new Date(m.date).getTime() + 150 * 60 * 1000 > nowWithOffset,
         );
         if (filtered.length > 0) result[day] = filtered;
       }
@@ -156,14 +163,14 @@ export default function ClientHomePage({
         const open = dayMatches.filter(
           (m) =>
             !predictionMap[m.id] &&
-            new Date(m.date).getTime() > nowWithOffset,
+            new Date(m.date).getTime() + 150 * 60 * 1000 > nowWithOffset,
         );
         if (open.length > 0) result[day] = open;
       }
       return result;
     }
     return hidePast(matchesByDate);
-  }, [viewMode, selectedGroup, matchesByDate, matchesByGroup, quickFilter, serverOffset, predictionMap, showPast]);
+  }, [viewMode, selectedGroup, matchesByDate, matchesByGroup, quickFilter, serverOffset, predictionMap, showPast, tick]);
 
   const getGroupLabel = (key: string) => {
     if (key.startsWith("Grupo ")) return key;

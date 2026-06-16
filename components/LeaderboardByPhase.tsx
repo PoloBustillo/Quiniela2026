@@ -51,11 +51,11 @@ function LiveMatchBadge({ matchId, home, away, homeFlag, awayFlag, liveScore, ma
     try { localStorage.removeItem("hide-live-badge"); } catch { /* ignore */ }
   };
 
-  // Safety check: si el partido empezó hace >2h y tiene marcador, ya terminó
+  // Safety check: si el partido empezó hace >2.5h y tiene marcador, ya terminó
   const isFinished = useMemo(() => {
     if (!matchDate || !liveScore?.home || !liveScore?.away) return false;
     const startTime = parseMatchDate(matchDate).getTime();
-    return Date.now() - startTime > 2 * 60 * 60 * 1000;
+    return Date.now() - startTime > 135 * 60 * 1000;
   }, [matchDate, liveScore]);
 
   if (isFinished || hidden) {
