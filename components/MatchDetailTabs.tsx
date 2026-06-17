@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Star,
 } from "lucide-react";
+import { parseMatchDate } from "@/lib/points";
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -340,7 +341,7 @@ export function MatchDetailTabs({
   userPrediction,
   bsd,
 }: MatchDetailTabsProps) {
-  const matchDate = new Date(m.date);
+  const matchDate = parseMatchDate(m.date);
   const isLive = bsd.status === "inprogress" || bsd.status === "penalties";
   const isFinished = bsd.status === "finished";
 
@@ -1225,7 +1226,7 @@ export function MatchDetailTabs({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Fecha</span>
                 <span>
-                  {new Date(m.date).toLocaleString("es-MX", {
+                  {matchDate.toLocaleString("es-MX", {
                     weekday: "short",
                     day: "numeric",
                     month: "short",

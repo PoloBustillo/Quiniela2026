@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import PredictionCard from "@/components/PredictionCard";
 import { Calendar, Trophy, ChevronDown, History } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { parseMatchDate } from "@/lib/points";
 
 interface Match {
   id: string;
@@ -80,7 +81,7 @@ export default function ClientHomePage({
   const matchesByDate = useMemo(() => {
     return matches.reduce(
       (acc, match) => {
-        const date = new Date(match.date).toLocaleDateString("es-MX", {
+        const date = parseMatchDate(match.date).toLocaleDateString("es-MX", {
           weekday: "long",
           year: "numeric",
           month: "long",
@@ -132,7 +133,7 @@ export default function ClientHomePage({
       const result: Record<string, Match[]> = {};
       for (const [day, dayMatches] of Object.entries(rec)) {
         const filtered = dayMatches.filter(
-          (m) => new Date(m.date).getTime() + 150 * 60 * 1000 > nowWithOffset,
+          (m) => parseMatchDate(m.date).getTime() + 150 * 60 * 1000 > nowWithOffset,
         );
         if (filtered.length > 0) result[day] = filtered;
       }
@@ -163,7 +164,7 @@ export default function ClientHomePage({
         const open = dayMatches.filter(
           (m) =>
             !predictionMap[m.id] &&
-            new Date(m.date).getTime() + 150 * 60 * 1000 > nowWithOffset,
+            parseMatchDate(m.date).getTime() + 150 * 60 * 1000 > nowWithOffset,
         );
         if (open.length > 0) result[day] = open;
       }
@@ -344,7 +345,7 @@ export default function ClientHomePage({
         {(viewMode === "date"
           ? Object.entries(filteredMatches).sort(
               ([, a], [, b]) =>
-                new Date(a[0].date).getTime() - new Date(b[0].date).getTime(),
+                parseMatchDate(a[0].date).getTime() - parseMatchDate(b[0].date).getTime(),
             )
           : Object.entries(filteredMatches)
         ).map(([key, groupMatches]) => (

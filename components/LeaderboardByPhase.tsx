@@ -379,7 +379,7 @@ export default function LeaderboardByPhase({
       const matchId = `match_${rawId}`;
       if (!liveMatchIds.includes(matchId)) continue;
       if (!info.order || !info.date) continue;
-      const matchDate = new Date(info.date);
+      const matchDate = parseMatchDate(info.date);
       if (isNaN(matchDate.getTime())) continue;
       if (!liveBest || matchDate < liveBest.date) {
         liveBest = { id: matchId, matchId: rawId, home: info.home, away: info.away, homeFlag: info.homeFlag, awayFlag: info.awayFlag, date: matchDate, isLive: true };
@@ -391,7 +391,7 @@ export default function LeaderboardByPhase({
     let best: { id: string; matchId: string; home: string; away: string; homeFlag: string; awayFlag: string; date: Date; isLive: boolean } | null = null;
     for (const [rawId, info] of Object.entries(matchMap)) {
       if (!info.order || !info.date) continue;
-      const matchDate = new Date(info.date);
+      const matchDate = parseMatchDate(info.date);
       if (isNaN(matchDate.getTime())) continue;
       if (finishedMatchIds.includes(`match_${rawId}`)) continue;
       if (!best || matchDate < best.date) {
