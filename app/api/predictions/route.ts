@@ -57,13 +57,24 @@ export async function POST(req: NextRequest) {
         // Checar si hay fecha personalizada en BD (tiene prioridad)
         const dbOverride = await prisma.groupMatchScore.findUnique({
           where: { matchId: numericMatchId },
-          select: { matchDate: true },
+          select: { matchDate: true, homeScore: true, awayScore: true },
         });
 
         if (dbOverride?.matchDate) {
           matchDate = dbOverride.matchDate;
         } else {
           matchDate = parseMatchDate(jsonMatch.date);
+        }
+
+        // Si el partido ya tiene resultado en BD, cerrar predicciones
+        if (dbOverride?.homeScore != null && dbOverride?.awayScore != null) {
+          return NextResponse.json(
+            {
+              error:
+                "Este partido ya tiene resultado. Las predicciones se cierran al finalizar el partido.",
+            },
+            { status: 400 },
+          );
         }
       } else if (numericMatchId >= 1000) {
         // Compatibilidad legacy: knockout por índice sintético (match_1000+)
@@ -78,6 +89,8 @@ export async function POST(req: NextRequest) {
             id: true,
             matchDate: true,
             phase: true,
+            homeScore: true,
+            awayScore: true,
           },
           orderBy: {
             matchDate: "asc",
@@ -95,6 +108,17 @@ export async function POST(req: NextRequest) {
         matchDate = legacyKnockout.matchDate;
         matchPhase = legacyKnockout.phase;
 
+        // Si el partido ya tiene resultado en BD, cerrar predicciones
+        if (legacyKnockout.homeScore != null && legacyKnockout.awayScore != null) {
+          return NextResponse.json(
+            {
+              error:
+                "Este partido ya tiene resultado. Las predicciones se cierran al finalizar el partido.",
+            },
+            { status: 400 },
+          );
+        }
+
         // Reescribir a ID estable para evitar seguir guardando formato legacy.
         normalizedMatchId = `match_${legacyKnockout.id}`;
       } else {
@@ -110,11 +134,24 @@ export async function POST(req: NextRequest) {
         select: {
           matchDate: true,
           phase: true,
+          homeScore: true,
+          awayScore: true,
         },
       });
       if (dbMatch) {
         matchDate = dbMatch.matchDate;
         matchPhase = dbMatch.phase;
+
+        // Si el partido ya tiene resultado en BD, cerrar predicciones
+        if (dbMatch.homeScore != null && dbMatch.awayScore != null) {
+          return NextResponse.json(
+            {
+              error:
+                "Este partido ya tiene resultado. Las predicciones se cierran al finalizar el partido.",
+            },
+            { status: 400 },
+          );
+        }
       } else {
         return NextResponse.json(
           { error: "Partido inválido" },

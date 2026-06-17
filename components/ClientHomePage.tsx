@@ -133,7 +133,10 @@ export default function ClientHomePage({
       const result: Record<string, Match[]> = {};
       for (const [day, dayMatches] of Object.entries(rec)) {
         const filtered = dayMatches.filter(
-          (m) => parseMatchDate(m.date).getTime() + 150 * 60 * 1000 > nowWithOffset,
+          (m) => {
+            if (m.homeScore != null && m.awayScore != null) return false;
+            return parseMatchDate(m.date).getTime() + 150 * 60 * 1000 > nowWithOffset;
+          },
         );
         if (filtered.length > 0) result[day] = filtered;
       }
@@ -164,6 +167,7 @@ export default function ClientHomePage({
         const open = dayMatches.filter(
           (m) =>
             !predictionMap[m.id] &&
+            (m.homeScore == null || m.awayScore == null) &&
             parseMatchDate(m.date).getTime() + 150 * 60 * 1000 > nowWithOffset,
         );
         if (open.length > 0) result[day] = open;

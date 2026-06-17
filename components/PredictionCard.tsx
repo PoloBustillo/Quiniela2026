@@ -88,7 +88,8 @@ export default function PredictionCard({
       });
   }, [initialServerOffset]);
 
-  const isPast = matchDate < new Date(Date.now() + serverOffset);
+  const hasResult = match.homeScore != null && match.awayScore != null;
+  const isPast = hasResult || matchDate < new Date(Date.now() + serverOffset);
 
   // Verificar si algún equipo es TBD (Por Definir)
   const isTBD = match.homeTeam.code === "TBD" || match.awayTeam.code === "TBD";
