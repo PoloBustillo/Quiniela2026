@@ -24,18 +24,11 @@ export default async function MatchesPage() {
     groupDateOverrides.map((m) => [m.matchId, m.matchDate]),
   );
 
-  const finishedScores = await prisma.groupMatchScore.findMany({
-    where: { homeScore: { not: null }, awayScore: { not: null } },
-    select: { matchId: true },
-  });
-  const finishedIds = new Set(finishedScores.map(s => s.matchId));
-
   const now = new Date();
 
-  // Filtrar partidos de grupos ya jugados y aplicar overrides de fecha
+  // Filtrar partidos de grupos: ocultar solo 3h después de que empezaron
   const groupMatches = matchesData.matches
     .filter(m => {
-      if (finishedIds.has(m.id)) return false;
       const overrideDate = groupDateOverrideMap.get(m.id);
       const matchDate = overrideDate || parseMatchDate(m.date);
       return matchDate.getTime() + 3 * 60 * 60 * 1000 > now.getTime();

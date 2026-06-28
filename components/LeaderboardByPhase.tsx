@@ -52,11 +52,12 @@ function LiveMatchBadge({ matchId, home, away, homeFlag, awayFlag, liveScore, ma
     try { localStorage.removeItem(storageKey); } catch { /* ignore */ }
   };
 
-  // Safety check: si el partido empezó hace >2.5h y tiene marcador, ya terminó
+  // Safety check: si el partido empezó hace >~2.5h y tiene marcador, ya terminó
+  // Se usa 160 min para cubrir partidos de hasta ~150 min de duración
   const isFinished = useMemo(() => {
     if (!matchDate || !liveScore?.home || !liveScore?.away) return false;
     const startTime = parseMatchDate(matchDate).getTime();
-    return Date.now() - startTime > 135 * 60 * 1000;
+    return Date.now() - startTime > 160 * 60 * 1000;
   }, [matchDate, liveScore]);
 
   if (isFinished || hidden) {
@@ -409,29 +410,48 @@ export default function LeaderboardByPhase({
     return matches;
   }, [matchMap, liveMatchIds]);
 
-  // Fallback: si no hay partidos en vivo, mostrar el más cercano que no ha terminado
+  // Fallback: si no hay partidos en vivo, mostrar el más cercano
   const fallbackMatch = useMemo(() => {
     if (liveMatches.length > 0) return null;
-    let best: LiveMatchInfo | null = null;
+    const now = Date.now();
+    let nextUpcoming: LiveMatchInfo | null = null;
+    let recentFinished: LiveMatchInfo | null = null;
     for (const [rawId, info] of Object.entries(matchMap)) {
       if (!info.order || !info.date) continue;
       const matchDate = parseMatchDate(info.date);
       if (isNaN(matchDate.getTime())) continue;
-      if (finishedMatchIds.includes(`match_${rawId}`)) continue;
-      if (!best || matchDate < best.date) {
-        best = {
-          id: `match_${rawId}`,
-          matchId: rawId,
-          home: info.home,
-          away: info.away,
-          homeFlag: info.homeFlag,
-          awayFlag: info.awayFlag,
-          date: matchDate,
-          isLive: false,
-        };
+      const isFinished = finishedMatchIds.includes(`match_${rawId}`);
+      const startedMinutesAgo = (now - matchDate.getTime()) / 60000;
+      if (!isFinished) {
+        if (!nextUpcoming || matchDate < nextUpcoming.date) {
+          nextUpcoming = {
+            id: `match_${rawId}`,
+            matchId: rawId,
+            home: info.home,
+            away: info.away,
+            homeFlag: info.homeFlag,
+            awayFlag: info.awayFlag,
+            date: matchDate,
+            isLive: false,
+          };
+        }
+      } else if (startedMinutesAgo >= 0 && startedMinutesAgo < 30) {
+        // Mostrar partidos que terminaron hace menos de 30 min
+        if (!recentFinished || matchDate > recentFinished.date) {
+          recentFinished = {
+            id: `match_${rawId}`,
+            matchId: rawId,
+            home: info.home,
+            away: info.away,
+            homeFlag: info.homeFlag,
+            awayFlag: info.awayFlag,
+            date: matchDate,
+            isLive: true,
+          };
+        }
       }
     }
-    return best;
+    return recentFinished ?? nextUpcoming;
   }, [matchMap, finishedMatchIds, liveMatches, systemNow]);
 
   // Para compatibilidad con el resto del código: el "partido actual" es

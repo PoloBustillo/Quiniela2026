@@ -155,7 +155,7 @@ export async function syncGroupMatch(
       },
     });
 
-    // Recalcular puntos sólo si hay scores completos
+    // Recalcular puntos en vivo para dar emoción
     if (newHomeScore !== null && newAwayScore !== null) {
       await recalcGroupMatchPredictions(
         localMatchId,
@@ -414,6 +414,41 @@ export async function syncLiveMatches(): Promise<SyncResult> {
       if (outcome === "updated") {
         result.details.push(
           `Partido eliminatoria ${knockoutDbId} actualizado vía detail (BSD ${bsdEventId}): ${event.home_score}-${event.away_score}`,
+        );
+      }
+    }
+
+    // Fallback para partidos de grupos con mapping BSD que no aparecieron en el feed
+    // (ej. el partido terminó y BSD ya lo quitó del feed vivo antes del próximo tick)
+    for (const [bsdEventId, localMatchId] of bsdToLocalGroup.entries()) {
+      if (processedBsdIds.has(bsdEventId)) continue;
+
+      const existing = await prisma.groupMatchScore.findUnique({
+        where: { matchId: localMatchId },
+      });
+      if (existing?.homeScore != null || existing?.awayScore != null) continue;
+
+      const event = await getEventDetail(bsdEventId);
+      if (!event) {
+        result.skipped++;
+        continue;
+      }
+      if (event.status !== "finished") {
+        result.skipped++;
+        continue;
+      }
+
+      const outcome = await syncGroupMatch(localMatchId, event);
+      result[
+        outcome === "updated"
+          ? "updated"
+          : outcome === "skipped"
+            ? "skipped"
+            : "errors"
+      ]++;
+      if (outcome === "updated") {
+        result.details.push(
+          `Partido grupos #${localMatchId} actualizado vía detail (BSD ${bsdEventId}): ${event.home_score}-${event.away_score}`,
         );
       }
     }

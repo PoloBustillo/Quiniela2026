@@ -221,15 +221,16 @@ export default async function LeaderboardPage() {
     select: { matchId: true, homeScore: true, awayScore: true },
   });
 
-  // Remover partidos que empezaron hace >2.5h y tienen marcador (ya terminaron)
-  const twoHoursAgo = new Date(now.getTime() - 135 * 60 * 1000);
+  // Remover partidos que empezaron hace >~2.5h y tienen marcador (ya terminaron)
+  // Se usa 160 min para cubrir partidos de hasta ~150 min de duración
+  const matchEndThreshold = new Date(now.getTime() - 160 * 60 * 1000);
   for (const gs of liveGroupScores) {
     if (gs.homeScore == null || gs.awayScore == null) continue;
     const gm = groupById.get(gs.matchId);
     if (!gm) continue;
     const overrideDate = groupDateOverrideMap.get(gs.matchId);
     const matchDate = overrideDate || parseMatchDate(gm.date);
-    if (matchDate <= twoHoursAgo) {
+    if (matchDate <= matchEndThreshold) {
       liveMatchIdSet.delete(`match_${gs.matchId}`);
     }
   }

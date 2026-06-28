@@ -135,7 +135,7 @@ export default function ClientHomePage({
         const filtered = dayMatches.filter(
           (m) => {
             if (m.homeScore != null && m.awayScore != null) return false;
-            return parseMatchDate(m.date).getTime() + 150 * 60 * 1000 > nowWithOffset;
+            return parseMatchDate(m.date).getTime() + 160 * 60 * 1000 > nowWithOffset;
           },
         );
         if (filtered.length > 0) result[day] = filtered;
@@ -168,7 +168,7 @@ export default function ClientHomePage({
           (m) =>
             !predictionMap[m.id] &&
             (m.homeScore == null || m.awayScore == null) &&
-            parseMatchDate(m.date).getTime() + 150 * 60 * 1000 > nowWithOffset,
+            parseMatchDate(m.date).getTime() + 160 * 60 * 1000 > nowWithOffset,
         );
         if (open.length > 0) result[day] = open;
       }
