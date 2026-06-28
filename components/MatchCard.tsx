@@ -56,12 +56,20 @@ export function MatchCard({ match }: MatchCardProps) {
       <Card className="hover:shadow-lg hover:border-primary/40 transition-all group-hover:scale-[1.01]">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-xs">
-              Partido {match.matchNumber}
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              Grupo {match.group}
-            </Badge>
+            {match.matchNumber > 0 ? (
+              <Badge variant="secondary" className="text-xs">
+                Partido {match.matchNumber}
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="text-xs">
+                {match.stage}
+              </Badge>
+            )}
+            {match.group && (
+              <Badge variant="outline" className="text-xs">
+                Grupo {match.group}
+              </Badge>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">

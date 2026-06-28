@@ -1101,10 +1101,12 @@ export default function LeaderboardByPhase({
                                           </span>
                                         ) : match ? (
                                           <>
+                                            <Image src={match.homeFlag} alt="" width={14} height={10} className="inline-block rounded-sm mr-0.5" unoptimized />
                                             {translateCountry(match.home)}{" "}
                                             <span className="text-foreground font-mono font-semibold">
                                               {pred.homeScore}–{pred.awayScore}
                                             </span>{" "}
+                                            <Image src={match.awayFlag} alt="" width={14} height={10} className="inline-block rounded-sm mr-0.5" unoptimized />
                                             {translateCountry(match.away)}
                                           </>
                                         ) : (
