@@ -203,6 +203,11 @@ export function UsersPaymentManager() {
 
   const totalRevenue = users.reduce((acc, u) => acc + getTotalPaid(u), 0);
 
+  // Pagados por fase
+  const paidGroupCount = users.filter(u => u.isActive && u.paidGroupStage).length;
+  const paidKnockoutCount = users.filter(u => u.isActive && u.paidKnockout).length;
+  const paidFinalsCount = users.filter(u => u.isActive && u.paidFinals).length;
+
   // Calcular partidos de hoy y mañana (usando inicio de día para no perder partidos de hoy)
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
@@ -358,6 +363,22 @@ ${upcomingMatchIds.length > 0
               </span>
             </div>
             <p className="text-2xl font-bold">${totalRevenue}</p>
+          </div>
+        </div>
+
+        {/* Per-phase counts */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="p-2 rounded-lg border border-blue-500/20 bg-blue-500/5 text-center">
+            <p className="text-xs font-medium text-blue-600">Grupos</p>
+            <p className="text-xl font-bold">{paidGroupCount}</p>
+          </div>
+          <div className="p-2 rounded-lg border border-orange-500/20 bg-orange-500/5 text-center">
+            <p className="text-xs font-medium text-orange-600">16vos + 8vos</p>
+            <p className="text-xl font-bold">{paidKnockoutCount}</p>
+          </div>
+          <div className="p-2 rounded-lg border border-purple-500/20 bg-purple-500/5 text-center">
+            <p className="text-xs font-medium text-purple-600">Fases Finales</p>
+            <p className="text-xl font-bold">{paidFinalsCount}</p>
           </div>
         </div>
 
