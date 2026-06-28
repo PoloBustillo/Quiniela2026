@@ -79,6 +79,7 @@ export function UsersPaymentManager() {
   const [copiedPayment, setCopiedPayment] = useState(false);
   const [copiedPredictions, setCopiedPredictions] = useState(false);
   const [knockoutMatches, setKnockoutMatches] = useState<any[]>([]);
+  const [selectedMatchIds, setSelectedMatchIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadUsers();
@@ -214,8 +215,8 @@ export function UsersPaymentManager() {
   const endOfTomorrow = new Date(startOfToday);
   endOfTomorrow.setDate(endOfTomorrow.getDate() + 2);
 
-  // Combinar partidos de grupos + knockout, ordenar, tomar siguientes 3
-  const nextThreeMatches = useMemo(() => {
+  // Combinar partidos de grupos + knockout, ordenar, tomar siguientes 4
+  const nextMatches = useMemo(() => {
     const groupMatches = matchesData.matches.map(m => ({
       id: `match_${m.id}`,
       date: new Date(m.date),
@@ -230,17 +231,24 @@ export function UsersPaymentManager() {
     return [...groupMatches, ...koMatches]
       .sort((a, b) => a.date.getTime() - b.date.getTime())
       .filter(m => m.date >= startOfToday && m.date < endOfTomorrow && m.date > now)
-      .slice(0, 3);
+      .slice(0, 4);
   }, [knockoutMatches]);
 
-  const upcomingMatchIds = nextThreeMatches.map(m => m.id);
+  // Inicializar selección cuando cambian los próximos partidos
+  useEffect(() => {
+    setSelectedMatchIds(new Set(nextMatches.map(m => m.id)));
+  }, [nextMatches]);
+
+  const upcomingMatchIds = nextMatches
+    .filter(m => selectedMatchIds.has(m.id))
+    .map(m => m.id);
 
   // Determinar fase actual: si hay knockout en los próximos partidos
-  const hasKnockoutUpcoming = nextThreeMatches.some(m =>
+  const hasKnockoutUpcoming = nextMatches.some(m =>
     knockoutMatches.some(km => `match_${km.id}` === m.id),
   );
 
-  // Usuarios que pagaron la fase actual y NO han predicho al menos 1 de los próximos 3 partidos
+  // Usuarios que pagaron la fase actual y NO han predicho al menos 1 de los partidos seleccionados
   const noPredictionsUsers = users.filter((u) => {
     if (!u.isActive) return false;
     if (hasKnockoutUpcoming) {
@@ -293,8 +301,10 @@ Tel: 3317700339
 
 💰 Favor de realizar su depósito y confirmar en el grupo 🙏`;
 
-  // Nombres de los partidos próximos para el mensaje
-  const upcomingMatchNames = nextThreeMatches.map(m => m.name).join(", ");
+  // Nombres de los partidos seleccionados para el mensaje
+  const upcomingMatchNames = nextMatches
+    .filter(m => selectedMatchIds.has(m.id))
+    .map(m => m.name).join(", ");
 
   const predictionsMessage = `⚽ *Quiniela Mundial 2026* ⚽
 
@@ -542,8 +552,61 @@ ${upcomingMatchIds.length > 0
           </div>
         )}
 
+        {/* Selección de partidos para el mensaje */}
+        {nextMatches.length > 0 && (
+          <div className="border-t pt-4 mt-4 space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">
+              Partidos para el recordatorio:
+            </p>
+            <div className="space-y-1.5">
+              {nextMatches.map(m => {
+                const checked = selectedMatchIds.has(m.id);
+                return (
+                  <label
+                    key={m.id}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition-colors ${
+                      checked
+                        ? "bg-primary/5 border-primary/30"
+                        : "bg-muted/30 border-border"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        setSelectedMatchIds(prev => {
+                          const next = new Set(prev);
+                          if (next.has(m.id)) {
+                            next.delete(m.id);
+                          } else {
+                            next.add(m.id);
+                          }
+                          return next;
+                        });
+                      }}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium truncate">{m.name}</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        {m.date.toLocaleString("es-MX", {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          timeZone: "America/Mexico_City",
+                        })}
+                      </span>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* WhatsApp Buttons */}
-        <div className="border-t pt-4 mt-4 space-y-3">
+        <div className="pt-4 space-y-3">
           <p className="text-sm font-medium text-muted-foreground">
             Mensajes WhatsApp para el grupo:
           </p>
