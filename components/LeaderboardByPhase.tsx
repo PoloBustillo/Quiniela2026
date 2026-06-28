@@ -1094,21 +1094,21 @@ export default function LeaderboardByPhase({
                                       )}
 
                                       {/* Teams */}
-                                      <span className="flex-1 truncate text-muted-foreground">
+                                      <span className="flex-1 min-w-0 text-muted-foreground leading-snug">
                                         {!isRevealed ? (
                                           <span className="italic text-amber-700">
                                             Oculto hasta que inicie el partido
                                           </span>
                                         ) : match ? (
-                                          <>
-                                            <Image src={match.homeFlag} alt="" width={14} height={10} className="inline-block rounded-sm mr-0.5" unoptimized />
-                                            {translateCountry(match.home)}{" "}
+                                          <span className="inline-flex items-center gap-1 flex-wrap">
+                                            <Image src={match.homeFlag} alt="" width={16} height={12} className="rounded-sm" unoptimized />
+                                            <span>{translateCountry(match.home)}</span>
                                             <span className="text-foreground font-mono font-semibold">
                                               {pred.homeScore}–{pred.awayScore}
-                                            </span>{" "}
-                                            <Image src={match.awayFlag} alt="" width={14} height={10} className="inline-block rounded-sm mr-0.5" unoptimized />
-                                            {translateCountry(match.away)}
-                                          </>
+                                            </span>
+                                            <Image src={match.awayFlag} alt="" width={16} height={12} className="rounded-sm" unoptimized />
+                                            <span>{translateCountry(match.away)}</span>
+                                          </span>
                                         ) : (
                                           <span className="font-mono font-semibold">
                                             {pred.homeScore}–{pred.awayScore}
