@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -78,9 +78,17 @@ export function UsersPaymentManager() {
   const [loading, setLoading] = useState(false);
   const [copiedPayment, setCopiedPayment] = useState(false);
   const [copiedPredictions, setCopiedPredictions] = useState(false);
+  const [knockoutMatches, setKnockoutMatches] = useState<any[]>([]);
 
   useEffect(() => {
     loadUsers();
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/admin/matches")
+      .then(r => r.json())
+      .then(data => setKnockoutMatches(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
   const loadUsers = async () => {
@@ -201,17 +209,40 @@ export function UsersPaymentManager() {
   const endOfTomorrow = new Date(startOfToday);
   endOfTomorrow.setDate(endOfTomorrow.getDate() + 2);
 
-  const upcomingMatchIds = matchesData.matches
-    .filter((m) => {
-      const matchDate = new Date(m.date);
-      return matchDate >= startOfToday && matchDate < endOfTomorrow;
-    })
-    .map((m) => `match_${m.id}`);
+  // Combinar partidos de grupos + knockout, ordenar, tomar siguientes 3
+  const nextThreeMatches = useMemo(() => {
+    const groupMatches = matchesData.matches.map(m => ({
+      id: `match_${m.id}`,
+      date: new Date(m.date),
+      name: `${m.homeTeam.name} vs ${m.awayTeam.name}`,
+    }));
+    const koMatches = knockoutMatches.map(m => ({
+      id: `match_${m.id}`,
+      date: new Date(m.matchDate),
+      name: `${m.homeTeam?.name ?? "TBD"} vs ${m.awayTeam?.name ?? "TBD"}`,
+    }));
+    const now = new Date();
+    return [...groupMatches, ...koMatches]
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .filter(m => m.date >= startOfToday && m.date < endOfTomorrow && m.date > now)
+      .slice(0, 3);
+  }, [knockoutMatches]);
 
-  // Usuarios que NO han predicho los partidos de hoy y mañana
+  const upcomingMatchIds = nextThreeMatches.map(m => m.id);
+
+  // Determinar fase actual: si hay knockout en los próximos partidos
+  const hasKnockoutUpcoming = nextThreeMatches.some(m =>
+    knockoutMatches.some(km => `match_${km.id}` === m.id),
+  );
+
+  // Usuarios que pagaron la fase actual y NO han predicho al menos 1 de los próximos 3 partidos
   const noPredictionsUsers = users.filter((u) => {
     if (!u.isActive) return false;
-    if (!(u.paidGroupStage || u.paidKnockout || u.paidFinals)) return false;
+    if (hasKnockoutUpcoming) {
+      if (!(u.paidKnockout || u.paidFinals)) return false;
+    } else {
+      if (!u.paidGroupStage) return false;
+    }
     if (upcomingMatchIds.length === 0) return false;
     const userPredMatchIds = new Set(u.predictions.map((p) => p.matchId));
     return upcomingMatchIds.some((matchId) => !userPredMatchIds.has(matchId));
@@ -258,22 +289,16 @@ Tel: 3317700339
 💰 Favor de realizar su depósito y confirmar en el grupo 🙏`;
 
   // Nombres de los partidos próximos para el mensaje
-  const upcomingMatchNames = matchesData.matches
-    .filter((m) => {
-      const matchDate = new Date(m.date);
-      return matchDate >= startOfToday && matchDate < endOfTomorrow;
-    })
-    .map((m) => `${m.homeTeam.name} vs ${m.awayTeam.name}`)
-    .join(", ");
+  const upcomingMatchNames = nextThreeMatches.map(m => m.name).join(", ");
 
   const predictionsMessage = `⚽ *Quiniela Mundial 2026* ⚽
 
 📝 *Recordatorio de Predicciones*
 
 ${upcomingMatchIds.length > 0
-  ? `Partidos de hoy y mañana: *${upcomingMatchNames}*
+  ? `Próximos partidos: *${upcomingMatchNames}*
 
-Los siguientes participantes *no han metido predicciones* para estos partidos:`
+Los siguientes participantes *no han metido predicciones* en al menos uno de estos partidos:`
   : `No hay partidos programados para hoy ni mañana.`}
 
 ${noPredictionsUsers.map((u) => `• ${u.email || u.name || "Sin nombre"}`).join("\n")}

@@ -166,6 +166,7 @@ interface LeaderboardByPhaseProps {
   paidCounts: { T1: number; T2: number; T3: number };
   liveMatchIds?: string[];
   liveScores?: Record<string, { home: number | null; away: number | null }>;
+  defaultTorneo?: string;
 }
 
 /** The 3 torneos + "All" */
@@ -335,8 +336,9 @@ export default function LeaderboardByPhase({
   paidCounts,
   liveMatchIds = [],
   liveScores = {},
+  defaultTorneo = "ALL",
 }: LeaderboardByPhaseProps) {
-  const [selectedTorneo, setSelectedTorneo] = useState("ALL");
+  const [selectedTorneo, setSelectedTorneo] = useState(defaultTorneo || "ALL");
   const [viewTab, setViewTab] = useState<"tabla" | "grafica">("tabla");
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [showUnpaidUsers, setShowUnpaidUsers] = useState(false);
@@ -476,7 +478,9 @@ export default function LeaderboardByPhase({
     const phasesForTorneo = TORNEO_PHASES[selectedTorneo] ?? [];
     const visibleUsers = showUnpaidUsers
       ? users
-      : users.filter(isUserPaid);
+      : selectedTorneo === "ALL"
+        ? users.filter(isUserPaid)
+        : users.filter(TORNEO_TIER[selectedTorneo]);
     const sorted = visibleUsers
       .map((user) => {
         const preds =
@@ -527,7 +531,9 @@ export default function LeaderboardByPhase({
     const phasesForTorneo = TORNEO_PHASES[selectedTorneo] ?? [];
     const visibleUsers = showUnpaidUsers
       ? users
-      : users.filter(isUserPaid);
+      : selectedTorneo === "ALL"
+        ? users.filter(isUserPaid)
+        : users.filter(TORNEO_TIER[selectedTorneo]);
     const dayKeys = Array.from(new Set(Object.values(finishedMatchDayMap)))
       .filter((day) => day >= WORLD_CUP_START_DAY && day <= currentSystemDay)
       .sort();

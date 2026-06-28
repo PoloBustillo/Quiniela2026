@@ -16,7 +16,7 @@ export default async function MatchesPage() {
     redirect("/auth/signin");
   }
 
-  // Obtener fechas override de la DB (igual que en predicciones)
+  // Obtener fechas override y resultados de la DB
   const groupDateOverrides = await prisma.groupMatchScore.findMany({
     select: { matchId: true, matchDate: true },
   });
@@ -24,8 +24,23 @@ export default async function MatchesPage() {
     groupDateOverrides.map((m) => [m.matchId, m.matchDate]),
   );
 
-  // Aplicar overrides de fecha (igual que en la página de predicciones)
-  const matchesWithOverrides = matchesData.matches.map((match) => {
+  const finishedScores = await prisma.groupMatchScore.findMany({
+    where: { homeScore: { not: null }, awayScore: { not: null } },
+    select: { matchId: true },
+  });
+  const finishedIds = new Set(finishedScores.map(s => s.matchId));
+
+  const now = new Date();
+
+  // Filtrar partidos de grupos ya jugados y aplicar overrides de fecha
+  const groupMatches = matchesData.matches
+    .filter(m => {
+      if (finishedIds.has(m.id)) return false;
+      const overrideDate = groupDateOverrideMap.get(m.id);
+      const matchDate = overrideDate || parseMatchDate(m.date);
+      return matchDate.getTime() + 3 * 60 * 60 * 1000 > now.getTime();
+    })
+    .map((match) => {
     const overrideDate = groupDateOverrideMap.get(match.id);
     if (overrideDate) {
       // Formatear como el JSON: "YYYY-MM-DD HH:MM:SS-06"
@@ -62,8 +77,67 @@ export default async function MatchesPage() {
     return match;
   });
 
-  // Agrupar partidos por fecha (usando timezone de México para agrupar correctamente)
-  const matchesByDate = matchesWithOverrides.reduce(
+  // Cargar partidos de eliminatorias (16vos, 8vos, etc.)
+  const knockoutMatches = await prisma.match.findMany({
+    where: {
+      phase: {
+        not: "GROUP_STAGE",
+      },
+      OR: [
+        { status: "SCHEDULED" },
+        { status: "LIVE" },
+      ],
+    },
+    include: {
+      homeTeam: true,
+      awayTeam: true,
+    },
+    orderBy: {
+      matchDate: "asc",
+    },
+  });
+
+  const PHASE_LABELS: Record<string, string> = {
+    ROUND_OF_32: "16vos de Final",
+    ROUND_OF_16: "8vos de Final",
+    QUARTER_FINAL: "Cuartos de Final",
+    SEMI_FINAL: "Semifinal",
+    THIRD_PLACE: "3er Lugar",
+    FINAL: "Final",
+  };
+
+  // Mapear knockout matches al formato que espera MatchCard
+  const knockoutFormatted = knockoutMatches.map(m => ({
+    id: m.id,
+    matchNumber: 0,
+    date: m.matchDate.toISOString(),
+    stadium: m.stadium ?? "",
+    city: m.city ?? "",
+    country: "",
+    group: "",
+    stage: PHASE_LABELS[m.phase] ?? m.phase,
+    phase: m.phase,
+    homeTeam: {
+      id: m.homeTeam?.id ?? "",
+      name: m.homeTeam?.name ?? "TBD",
+      code: m.homeTeam?.code ?? "",
+      flag: m.homeTeam?.flag ?? "/flags/tbd.png",
+    },
+    awayTeam: {
+      id: m.awayTeam?.id ?? "",
+      name: m.awayTeam?.name ?? "TBD",
+      code: m.awayTeam?.code ?? "",
+      flag: m.awayTeam?.flag ?? "/flags/tbd.png",
+    },
+    homeScore: m.homeScore,
+    awayScore: m.awayScore,
+  }));
+
+  // Combinar grupos + knockout
+  const allMatches = [...groupMatches, ...knockoutFormatted];
+
+  // Agrupar partidos por fecha (usando timezone de México)
+  const matchesByDate = allMatches.reduce(
     (acc, match) => {
       const date = parseMatchDate(match.date).toLocaleDateString("es-MX", {
         weekday: "long",
@@ -81,6 +155,8 @@ export default async function MatchesPage() {
     {} as Record<string, any[]>,
   );
 
+  const hasKnockout = knockoutMatches.length > 0;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -90,28 +166,44 @@ export default async function MatchesPage() {
             Calendario de Partidos
           </h1>
           <p className="text-muted-foreground mt-2">
-            Todos los partidos de la fase de grupos
+            {hasKnockout
+              ? "Eliminatorias del Mundial 2026"
+              : "Partidos de la fase de grupos"}
           </p>
         </div>
       </div>
 
       {/* Matches by Date */}
       <div className="space-y-8">
-        {Object.entries(matchesByDate).map(([date, matches]) => (
-          <div key={date} className="space-y-4">
-            <div className="sticky top-16 z-10 bg-background/95 backdrop-blur py-2 border-b">
-              <h2 className="text-xl font-semibold capitalize">{date}</h2>
-              <p className="text-sm text-muted-foreground">
-                {matches.length} {matches.length === 1 ? "partido" : "partidos"}
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {matches.map((match) => (
-                <MatchCard key={match.id} match={match as any} />
-              ))}
-            </div>
+        {Object.keys(matchesByDate).length === 0 ? (
+          <div className="text-center py-16 space-y-3">
+            <Calendar className="h-12 w-12 text-muted-foreground/40 mx-auto" />
+            <p className="text-lg font-semibold text-muted-foreground">
+              {hasKnockout
+                ? "No hay partidos programados"
+                : "La fase de grupos ha terminado"}
+            </p>
+            <p className="text-sm text-muted-foreground/60">
+              Próximamente: 16vos de Final
+            </p>
           </div>
-        ))}
+        ) : (
+          Object.entries(matchesByDate).map(([date, matches]) => (
+            <div key={date} className="space-y-4">
+              <div className="sticky top-16 z-10 bg-background/95 backdrop-blur py-2 border-b">
+                <h2 className="text-xl font-semibold capitalize">{date}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {matches.length} {matches.length === 1 ? "partido" : "partidos"}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {matches.map((match) => (
+                  <MatchCard key={match.id} match={match as any} />
+                ))}
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

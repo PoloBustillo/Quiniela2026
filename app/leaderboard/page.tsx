@@ -161,6 +161,34 @@ export default async function LeaderboardPage() {
     .filter(({ match }) => match.matchDate <= now)
     .map(({ legacyId }) => legacyId);
 
+  // ── Auto-detect current torneo based on started matches ──────────────────
+  let defaultTorneo = "T1";
+  for (const m of knockoutMatches) {
+    if (m.matchDate <= now) {
+      if (m.phase === "ROUND_OF_32" || m.phase === "ROUND_OF_16") {
+        defaultTorneo = "T2";
+        break;
+      }
+      if (defaultTorneo === "T1" && ["QUARTER_FINAL", "SEMI_FINAL", "THIRD_PLACE", "FINAL"].includes(m.phase)) {
+        defaultTorneo = "T3";
+      }
+    }
+  }
+
+  // Fallback: si aún en T1 pero todos los grupos terminaron, ir a T2
+  if (defaultTorneo === "T1") {
+    const finishedGroupIds = new Set(finishedGroupScores.map(s => s.matchId));
+    const allGroupDone = matchesData.matches.every(m => {
+      const overrideDate = groupDateOverrideMap.get(m.id);
+      const matchDate = overrideDate || parseMatchDate(m.date);
+      return finishedGroupIds.has(m.id) || matchDate <= now;
+    });
+    const hasT2Matches = knockoutMatches.some(m => m.phase === "ROUND_OF_32" || m.phase === "ROUND_OF_16");
+    if (allGroupDone && hasT2Matches) {
+      defaultTorneo = "T2";
+    }
+  }
+
   // ── Detectar partidos en vivo ──────────────────────────────────────────────
   // Knockout: status === "LIVE" en DB (seteado por BSD sync)
   const liveKnockoutIds = knockoutMatches
@@ -379,6 +407,7 @@ export default async function LeaderboardPage() {
           paidCounts={{ T1: paidGroupStageCount, T2: paidKnockoutCount, T3: paidFinalsCount }}
           liveMatchIds={Array.from(liveMatchIdSet)}
           liveScores={liveScoresMap}
+          defaultTorneo={defaultTorneo}
         />
       )}
     </div>
