@@ -818,17 +818,30 @@ export default function LeaderboardByPhase({
                         Tú
                       </Badge>
                     )}
-                    <Badge
-                      variant={paidForCurrentTorneo ? "default" : "secondary"}
-                      className={cn(
-                        "text-[9px] h-4 px-1.5 py-0",
-                        paidForCurrentTorneo
-                          ? "bg-emerald-600/15 text-emerald-700"
-                          : "bg-amber-100/60 text-amber-700 border border-amber-300/40",
-                      )}
-                    >
-                      {quotaLabel}
-                    </Badge>
+                    {prizeAmount != null && prizeAmount > 0 ? (
+                      <span
+                        className={cn(
+                          "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                          user.rank === 1 && "bg-yellow-500/15 text-yellow-700",
+                          user.rank === 2 && "bg-slate-400/15 text-slate-600",
+                          user.rank === 3 && "bg-amber-700/15 text-amber-800",
+                        )}
+                      >
+                        ${prizeAmount}
+                      </span>
+                    ) : (
+                      <Badge
+                        variant={paidForCurrentTorneo ? "default" : "secondary"}
+                        className={cn(
+                          "text-[9px] h-4 px-1.5 py-0",
+                          paidForCurrentTorneo
+                            ? "bg-emerald-600/15 text-emerald-700"
+                            : "bg-amber-100/60 text-amber-700 border border-amber-300/40",
+                        )}
+                      >
+                        {quotaLabel}
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
                     <span className="text-green-600 font-medium">
@@ -940,18 +953,6 @@ export default function LeaderboardByPhase({
 
                 {/* Points + expand */}
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  {prizeAmount != null && prizeAmount > 0 && (
-                    <span
-                      className={cn(
-                        "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
-                        user.rank === 1 && "bg-yellow-500/15 text-yellow-700",
-                        user.rank === 2 && "bg-slate-400/15 text-slate-600",
-                        user.rank === 3 && "bg-amber-700/15 text-amber-800",
-                      )}
-                    >
-                      ${prizeAmount}
-                    </span>
-                  )}
                   <span className="text-lg font-black text-primary">
                     {user.points}
                   </span>
