@@ -134,7 +134,6 @@ export default function ClientHomePage({
       for (const [day, dayMatches] of Object.entries(rec)) {
         const filtered = dayMatches.filter(
           (m) => {
-            if (m.homeScore != null && m.awayScore != null) return false;
             return parseMatchDate(m.date).getTime() + 160 * 60 * 1000 > nowWithOffset;
           },
         );
