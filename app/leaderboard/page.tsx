@@ -96,7 +96,7 @@ export default async function LeaderboardPage() {
   // Fetch finished group-stage match IDs (scored in GroupMatchScore)
   const finishedGroupScores = await prisma.groupMatchScore.findMany({
     where: { homeScore: { not: null }, awayScore: { not: null } },
-    select: { matchId: true },
+    select: { matchId: true, homeScore: true, awayScore: true },
   });
   const finishedMatchIds = finishedGroupScores.map((s) => `match_${s.matchId}`);
 
@@ -247,6 +247,15 @@ export default async function LeaderboardPage() {
       away: gs.awayScore,
     };
   }
+  // Incluir scores de partidos de grupos terminados (fuera de ventana 3h)
+  for (const gs of finishedGroupScores) {
+    const id = `match_${gs.matchId}`;
+    if (liveScoresMap[id]) continue;
+    liveScoresMap[id] = {
+      home: gs.homeScore,
+      away: gs.awayScore,
+    };
+  }
   // Eliminatorias en vivo
   for (const km of liveKnockoutIds) {
     const match = knockoutMatches.find((m) => `match_${m.id}` === km);
@@ -256,6 +265,16 @@ export default async function LeaderboardPage() {
         away: match.awayScore,
       };
     }
+  }
+  // Incluir scores de eliminatorias terminadas
+  for (const match of knockoutMatches) {
+    if (match.status !== "FINISHED") continue;
+    const id = `match_${match.id}`;
+    if (liveScoresMap[id]) continue;
+    liveScoresMap[id] = {
+      home: match.homeScore,
+      away: match.awayScore,
+    };
   }
 
   const startedMatchIdSet = new Set([
