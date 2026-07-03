@@ -93,6 +93,13 @@ export default async function LeaderboardPage() {
     },
   });
 
+  const groupDateOverrides = await prisma.groupMatchScore.findMany({
+    select: { matchId: true, matchDate: true },
+  });
+  const groupDateOverrideMap = new Map(
+    groupDateOverrides.map((m) => [m.matchId, m.matchDate]),
+  );
+
   // Fetch finished group-stage match IDs (scored in GroupMatchScore)
   const groupScoresWithResult = await prisma.groupMatchScore.findMany({
     where: { homeScore: { not: null }, awayScore: { not: null } },
@@ -107,13 +114,6 @@ export default async function LeaderboardPage() {
     return matchDate.getTime() + 160 * 60 * 1000 <= now.getTime();
   });
   const finishedMatchIds = finishedGroupScores.map((s) => `match_${s.matchId}`);
-
-  const groupDateOverrides = await prisma.groupMatchScore.findMany({
-    select: { matchId: true, matchDate: true },
-  });
-  const groupDateOverrideMap = new Map(
-    groupDateOverrides.map((m) => [m.matchId, m.matchDate]),
-  );
 
   const startedGroupIds = matchesData.matches
     .filter((m) => {
