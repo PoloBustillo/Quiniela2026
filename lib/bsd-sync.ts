@@ -118,19 +118,32 @@ export async function syncGroupMatch(
 
     // Respetar override manual
     if (existing?.manualOverride === true) {
+      console.log("[BSD syncGroupMatch] skipped manual override", { localMatchId });
       return "skipped";
     }
 
     const newHomeScore = bsdEvent.home_score;
     const newAwayScore = bsdEvent.away_score;
 
+    console.log("[BSD syncGroupMatch] event raw", {
+      localMatchId,
+      bsd: {
+        home_score: bsdEvent.home_score,
+        away_score: bsdEvent.away_score,
+        status: bsdEvent.status,
+      },
+      existing,
+    });
+
     // No hay scores todavía en BSD (ambos deben existir)
     if (newHomeScore === null || newAwayScore === null) {
+      console.log("[BSD syncGroupMatch] skipped null scores", { localMatchId });
       return "skipped";
     }
 
     // No sincronizar partidos que aún no han iniciado (BSD a veces retorna 0-0 para notstarted)
     if (bsdEvent.status === "notstarted") {
+      console.log("[BSD syncGroupMatch] skipped notstarted", { localMatchId });
       return "skipped";
     }
 
@@ -139,7 +152,16 @@ export async function syncGroupMatch(
       existing?.homeScore === newHomeScore &&
       existing?.awayScore === newAwayScore;
 
-    if (scoresUnchanged) return "skipped";
+    if (scoresUnchanged) {
+      console.log("[BSD syncGroupMatch] skipped unchanged", { localMatchId });
+      return "skipped";
+    }
+
+    console.log("[BSD syncGroupMatch] updating", {
+      localMatchId,
+      homeScore: newHomeScore,
+      awayScore: newAwayScore,
+    });
 
     // Actualizar o crear
     await prisma.groupMatchScore.upsert({
@@ -169,6 +191,7 @@ export async function syncGroupMatch(
       );
     }
 
+    console.log("[BSD syncGroupMatch] updated", { localMatchId, homeScore: newHomeScore, awayScore: newAwayScore });
     return "updated";
   } catch (err) {
     console.error(
@@ -264,10 +287,22 @@ export async function forceSyncKnockoutMatch(
       return result;
     }
 
+    const existingMatch = await prisma.match.findUnique({
+      where: { id: matchDbId },
+      select: { homeScore: true, awayScore: true, status: true, bsdEventId: true },
+    });
+
+    console.log("[BSD forceSyncKnockout] before", {
+      matchDbId,
+      bsdEventId: match.bsdEventId,
+      existing: existingMatch,
+    });
+
     const event = await getEventDetail(match.bsdEventId);
     if (!event) {
       result.errors = 1;
       result.details.push(`Evento BSD ${match.bsdEventId} no encontrado`);
+      console.log("[BSD forceSyncKnockout] event not found", { matchDbId, bsdEventId: match.bsdEventId });
       return result;
     }
 
@@ -275,12 +310,24 @@ export async function forceSyncKnockoutMatch(
     const newAwayScore = event.away_score;
     const newStatus = bsdStatusToLocal(event.status);
 
+    console.log("[BSD forceSyncKnockout] event raw", {
+      matchDbId,
+      bsdEventId: match.bsdEventId,
+      bsd: {
+        home_score: event.home_score,
+        away_score: event.away_score,
+        status: event.status,
+      },
+      computedStatus: newStatus,
+    });
+
     // No sincronizar scores parciales/nulos ni partidos no iniciados
     if (newHomeScore === null || newAwayScore === null) {
       result.skipped = 1;
       result.details.push(
         `Partido ${matchDbId} sin scores completos en BSD`,
       );
+      console.log("[BSD forceSyncKnockout] skipped null scores", { matchDbId });
       return result;
     }
 
@@ -289,8 +336,16 @@ export async function forceSyncKnockoutMatch(
       result.details.push(
         `Partido ${matchDbId} aún no iniciado en BSD (status: ${event.status})`,
       );
+      console.log("[BSD forceSyncKnockout] skipped notstarted", { matchDbId });
       return result;
     }
+
+    console.log("[BSD forceSyncKnockout] updating", {
+      matchDbId,
+      homeScore: newHomeScore,
+      awayScore: newAwayScore,
+      status: newStatus,
+    });
 
     await prisma.match.update({
       where: { id: matchDbId },
@@ -315,9 +370,14 @@ export async function forceSyncKnockoutMatch(
     result.details.push(
       `Partido ${matchDbId} sincronizado forzosamente: ${newHomeScore}-${newAwayScore} (${event.status})`,
     );
+    console.log("[BSD forceSyncKnockout] done", {
+      matchDbId,
+      result: result.details[result.details.length - 1],
+    });
   } catch (err) {
     result.errors = 1;
     result.details.push(`Error: ${String(err)}`);
+    console.error("[BSD forceSyncKnockout] error", { matchDbId, err });
   }
   return result;
 }
@@ -333,6 +393,20 @@ export async function syncLiveMatches(): Promise<SyncResult> {
 
   try {
     const liveEvents = await getLiveMatches();
+    console.log("[BSD syncLiveMatches] live events count", liveEvents.length);
+    if (liveEvents.length > 0) {
+      console.log(
+        "[BSD syncLiveMatches] live events",
+        liveEvents.map((e) => ({
+          id: e.id,
+          home: e.home_team,
+          away: e.away_team,
+          home_score: e.home_score,
+          away_score: e.away_score,
+          status: e.status,
+        })),
+      );
+    }
 
     // Construir mapa inverso: bsdEventId → localMatchId (fase de grupos)
     const bsdToLocalGroup = buildBsdToLocalGroupMap();
@@ -492,6 +566,7 @@ export async function syncLiveMatches(): Promise<SyncResult> {
     return result;
   }
 
+  console.log("[BSD syncLiveMatches] result", result);
   await logSync("live_poll", "ok", result, Date.now() - startMs);
   return result;
 }
