@@ -129,6 +129,11 @@ export async function syncGroupMatch(
       return "skipped";
     }
 
+    // No sincronizar partidos que aún no han iniciado (BSD a veces retorna 0-0 para notstarted)
+    if (bsdEvent.status === "notstarted") {
+      return "skipped";
+    }
+
     // Verificar si algo cambió
     const scoresUnchanged =
       existing?.homeScore === newHomeScore &&
@@ -279,6 +284,14 @@ export async function forceSyncKnockoutMatch(
       return result;
     }
 
+    if (event.status === "notstarted") {
+      result.skipped = 1;
+      result.details.push(
+        `Partido ${matchDbId} aún no iniciado en BSD (status: ${event.status})`,
+      );
+      return result;
+    }
+
     await prisma.match.update({
       where: { id: matchDbId },
       data: {
@@ -287,7 +300,6 @@ export async function forceSyncKnockoutMatch(
         status: newStatus,
         syncSource: "bsd",
         lastSyncedAt: new Date(),
-        manualOverride: false,
       },
     });
 
