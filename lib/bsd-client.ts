@@ -17,6 +17,10 @@ const REQUEST_TIMEOUT_MS = 8000; // 8s timeout
 export type BsdMatchStatus =
   | "notstarted"
   | "inprogress"
+  | "1st_half"
+  | "2nd_half"
+  | "halftime"
+  | "extra_time"
   | "penalties"
   | "finished"
   | "postponed"
@@ -386,6 +390,10 @@ export function bsdStatusToLocal(
 ): "SCHEDULED" | "LIVE" | "FINISHED" | "POSTPONED" | "CANCELLED" {
   switch (bsdStatus) {
     case "inprogress":
+    case "1st_half":
+    case "2nd_half":
+    case "halftime":
+    case "extra_time":
     case "penalties":
       return "LIVE";
     case "finished":
