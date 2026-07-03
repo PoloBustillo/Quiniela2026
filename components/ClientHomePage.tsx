@@ -134,7 +134,7 @@ export default function ClientHomePage({
       for (const [day, dayMatches] of Object.entries(rec)) {
         const filtered = dayMatches.filter(
           (m) => {
-            return parseMatchDate(m.date).getTime() + 160 * 60 * 1000 > nowWithOffset;
+            return parseMatchDate(m.date).getTime() + 120 * 60 * 1000 > nowWithOffset;
           },
         );
         if (filtered.length > 0) result[day] = filtered;
@@ -158,7 +158,7 @@ export default function ClientHomePage({
         },
       );
       const todayMatches = matchesByDate[todayKey] ?? [];
-      return todayMatches.length > 0 ? { [todayKey]: todayMatches } : {};
+      return hidePast({ [todayKey]: todayMatches });
     }
     if (quickFilter === "missing") {
       const result: Record<string, Match[]> = {};
@@ -167,7 +167,7 @@ export default function ClientHomePage({
           (m) =>
             !predictionMap[m.id] &&
             (m.homeScore == null || m.awayScore == null) &&
-            parseMatchDate(m.date).getTime() + 160 * 60 * 1000 > nowWithOffset,
+            parseMatchDate(m.date).getTime() + 120 * 60 * 1000 > nowWithOffset,
         );
         if (open.length > 0) result[day] = open;
       }
