@@ -94,9 +94,17 @@ export default async function LeaderboardPage() {
   });
 
   // Fetch finished group-stage match IDs (scored in GroupMatchScore)
-  const finishedGroupScores = await prisma.groupMatchScore.findMany({
+  const groupScoresWithResult = await prisma.groupMatchScore.findMany({
     where: { homeScore: { not: null }, awayScore: { not: null } },
     select: { matchId: true, homeScore: true, awayScore: true },
+  });
+  // Solo considerar finalizados los que empezaron hace >= 160 min
+  const finishedGroupScores = groupScoresWithResult.filter((gs) => {
+    const gm = matchesData.matches.find((m) => m.id === gs.matchId);
+    if (!gm) return false;
+    const overrideDate = groupDateOverrideMap.get(gs.matchId);
+    const matchDate = overrideDate || parseMatchDate(gm.date);
+    return matchDate.getTime() + 160 * 60 * 1000 <= now.getTime();
   });
   const finishedMatchIds = finishedGroupScores.map((s) => `match_${s.matchId}`);
 
