@@ -105,15 +105,18 @@ export default async function LeaderboardPage() {
     where: { homeScore: { not: null }, awayScore: { not: null } },
     select: { matchId: true, homeScore: true, awayScore: true },
   });
-  // Solo considerar finalizados los que empezaron hace >= 160 min
+  // Partidos con marcador (para mostrar scores/badge)
+  const scoredGroupScores = groupScoresWithResult;
+  // Solo considerar cerrados para puntos los que empezaron hace >= 120 min
   const finishedGroupScores = groupScoresWithResult.filter((gs) => {
     const gm = matchesData.matches.find((m) => m.id === gs.matchId);
     if (!gm) return false;
     const overrideDate = groupDateOverrideMap.get(gs.matchId);
     const matchDate = overrideDate || parseMatchDate(gm.date);
-    return matchDate.getTime() + 160 * 60 * 1000 <= now.getTime();
+    return matchDate.getTime() + 120 * 60 * 1000 <= now.getTime();
   });
-  const finishedMatchIds = finishedGroupScores.map((s) => `match_${s.matchId}`);
+  const finishedMatchIds = scoredGroupScores.map((s) => `match_${s.matchId}`);
+  const closedMatchIds = finishedGroupScores.map((s) => `match_${s.matchId}`);
 
   const startedGroupIds = matchesData.matches
     .filter((m) => {
@@ -134,6 +137,11 @@ export default async function LeaderboardPage() {
 
   const finishedMatchIdSet = [
     ...finishedMatchIds,
+    ...finishedKnockoutIds,
+    ...legacyFinishedKnockoutIds,
+  ];
+  const closedMatchIdSet = [
+    ...closedMatchIds,
     ...finishedKnockoutIds,
     ...legacyFinishedKnockoutIds,
   ];
@@ -431,6 +439,7 @@ export default async function LeaderboardPage() {
           matchMap={matchMap}
           currentUserId={session.user?.id ?? ""}
           finishedMatchIds={finishedMatchIdSet}
+          closedMatchIds={closedMatchIdSet}
           finishedMatchDayMap={finishedMatchDayMap}
           paidCounts={{ T1: paidGroupStageCount, T2: paidKnockoutCount, T3: paidFinalsCount }}
           liveMatchIds={Array.from(liveMatchIdSet)}

@@ -163,6 +163,7 @@ interface LeaderboardByPhaseProps {
   matchMap: Record<string, MatchInfo>;
   currentUserId: string;
   finishedMatchIds: string[];
+  closedMatchIds?: string[];
   finishedMatchDayMap?: Record<string, string>;
   paidCounts: { T1: number; T2: number; T3: number };
   liveMatchIds?: string[];
@@ -333,6 +334,7 @@ export default function LeaderboardByPhase({
   matchMap,
   currentUserId,
   finishedMatchIds,
+  closedMatchIds = finishedMatchIds,
   finishedMatchDayMap = {},
   paidCounts,
   liveMatchIds = [],
@@ -494,6 +496,11 @@ export default function LeaderboardByPhase({
     [finishedMatchIds],
   );
 
+  const closedSet = useMemo(
+    () => new Set(closedMatchIds),
+    [closedMatchIds],
+  );
+
   const leaderboard = useMemo(() => {
     const phasesForTorneo = TORNEO_PHASES[selectedTorneo] ?? [];
     const visibleUsers = showUnpaidUsers
@@ -514,10 +521,10 @@ export default function LeaderboardByPhase({
         const correct = preds.filter((p) => p.points === 3).length;
         // Only count wrong predictions for *completed* matches
         const wrong = preds.filter(
-          (p) => p.points === 0 && finishedSet.has(p.matchId),
+          (p) => p.points === 0 && closedSet.has(p.matchId),
         ).length;
         const pending = preds.filter(
-          (p) => p.points === 0 && !finishedSet.has(p.matchId),
+          (p) => p.points === 0 && !closedSet.has(p.matchId),
         ).length;
         return { ...user, points, preds, exact, correct, wrong, pending };
       })
@@ -525,7 +532,7 @@ export default function LeaderboardByPhase({
 
     const rankMap = getCompetitionRank(sorted);
     return sorted.map((u) => ({ ...u, rank: rankMap.get(u.id) ?? 0 }));
-  }, [users, selectedTorneo, finishedSet, showUnpaidUsers]);
+  }, [users, selectedTorneo, closedSet, showUnpaidUsers]);
 
   // Guardar posiciones actuales en localStorage SOLO una vez al montar
   // para que en la próxima visita se puedan comparar con las nuevas posiciones
@@ -578,7 +585,7 @@ export default function LeaderboardByPhase({
 
     for (const user of visibleUsers) {
       for (const pred of user.predictions) {
-        if (!finishedSet.has(pred.matchId)) continue;
+        if (!closedSet.has(pred.matchId)) continue;
         const matchDay = finishedMatchDayMap[pred.matchId];
         if (!matchDay || !dayBuckets[matchDay]) continue;
         if (
@@ -619,7 +626,7 @@ export default function LeaderboardByPhase({
     const expectedTotals = new Map<string, number>();
     visibleUsers.forEach((u) => {
       const total = u.predictions.reduce((acc, p) => {
-        if (!finishedSet.has(p.matchId)) return acc;
+        if (!closedSet.has(p.matchId)) return acc;
         const hasDay = !!finishedMatchDayMap[p.matchId];
         if (!hasDay) return acc;
         if (
@@ -647,7 +654,7 @@ export default function LeaderboardByPhase({
     }
 
     return frames;
-  }, [users, leaderboard, selectedTorneo, finishedSet, finishedMatchDayMap, currentSystemDay, showUnpaidUsers]);
+  }, [users, leaderboard, selectedTorneo, closedSet, finishedMatchDayMap, currentSystemDay, showUnpaidUsers]);
 
   /** Drop last surname when 4+ words; hard-cap at 28 chars. */
   const formatDisplayName = (n: string) => {
@@ -1072,7 +1079,7 @@ export default function LeaderboardByPhase({
                                     "",
                                   );
                                   const match = matchMap[numId];
-                                  const isFinished = finishedSet.has(
+                                  const isFinished = closedSet.has(
                                     pred.matchId,
                                   );
                                   const isPending =

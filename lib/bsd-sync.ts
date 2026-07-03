@@ -124,8 +124,8 @@ export async function syncGroupMatch(
     const newHomeScore = bsdEvent.home_score;
     const newAwayScore = bsdEvent.away_score;
 
-    // No hay scores todavía en BSD
-    if (newHomeScore === null && newAwayScore === null) {
+    // No hay scores todavía en BSD (ambos deben existir)
+    if (newHomeScore === null || newAwayScore === null) {
       return "skipped";
     }
 
@@ -196,6 +196,11 @@ export async function syncKnockoutMatch(
     const newAwayScore = bsdEvent.away_score;
     const newStatus = bsdStatusToLocal(bsdEvent.status);
 
+    // No sincronizar scores parciales/nulos
+    if (newHomeScore === null || newAwayScore === null) {
+      return "skipped";
+    }
+
     const scoresUnchanged =
       existing.homeScore === newHomeScore &&
       existing.awayScore === newAwayScore &&
@@ -264,6 +269,15 @@ export async function forceSyncKnockoutMatch(
     const newHomeScore = event.home_score;
     const newAwayScore = event.away_score;
     const newStatus = bsdStatusToLocal(event.status);
+
+    // No sincronizar scores parciales/nulos ni partidos no iniciados
+    if (newHomeScore === null || newAwayScore === null) {
+      result.skipped = 1;
+      result.details.push(
+        `Partido ${matchDbId} sin scores completos en BSD`,
+      );
+      return result;
+    }
 
     await prisma.match.update({
       where: { id: matchDbId },
