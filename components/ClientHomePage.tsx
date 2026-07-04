@@ -20,6 +20,7 @@ interface Match {
   phase?: string;
   homeScore?: number | null;
   awayScore?: number | null;
+  status?: string;
 }
 
 interface PredictionMap {
@@ -68,7 +69,14 @@ export default function ClientHomePage({
   const [serverOffset, setServerOffset] = useState(0);
   // UI-REC #6: quick filter state — remove this line (and filter chips + filteredMatches change below) to disable
   const [quickFilter, setQuickFilter] = useState<"all" | "today" | "missing">("all");
-  const [showPast, setShowPast] = useState(false);
+  const [showPast, setShowPast] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem("predictions-show-past") === "true";
+    } catch {
+      return false;
+    }
+  });
   useEffect(() => {
     fetch("/api/server-time", { cache: "no-store" })
       .then((r) => r.json())
@@ -132,11 +140,15 @@ export default function ClientHomePage({
       if (showPast) return rec;
       const result: Record<string, Match[]> = {};
       for (const [day, dayMatches] of Object.entries(rec)) {
-        const filtered = dayMatches.filter(
-          (m) => {
-            return parseMatchDate(m.date).getTime() + 120 * 60 * 1000 > nowWithOffset;
-          },
-        );
+        const filtered = dayMatches.filter((m) => {
+          const isFinished =
+            m.status === "FINISHED" ||
+            (m.homeScore != null && m.awayScore != null);
+          if (isFinished) return false;
+          return (
+            parseMatchDate(m.date).getTime() + 120 * 60 * 1000 > nowWithOffset
+          );
+        });
         if (filtered.length > 0) result[day] = filtered;
       }
       return result;
@@ -239,7 +251,17 @@ export default function ClientHomePage({
             </button>
           ))}
           <button
-            onClick={() => setShowPast(!showPast)}
+            onClick={() => {
+              setShowPast((prev) => {
+                const next = !prev;
+                try {
+                  localStorage.setItem("predictions-show-past", String(next));
+                } catch {
+                  // ignore localStorage errors
+                }
+                return next;
+              });
+            }}
             className={cn(
               "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-1",
               showPast

@@ -145,12 +145,17 @@ export default async function HomePage() {
     group: "", // No group for knockout matches
     homeScore: match.homeScore ?? null,
     awayScore: match.awayScore ?? null,
+    status: match.status,
   }));
 
   // Combine group stage matches (with DB data) with knockout matches from DB
   const formattedGroupMatches = groupMatches.map((match: any) => ({
     ...match,
     id: `match_${match.id}`,
+    status:
+      match.homeScore != null && match.awayScore != null
+        ? "FINISHED"
+        : "SCHEDULED",
   }));
 
   const allMatches = [...formattedGroupMatches, ...formattedKnockoutMatches];

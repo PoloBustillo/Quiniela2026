@@ -34,6 +34,7 @@ interface Match {
   group?: string; // Optional group property
   homeScore?: number | null;
   awayScore?: number | null;
+  status?: string;
 }
 
 interface PredictionCardProps {
@@ -88,8 +89,10 @@ export default function PredictionCard({
       });
   }, [initialServerOffset]);
 
-  const hasResult = match.homeScore != null && match.awayScore != null;
-  const isPast = hasResult || matchDate < new Date(Date.now() + serverOffset);
+  const isFinished =
+    match.status === "FINISHED" ||
+    (match.homeScore != null && match.awayScore != null);
+  const isPast = isFinished || matchDate < new Date(Date.now() + serverOffset);
 
   // Verificar si algún equipo es TBD (Por Definir)
   const isTBD = match.homeTeam.code === "TBD" || match.awayTeam.code === "TBD";
