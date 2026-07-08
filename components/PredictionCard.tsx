@@ -271,17 +271,21 @@ export default function PredictionCard({
     if (isDisabled) return;
 
     if (team === "home") {
-      setHomeInputStr(value);
       // While the field is empty we don't commit a score yet; this prevents
       // auto-save from firing and the keyboard from closing mid-typing.
-      if (value === "") return;
+      if (value === "") {
+        setHomeInputStr("");
+        return;
+      }
       const clamped = normalizeScore(value);
       if (clamped > homeScore) triggerBall("home");
       setHomeScore(clamped);
       setHomeInputStr(String(clamped));
     } else {
-      setAwayInputStr(value);
-      if (value === "") return;
+      if (value === "") {
+        setAwayInputStr("");
+        return;
+      }
       const clamped = normalizeScore(value);
       if (clamped > awayScore) triggerBall("away");
       setAwayScore(clamped);
@@ -324,7 +328,7 @@ export default function PredictionCard({
           <Minus className="h-3.5 w-3.5" />
         </button>
         <Input
-          type="number"
+          type="text"
           inputMode="numeric"
           pattern="[0-9]*"
           min="0"
@@ -367,7 +371,7 @@ export default function PredictionCard({
 
     return (
       <Input
-        type="number"
+        type="text"
         inputMode="numeric"
         pattern="[0-9]*"
         min="0"
@@ -410,13 +414,20 @@ export default function PredictionCard({
             unoptimized
             sizes="(max-width: 640px) 80px, (max-width: 768px) 96px, 112px"
           />
+          {isWinner && (
+            <div
+              className="absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.5),transparent_70%)] blur-md pointer-events-none animate-glow-pulse"
+              aria-hidden="true"
+            />
+          )}
           <Image
             src={playerSrc}
             alt=""
             fill
             className={cn(
               "object-contain transition-all duration-300",
-              isWinner && "scale-105 drop-shadow-lg",
+              isWinner &&
+                "scale-110 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)] drop-shadow-[0_0_22px_rgba(250,204,21,0.5)]",
               isLoser && "grayscale opacity-50",
               isDraw && "opacity-75",
             )}

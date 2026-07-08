@@ -72,6 +72,7 @@ const config: Config = {
         "accordion-up": "accordion-up 0.2s ease-out",
         "ball-fly-home": "ballFlyHome 0.7s ease-out forwards",
         "ball-fly-away": "ballFlyAway 0.7s ease-out forwards",
+        "glow-pulse": "glowPulse 2.5s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -103,6 +104,10 @@ const config: Config = {
           "0%": { transform: "translate(0, 0) scale(0.6)", opacity: "1" },
           "80%": { transform: "translate(-120px, -40px) scale(1)", opacity: "1" },
           "100%": { transform: "translate(-140px, -30px) scale(0.8)", opacity: "0" },
+        },
+        glowPulse: {
+          "0%, 100%": { opacity: "0.5" },
+          "50%": { opacity: "1" },
         },
       },
     },
