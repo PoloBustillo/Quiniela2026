@@ -20,6 +20,8 @@ import { translateCountry } from "@/lib/translations";
 import { calculatePoints, parseMatchDate } from "@/lib/points";
 import LeaderboardRaceChart from "@/components/LeaderboardRaceChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WinnersPodium } from "@/components/WinnersPodium";
+import { CelebrationEffects } from "@/components/CelebrationEffects";
 
 interface LiveMatchBadgeProps {
   matchId: string;
@@ -176,7 +178,7 @@ const TORNEOS = [
   { value: "ALL", label: "Todo" },
   { value: "T1", label: "1. Grupos" },
   { value: "T2", label: "2. 16vos + 8vos" },
-  { value: "T3", label: "3. Fases finales" },
+  { value: "T3", label: "Fases Finales", icon: Trophy },
 ];
 
 /** Which raw phases belong to each torneo */
@@ -665,6 +667,7 @@ export default function LeaderboardByPhase({
 
   return (
     <div className="space-y-3">
+      {selectedTorneo === "T3" && <CelebrationEffects />}
       <Tabs
         value={viewTab}
         onValueChange={(v) => setViewTab(v as "tabla" | "grafica")}
@@ -679,23 +682,32 @@ export default function LeaderboardByPhase({
         <TabsContent value="tabla" className="space-y-3">
       {/* Torneo filter */}
       <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-1">
-        {TORNEOS.map((t) => (
-          <button
-            key={t.value}
-            onClick={() => {
-              setSelectedTorneo(t.value);
-              setExpandedUsers(new Set());
-            }}
-            className={cn(
-              "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap",
-              selectedTorneo === t.value
-                ? "bg-primary text-primary-foreground border-primary"
-                : "border-border text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
+        {TORNEOS.map((t) => {
+          const isT3 = t.value === "T3";
+          const Icon = (t as { icon?: typeof Trophy }).icon;
+          return (
+            <button
+              key={t.value}
+              onClick={() => {
+                setSelectedTorneo(t.value);
+                setExpandedUsers(new Set());
+              }}
+              className={cn(
+                "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap flex items-center gap-1",
+                selectedTorneo === t.value
+                  ? isT3
+                    ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                    : "bg-primary text-primary-foreground border-primary"
+                  : isT3
+                    ? "border-amber-400/60 text-amber-700 hover:bg-amber-50"
+                    : "border-border text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {Icon && <Icon className="h-3.5 w-3.5" />}
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Show/hide unpaid users toggle */}
@@ -719,6 +731,35 @@ export default function LeaderboardByPhase({
         <GitCompare className="h-4 w-4 flex-shrink-0" />
         Comparar predicciones con otro participante →
       </Link>
+
+      {/* Fase decisiva banner */}
+      {selectedTorneo === "T3" && (
+        <Card className="border-amber-400/40 bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/10">
+          <CardContent className="px-4 py-3 text-center">
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+              ¡Fase decisiva! ¿Quién será el campeón?
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Cada predicción cuenta en la recta final.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Winners podium */}
+      {selectedTorneo !== "ALL" && leaderboard.length >= 3 && (
+        <WinnersPodium
+          top3={leaderboard.slice(0, 3).map((u) => ({
+            id: u.id,
+            name: u.name,
+            image: u.image,
+            rank: u.rank,
+            points: u.points,
+          }))}
+          paidCount={paidCounts[selectedTorneo as keyof typeof paidCounts]}
+          isFinalPhase={selectedTorneo === "T3"}
+        />
+      )}
 
       {/* My summary card (if not top 3) */}
       {myEntry && myRank > 3 && (
@@ -1198,20 +1239,29 @@ export default function LeaderboardByPhase({
 
         <TabsContent value="grafica" className="space-y-3">
           <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-1">
-            {TORNEOS.map((t) => (
-              <button
-                key={`graph-${t.value}`}
-                onClick={() => setSelectedTorneo(t.value)}
-                className={cn(
-                  "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap",
-                  selectedTorneo === t.value
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-border text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t.label}
-              </button>
-            ))}
+            {TORNEOS.map((t) => {
+              const isT3 = t.value === "T3";
+              const Icon = (t as { icon?: typeof Trophy }).icon;
+              return (
+                <button
+                  key={`graph-${t.value}`}
+                  onClick={() => setSelectedTorneo(t.value)}
+                  className={cn(
+                    "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap flex items-center gap-1",
+                    selectedTorneo === t.value
+                      ? isT3
+                        ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                        : "bg-primary text-primary-foreground border-primary"
+                      : isT3
+                        ? "border-amber-400/60 text-amber-700 hover:bg-amber-50"
+                        : "border-border text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {Icon && <Icon className="h-3.5 w-3.5" />}
+                  {t.label}
+                </button>
+              );
+            })}
           </div>
           <LeaderboardRaceChart key={`race-${selectedTorneo}`} frames={raceFrames} />
           <div className="space-y-0.5 text-xs text-muted-foreground">

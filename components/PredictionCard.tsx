@@ -12,6 +12,7 @@ import {
   translateCity,
   translateStadium,
 } from "@/lib/translations";
+import { getPlayerForTeam } from "@/lib/team-players";
 import { calculatePoints, parseMatchDate } from "@/lib/points";
 
 interface Team {
@@ -242,6 +243,12 @@ export default function PredictionCard({
     </div>
   );
 
+  const homePlayerSrc = isPast ? null : getPlayerForTeam(match.homeTeam);
+  const awayPlayerSrc = isPast ? null : getPlayerForTeam(match.awayTeam);
+
+  const visualWinner =
+    homeScore > awayScore ? "home" : awayScore > homeScore ? "away" : "draw";
+
   const CompactScoreInput = ({
     team,
     value,
@@ -264,6 +271,64 @@ export default function PredictionCard({
     />
   );
 
+  const SideFigure = ({
+    team,
+    playerSrc,
+    side,
+  }: {
+    team: Team;
+    playerSrc: string | null;
+    side: "home" | "away";
+  }) => {
+    const isWinner = visualWinner === side;
+    const isLoser = visualWinner !== side && visualWinner !== "draw";
+    const isDraw = visualWinner === "draw";
+
+    if (playerSrc) {
+      return (
+        <div
+          className="relative h-28 w-20 sm:h-32 sm:w-24 md:h-36 md:w-28 flex-shrink-0 pointer-events-none select-none"
+          aria-hidden="true"
+        >
+          <Image
+            src={team.flag}
+            alt={team.name}
+            fill
+            className="object-cover rounded-xl opacity-40"
+            unoptimized
+            sizes="(max-width: 640px) 80px, (max-width: 768px) 96px, 112px"
+          />
+          <Image
+            src={playerSrc}
+            alt=""
+            fill
+            className={cn(
+              "object-contain transition-all duration-300",
+              isWinner && "scale-105 drop-shadow-lg",
+              isLoser && "grayscale opacity-50",
+              isDraw && "opacity-75",
+            )}
+            unoptimized
+            sizes="(max-width: 640px) 80px, (max-width: 768px) 96px, 112px"
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 flex-shrink-0">
+        <Image
+          src={team.flag}
+          alt={team.name}
+          fill
+          className="object-contain"
+          unoptimized
+          sizes="(max-width: 640px) 56px, (max-width: 768px) 64px, 80px"
+        />
+      </div>
+    );
+  };
+
   // ── COMPACT (list) mode ─────────────────────────────────────────────────────
   if (compact) {
     return (
@@ -276,80 +341,62 @@ export default function PredictionCard({
           justSaved && "ring-2 ring-green-500/60 ring-offset-background ring-offset-1",
         )}
       >
-        <CardContent className="px-3 py-3">
-          <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2">
-            {/* Home team */}
-            <div className="flex items-center gap-1.5 min-w-0 justify-end">
-              <p className="text-xs sm:text-sm font-medium line-clamp-2 text-right leading-tight">
-                {translateCountry(match.homeTeam.name)}
-              </p>
-              <div className="w-8 h-6 sm:w-9 sm:h-7 flex-shrink-0 relative">
-                <Image
-                  src={match.homeTeam.flag}
-                  alt={match.homeTeam.name}
-                  fill
-                  className="object-contain"
-                  unoptimized
-                />
-              </div>
+        <CardContent className="py-3 px-3">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+            <div className="flex items-center justify-center">
+              <SideFigure
+                team={match.homeTeam}
+                playerSrc={homePlayerSrc}
+                side="home"
+              />
             </div>
 
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold text-center w-6">
-              vs
-            </span>
-
-            {/* Away team */}
-            <div className="flex items-center gap-1.5 min-w-0">
-              <div className="w-8 h-6 sm:w-9 sm:h-7 flex-shrink-0 relative">
-                <Image
-                  src={match.awayTeam.flag}
-                  alt={match.awayTeam.name}
-                  fill
-                  className="object-contain"
-                  unoptimized
-                />
+            <div className="min-w-0">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 w-full">
+                <p className="text-xs sm:text-sm font-medium line-clamp-2 text-right leading-tight">
+                  {translateCountry(match.homeTeam.name)}
+                </p>
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold text-center w-5">
+                  vs
+                </span>
+                <p className="text-xs sm:text-sm font-medium line-clamp-2 leading-tight">
+                  {translateCountry(match.awayTeam.name)}
+                </p>
               </div>
-              <p className="text-xs sm:text-sm font-medium line-clamp-2 leading-tight">
-                {translateCountry(match.awayTeam.name)}
-              </p>
-            </div>
 
-            {/* Save button */}
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isDisabled || isSaving}
-              // UI-REC #2: aria-label — remove this line if not needed
-              aria-label={isPast ? "Predicción cerrada" : saved ? "Predicción guardada" : "Guardar predicción"}
-              className={cn(
-                // UI-REC #8: h-10 w-10 (40px) touch target + scale tap feedback — revert to "h-9 w-9 transition-colors" to undo
-                "flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center transition-all active:scale-95 touch-manipulation font-bold text-sm select-none border",
-                isPast
-                  ? "bg-muted text-muted-foreground cursor-not-allowed border-transparent"
-                  : saved
-                    ? "bg-green-500/10 text-green-600 border-green-500/40"
-                    : "bg-primary text-primary-foreground border-transparent active:opacity-80",
-              )}
-            >
-              {isSaving ? (
-                <span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin block" />
-              ) : isPast ? (
-                "🔒"
-              ) : saved ? (
-                "✓"
-              ) : (
-                "↑"
-              )}
-            </button>
-          </div>
-
-          <div className="mt-2.5 flex items-center justify-center gap-2">
-            <CompactScoreInput team="home" value={homeScore} />
-            <span className="text-muted-foreground font-bold text-sm w-3 text-center select-none">
-              –
-            </span>
-            <CompactScoreInput team="away" value={awayScore} />
-          </div>
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <CompactScoreInput team="home" value={homeScore} />
+                <span className="text-muted-foreground font-bold text-sm w-3 text-center select-none">
+                  –
+                </span>
+                <CompactScoreInput team="away" value={awayScore} />
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isDisabled || isSaving}
+                  // UI-REC #2: aria-label — remove this line if not needed
+                  aria-label={isPast ? "Predicción cerrada" : saved ? "Predicción guardada" : "Guardar predicción"}
+                  className={cn(
+                    // UI-REC #8: h-10 w-10 (40px) touch target + scale tap feedback
+                    "flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center transition-all active:scale-95 touch-manipulation font-bold text-sm select-none border",
+                    isPast
+                      ? "bg-muted text-muted-foreground cursor-not-allowed border-transparent"
+                      : saved
+                        ? "bg-green-500/10 text-green-600 border-green-500/40"
+                        : "bg-primary text-primary-foreground border-transparent active:opacity-80",
+                  )}
+                >
+                  {isSaving ? (
+                    <span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin block" />
+                  ) : isPast ? (
+                    "🔒"
+                  ) : saved ? (
+                    "✓"
+                  ) : (
+                    "↑"
+                  )}
+                </button>
+              </div>
 
           {/* Result indicator — visible once match has a score */}
           {isPast &&
@@ -398,25 +445,25 @@ export default function PredictionCard({
               );
             })()}
 
-          {/* Meta row */}
-          <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground gap-2">
-            <span className="truncate">
+          {/* Meta row — mobile: solo día/hora · sm+: detalles completos */}
+          <div className="mt-1.5 text-[10px] sm:text-xs text-muted-foreground text-center w-full">
+            <span className="hidden sm:inline">
               {match.group ? `Grupo ${match.group}` : match.stage} ·{" "}
-              {translateCity(match.city)}
+              {translateCity(match.city)} ·{" "}
             </span>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span>
-                {matchDate.toLocaleDateString("es-MX", {
-                  month: "short",
-                  day: "numeric",
-                  timeZone: "America/Mexico_City",
-                })}{" "}
-                {matchDate.toLocaleTimeString("es-MX", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  timeZone: "America/Mexico_City",
-                })}
-              </span>
+            <span>
+              {matchDate.toLocaleDateString("es-MX", {
+                month: "short",
+                day: "numeric",
+                timeZone: "America/Mexico_City",
+              })}{" "}
+              {matchDate.toLocaleTimeString("es-MX", {
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "America/Mexico_City",
+              })}
+            </span>
+            <span className="hidden sm:inline">
               {(() => {
                 if (match.id.startsWith("match_")) {
                   const detailId = match.id.replace("match_", "");
@@ -424,7 +471,7 @@ export default function PredictionCard({
                   return (
                     <Link
                       href={`/matches/${encodeURIComponent(detailId)}`}
-                      className="text-primary font-medium hover:underline"
+                      className="ml-2 text-primary font-medium hover:underline"
                       onClick={(e) => e.stopPropagation()}
                     >
                       Detalles →
@@ -433,11 +480,21 @@ export default function PredictionCard({
                 }
                 return null;
               })()}
+            </span>
+          </div>
+              {error && (
+                <p className="mt-1 text-[11px] text-destructive">{error}</p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-center">
+              <SideFigure
+                team={match.awayTeam}
+                playerSrc={awayPlayerSrc}
+                side="away"
+              />
             </div>
           </div>
-          {error && (
-            <p className="mt-1 text-[11px] text-destructive">{error}</p>
-          )}
         </CardContent>
       </Card>
     );
@@ -453,60 +510,60 @@ export default function PredictionCard({
     >
       <CardContent className="p-4 md:p-6">
         <div className="mb-4">
-          <p className="text-xs text-muted-foreground">
-            {match.group ? `Grupo ${match.group}` : match.stage}
-          </p>
-          <p className="text-xs font-medium mt-0.5">
-            {matchDate.toLocaleDateString("es-MX", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              timeZone: "America/Mexico_City",
-            })}
-          </p>
-        </div>
+            <p className="text-xs text-muted-foreground">
+              {match.group ? `Grupo ${match.group}` : match.stage}
+            </p>
+            <p className="text-xs font-medium mt-0.5">
+              {matchDate.toLocaleDateString("es-MX", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "America/Mexico_City",
+              })}
+            </p>
+          </div>
 
-        <div className="space-y-3 mb-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <div className="relative w-10 h-10 flex-shrink-0">
-                <Image
-                  src={match.homeTeam.flag}
-                  alt={match.homeTeam.name}
-                  fill
-                  className="object-cover rounded-md"
-                  unoptimized
-                />
+          <div className="space-y-3 mb-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="relative w-10 h-10 flex-shrink-0">
+                  <Image
+                    src={match.homeTeam.flag}
+                    alt={match.homeTeam.name}
+                    fill
+                    className="object-cover rounded-md"
+                    unoptimized
+                  />
+                </div>
+                <p className="text-sm font-medium line-clamp-2 leading-tight">
+                  {translateCountry(match.homeTeam.name)}
+                </p>
               </div>
-              <p className="text-sm font-medium line-clamp-2 leading-tight">
-                {translateCountry(match.homeTeam.name)}
-              </p>
+              <ScoreControl team="home" value={homeScore} />
             </div>
-            <ScoreControl team="home" value={homeScore} />
-          </div>
-          <div className="text-center text-xs text-muted-foreground font-medium">
-            VS
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <div className="relative w-10 h-10 flex-shrink-0">
-                <Image
-                  src={match.awayTeam.flag}
-                  alt={match.awayTeam.name}
-                  fill
-                  className="object-cover rounded-md"
-                  unoptimized
-                />
+            <div className="text-center text-xs text-muted-foreground font-medium">
+              VS
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="relative w-10 h-10 flex-shrink-0">
+                  <Image
+                    src={match.awayTeam.flag}
+                    alt={match.awayTeam.name}
+                    fill
+                    className="object-cover rounded-md"
+                    unoptimized
+                  />
+                </div>
+                <p className="text-sm font-medium line-clamp-2 leading-tight">
+                  {translateCountry(match.awayTeam.name)}
+                </p>
               </div>
-              <p className="text-sm font-medium line-clamp-2 leading-tight">
-                {translateCountry(match.awayTeam.name)}
-              </p>
+              <ScoreControl team="away" value={awayScore} />
             </div>
-            <ScoreControl team="away" value={awayScore} />
           </div>
-        </div>
 
         <p className="text-xs text-muted-foreground text-center mb-4 line-clamp-1">
           {translateStadium(match.stadium)} · {translateCity(match.city)}

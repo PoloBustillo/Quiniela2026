@@ -177,7 +177,11 @@ export default async function LeaderboardPage() {
     .filter(({ match }) => match.matchDate <= now)
     .map(({ legacyId }) => legacyId);
 
-  // ── Auto-detect current torneo based on started matches ──────────────────
+  // ── Default torneo: forzar T3 (Fases Finales) durante la recta final ─────
+  // La lógica de auto-detección anterior se conserva comentada por si se desea revertir.
+  const defaultTorneo = "T3";
+
+  /* Auto-detección anterior (comentada):
   let defaultTorneo = "T1";
   for (const m of knockoutMatches) {
     if (m.matchDate <= now) {
@@ -191,7 +195,6 @@ export default async function LeaderboardPage() {
     }
   }
 
-  // Fallback: si aún en T1 pero todos los grupos terminaron, ir a T2
   if (defaultTorneo === "T1") {
     const finishedGroupIds = new Set(finishedGroupScores.map(s => s.matchId));
     const allGroupDone = matchesData.matches.every(m => {
@@ -204,6 +207,7 @@ export default async function LeaderboardPage() {
       defaultTorneo = "T2";
     }
   }
+  */
 
   // ── Detectar partidos en vivo ──────────────────────────────────────────────
   // Knockout: status === "LIVE" en DB (seteado por BSD sync)
