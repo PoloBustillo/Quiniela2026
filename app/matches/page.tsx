@@ -74,7 +74,7 @@ export default async function MatchesPage() {
   const knockoutMatches = await prisma.match.findMany({
     where: {
       phase: {
-        not: "GROUP_STAGE",
+        in: ["QUARTER_FINAL", "SEMI_FINAL", "THIRD_PLACE", "FINAL"],
       },
       OR: [
         { status: "SCHEDULED" },
@@ -127,8 +127,8 @@ export default async function MatchesPage() {
     awayScore: m.awayScore,
   }));
 
-  // Combinar grupos + knockout
-  const allMatches = [...groupMatches, ...knockoutFormatted];
+  // Mostrar solo fases finales a partir de cuartos
+  const allMatches = [...knockoutFormatted];
 
   // Agrupar partidos por fecha (usando timezone de México)
   const matchesByDate = allMatches.reduce(
@@ -161,8 +161,8 @@ export default async function MatchesPage() {
           </h1>
           <p className="text-muted-foreground mt-2">
             {hasKnockout
-              ? "Eliminatorias del Mundial 2026"
-              : "Partidos de la fase de grupos"}
+              ? "Fases Finales del Mundial 2026"
+              : "No hay partidos programados"}
           </p>
         </div>
       </div>
