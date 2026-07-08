@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCountdown } from "@/lib/use-countdown";
 import {
   translateCountry,
   translateCity,
@@ -72,6 +73,13 @@ export default function PredictionCard({
   // UI-REC #3: brief success ring — remove this line (and its usages below) to disable
   const [justSaved, setJustSaved] = useState(false);
 
+  // Auto-save debounce timer
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Goal ball animation state
+  const [ballAnim, setBallAnim] = useState<{ key: number; side: "home" | "away" } | null>(null);
+  const ballKeyRef = useRef(0);
+
   const matchDate = parseMatchDate(match.date);
 
   // Server-time offset (anti-cheat): keeps UI lock in sync with server clock.
@@ -117,6 +125,10 @@ export default function PredictionCard({
   }, [homeScore, awayScore, saved]);
 
   const handleSave = async () => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
     if (isSaving || isDisabled) return;
     setError(null);
     // Actualizar ref ANTES del estado para que el efecto vea el nuevo valor
@@ -169,11 +181,48 @@ export default function PredictionCard({
     }
   };
 
+  // Auto-guardado debounced (1.2s) cuando hay cambios sin guardar
+  const handleSaveRef = useRef(handleSave);
+  handleSaveRef.current = handleSave;
+  useEffect(() => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+
+    if (isDisabled || isSaving) return;
+
+    const hasChanged =
+      !lastSavedRef.current ||
+      homeScore !== lastSavedRef.current.homeScore ||
+      awayScore !== lastSavedRef.current.awayScore;
+
+    if (hasChanged) {
+      autoSaveTimerRef.current = setTimeout(() => {
+        void handleSaveRef.current();
+      }, 1200);
+    }
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+    };
+  }, [homeScore, awayScore, isDisabled, isSaving]);
+
+  const triggerBall = (side: "home" | "away") => {
+    ballKeyRef.current += 1;
+    setBallAnim({ key: ballKeyRef.current, side });
+  };
+
   const incrementScore = (team: "home" | "away") => {
     if (isDisabled) return;
     if (team === "home") {
+      triggerBall("home");
       setHomeScore((prev) => Math.min(prev + 1, 20));
     } else {
+      triggerBall("away");
       setAwayScore((prev) => Math.min(prev + 1, 20));
     }
   };
@@ -192,8 +241,10 @@ export default function PredictionCard({
     const numValue = parseInt(value) || 0;
     const clampedValue = Math.max(0, Math.min(20, numValue));
     if (team === "home") {
+      if (clampedValue > homeScore) triggerBall("home");
       setHomeScore(clampedValue);
     } else {
+      if (clampedValue > awayScore) triggerBall("away");
       setAwayScore(clampedValue);
     }
   };
@@ -246,6 +297,8 @@ export default function PredictionCard({
   const homePlayerSrc = isPast ? null : getPlayerForTeam(match.homeTeam);
   const awayPlayerSrc = isPast ? null : getPlayerForTeam(match.awayTeam);
 
+  const countdown = useCountdown(matchDate, serverOffset);
+
   const visualWinner =
     homeScore > awayScore ? "home" : awayScore > homeScore ? "away" : "draw";
 
@@ -287,7 +340,7 @@ export default function PredictionCard({
     if (playerSrc) {
       return (
         <div
-          className="relative h-28 w-20 sm:h-32 sm:w-24 md:h-36 md:w-28 flex-shrink-0 pointer-events-none select-none"
+          className="relative h-28 w-20 sm:h-32 sm:w-24 md:h-36 md:w-28 flex-shrink-0 select-none transition-transform duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95"
           aria-hidden="true"
         >
           <Image
@@ -353,49 +406,85 @@ export default function PredictionCard({
 
             <div className="min-w-0">
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 w-full">
-                <p className="text-xs sm:text-sm font-medium line-clamp-2 text-right leading-tight">
-                  {translateCountry(match.homeTeam.name)}
-                </p>
+                <div className="flex items-center justify-end gap-1 min-w-0">
+                  <span className="sm:hidden font-mono font-bold text-xs tracking-wide">
+                    {match.homeTeam.code}
+                  </span>
+                  <div className="relative w-5 h-4 sm:hidden flex-shrink-0">
+                    <Image
+                      src={match.homeTeam.flag}
+                      alt=""
+                      fill
+                      className="object-contain"
+                      unoptimized
+                    />
+                  </div>
+                  <p className="hidden sm:block text-sm font-medium line-clamp-2 text-right leading-tight">
+                    {translateCountry(match.homeTeam.name)}
+                  </p>
+                </div>
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold text-center w-5">
                   vs
                 </span>
-                <p className="text-xs sm:text-sm font-medium line-clamp-2 leading-tight">
-                  {translateCountry(match.awayTeam.name)}
-                </p>
+                <div className="flex items-center gap-1 min-w-0">
+                  <div className="relative w-5 h-4 sm:hidden flex-shrink-0">
+                    <Image
+                      src={match.awayTeam.flag}
+                      alt=""
+                      fill
+                      className="object-contain"
+                      unoptimized
+                    />
+                  </div>
+                  <span className="sm:hidden font-mono font-bold text-xs tracking-wide">
+                    {match.awayTeam.code}
+                  </span>
+                  <p className="hidden sm:block text-sm font-medium line-clamp-2 leading-tight">
+                    {translateCountry(match.awayTeam.name)}
+                  </p>
+                </div>
               </div>
 
-              <div className="mt-2 flex items-center justify-center gap-2">
+              <div className="relative mt-2 flex items-center justify-center gap-2">
+                {ballAnim && (
+                  <div
+                    key={ballAnim.key}
+                    onAnimationEnd={() => setBallAnim(null)}
+                    className={cn(
+                      "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-2xl pointer-events-none",
+                      ballAnim.side === "home"
+                        ? "animate-ball-fly-home"
+                        : "animate-ball-fly-away",
+                    )}
+                  >
+                    ⚽
+                  </div>
+                )}
                 <CompactScoreInput team="home" value={homeScore} />
                 <span className="text-muted-foreground font-bold text-sm w-3 text-center select-none">
                   –
                 </span>
                 <CompactScoreInput team="away" value={awayScore} />
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={isDisabled || isSaving}
-                  // UI-REC #2: aria-label — remove this line if not needed
-                  aria-label={isPast ? "Predicción cerrada" : saved ? "Predicción guardada" : "Guardar predicción"}
-                  className={cn(
-                    // UI-REC #8: h-10 w-10 (40px) touch target + scale tap feedback
-                    "flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center transition-all active:scale-95 touch-manipulation font-bold text-sm select-none border",
-                    isPast
-                      ? "bg-muted text-muted-foreground cursor-not-allowed border-transparent"
-                      : saved
-                        ? "bg-green-500/10 text-green-600 border-green-500/40"
+                {(!saved || isSaving) && !isPast && (
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    aria-label={saved ? "Predicción guardada" : "Guardar predicción"}
+                    className={cn(
+                      "flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center transition-all active:scale-95 touch-manipulation font-bold text-sm select-none border",
+                      isSaving
+                        ? "bg-muted text-foreground cursor-wait border-transparent"
                         : "bg-primary text-primary-foreground border-transparent active:opacity-80",
-                  )}
-                >
-                  {isSaving ? (
-                    <span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin block" />
-                  ) : isPast ? (
-                    "🔒"
-                  ) : saved ? (
-                    "✓"
-                  ) : (
-                    "↑"
-                  )}
-                </button>
+                    )}
+                  >
+                    {isSaving ? (
+                      <span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin block" />
+                    ) : (
+                      "↑"
+                    )}
+                  </button>
+                )}
               </div>
 
           {/* Result indicator — visible once match has a score */}
@@ -445,24 +534,24 @@ export default function PredictionCard({
               );
             })()}
 
-          {/* Meta row — mobile: solo día/hora · sm+: detalles completos */}
+          {/* Meta row — hora + countdown en mobile · sm+: detalles completos */}
           <div className="mt-1.5 text-[10px] sm:text-xs text-muted-foreground text-center w-full">
             <span className="hidden sm:inline">
               {match.group ? `Grupo ${match.group}` : match.stage} ·{" "}
               {translateCity(match.city)} ·{" "}
             </span>
             <span>
-              {matchDate.toLocaleDateString("es-MX", {
-                month: "short",
-                day: "numeric",
-                timeZone: "America/Mexico_City",
-              })}{" "}
               {matchDate.toLocaleTimeString("es-MX", {
                 hour: "2-digit",
                 minute: "2-digit",
                 timeZone: "America/Mexico_City",
               })}
             </span>
+            {!isPast && (
+              <span className="text-muted-foreground/70 ml-1">
+                (faltan {countdown})
+              </span>
+            )}
             <span className="hidden sm:inline">
               {(() => {
                 if (match.id.startsWith("match_")) {
