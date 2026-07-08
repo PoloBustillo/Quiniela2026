@@ -272,20 +272,16 @@ export default function PredictionCard({
 
     if (team === "home") {
       setHomeInputStr(value);
-      if (value === "") {
-        setHomeScore(0);
-        return;
-      }
+      // While the field is empty we don't commit a score yet; this prevents
+      // auto-save from firing and the keyboard from closing mid-typing.
+      if (value === "") return;
       const clamped = normalizeScore(value);
       if (clamped > homeScore) triggerBall("home");
       setHomeScore(clamped);
       setHomeInputStr(String(clamped));
     } else {
       setAwayInputStr(value);
-      if (value === "") {
-        setAwayScore(0);
-        return;
-      }
+      if (value === "") return;
       const clamped = normalizeScore(value);
       if (clamped > awayScore) triggerBall("away");
       setAwayScore(clamped);
@@ -295,9 +291,19 @@ export default function PredictionCard({
 
   const handleInputBlur = (team: "home" | "away") => {
     if (team === "home") {
-      setHomeInputStr(String(homeScore));
+      if (homeInputStr === "") {
+        setHomeScore(0);
+        setHomeInputStr("0");
+      } else {
+        setHomeInputStr(String(homeScore));
+      }
     } else {
-      setAwayInputStr(String(awayScore));
+      if (awayInputStr === "") {
+        setAwayScore(0);
+        setAwayInputStr("0");
+      } else {
+        setAwayInputStr(String(awayScore));
+      }
     }
   };
 
