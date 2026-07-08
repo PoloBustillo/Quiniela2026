@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Copy,
   Check,
+  Trophy,
 } from "lucide-react";
 import Image from "next/image";
 import { AdminTableSkeleton } from "@/components/ui/skeletons";
@@ -77,6 +78,7 @@ export function UsersPaymentManager() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [copiedPayment, setCopiedPayment] = useState(false);
+  const [copiedFinals, setCopiedFinals] = useState(false);
   const [copiedPredictions, setCopiedPredictions] = useState(false);
   const [knockoutMatches, setKnockoutMatches] = useState<any[]>([]);
   const [selectedMatchIds, setSelectedMatchIds] = useState<Set<string>>(new Set());
@@ -201,6 +203,9 @@ export function UsersPaymentManager() {
       !u.paidKnockout &&
       !u.paidFinals,
   );
+  const unpaidFinalsUsers = users.filter(
+    (u) => u.isActive && !u.paidFinals,
+  );
 
   const totalRevenue = users.reduce((acc, u) => acc + getTotalPaid(u), 0);
 
@@ -261,7 +266,10 @@ export function UsersPaymentManager() {
     return upcomingMatchIds.some((matchId) => !userPredMatchIds.has(matchId));
   });
 
-  const copyToClipboard = async (text: string, type: "payment" | "predictions") => {
+  const copyToClipboard = async (
+    text: string,
+    type: "payment" | "finals" | "predictions",
+  ) => {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -275,6 +283,9 @@ export function UsersPaymentManager() {
     if (type === "payment") {
       setCopiedPayment(true);
       setTimeout(() => setCopiedPayment(false), 2000);
+    } else if (type === "finals") {
+      setCopiedFinals(true);
+      setTimeout(() => setCopiedFinals(false), 2000);
     } else {
       setCopiedPredictions(true);
       setTimeout(() => setCopiedPredictions(false), 2000);
@@ -293,6 +304,23 @@ ${unpaidUsers.map((u) => `• ${u.email || u.name || "Sin nombre"}`).join("\n")}
 • Fase de Grupos: $100
 • 16vos + 8vos: $100
 • Fases Finales: $100
+
+🏦 *Datos para depósito:*
+CLABE: 002320700942203419
+Nombre: Mario Leopoldo Bustillo Eguiluz
+Tel: 3317700339
+
+💰 Favor de realizar su depósito y confirmar en el grupo 🙏`;
+
+  const finalsPaymentMessage = `⚽ *Quiniela Mundial 2026* ⚽
+
+🏆 *Recordatorio — Fases Finales*
+
+Ya vienen los Cuartos de Final, la Semifinal, el 3er Lugar y la Gran Final.
+
+Los siguientes participantes aún no han pagado la fase final ($100):
+
+${unpaidFinalsUsers.map((u) => `• ${u.email || u.name || "Sin nombre"}`).join("\n")}
 
 🏦 *Datos para depósito:*
 CLABE: 002320700942203419
@@ -610,7 +638,7 @@ ${upcomingMatchIds.length > 0
           <p className="text-sm font-medium text-muted-foreground">
             Mensajes WhatsApp para el grupo:
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Button
               variant="outline"
               onClick={() => copyToClipboard(paymentMessage, "payment")}
@@ -625,6 +653,21 @@ ${upcomingMatchIds.length > 0
               {copiedPayment
                 ? "¡Copiado!"
                 : `Copiar recordatorio de pagos (${unpaidUsers.length})`}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => copyToClipboard(finalsPaymentMessage, "finals")}
+              disabled={unpaidFinalsUsers.length === 0}
+              className="justify-start"
+            >
+              {copiedFinals ? (
+                <Check className="h-4 w-4 mr-2 text-green-500" />
+              ) : (
+                <Trophy className="h-4 w-4 mr-2 text-yellow-500" />
+              )}
+              {copiedFinals
+                ? "¡Copiado!"
+                : `Copiar recordatorio Fases Finales (${unpaidFinalsUsers.length})`}
             </Button>
             <Button
               variant="outline"

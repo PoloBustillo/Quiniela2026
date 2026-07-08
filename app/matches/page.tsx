@@ -79,6 +79,7 @@ export default async function MatchesPage() {
       OR: [
         { status: "SCHEDULED" },
         { status: "LIVE" },
+        { status: "FINISHED" },
       ],
     },
     include: {

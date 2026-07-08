@@ -15,6 +15,7 @@ import {
 } from "@/lib/translations";
 import { getPlayerForTeam } from "@/lib/team-players";
 import { calculatePoints, parseMatchDate } from "@/lib/points";
+import SideFigure from "@/components/SideFigure";
 
 interface Team {
   id: number | string;
@@ -49,6 +50,94 @@ interface PredictionCardProps {
   /** Pre-fetched server-time offset in ms. If provided, skips the per-card /api/server-time request. */
   serverOffset?: number;
 }
+
+interface CompactScoreInputProps {
+  team: "home" | "away";
+  inputStr: string;
+  onChange: (team: "home" | "away", value: string) => void;
+  onBlur: (team: "home" | "away") => void;
+  disabled: boolean;
+}
+
+const CompactScoreInput = ({
+  team,
+  inputStr,
+  onChange,
+  onBlur,
+  disabled,
+}: CompactScoreInputProps) => (
+  <Input
+    type="text"
+    inputMode="numeric"
+    pattern="[0-9]*"
+    min="0"
+    max="20"
+    value={inputStr}
+    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange(team, e.target.value)
+    }
+    onBlur={() => onBlur(team)}
+    disabled={disabled}
+    className="w-12 h-10 text-center text-lg font-black px-0 rounded-lg border"
+  />
+);
+
+interface ScoreControlProps {
+  team: "home" | "away";
+  inputStr: string;
+  numValue: number;
+  onIncrement: (team: "home" | "away") => void;
+  onDecrement: (team: "home" | "away") => void;
+  onChange: (team: "home" | "away", value: string) => void;
+  onBlur: (team: "home" | "away") => void;
+  disabled: boolean;
+}
+
+const ScoreControl = ({
+  team,
+  inputStr,
+  numValue,
+  onIncrement,
+  onDecrement,
+  onChange,
+  onBlur,
+  disabled,
+}: ScoreControlProps) => (
+  <div className="flex items-center">
+    <button
+      type="button"
+      onClick={() => onDecrement(team)}
+      disabled={disabled || numValue === 0}
+      aria-label={`Reducir goles ${team === "home" ? "local" : "visitante"}`}
+      className="h-9 w-9 flex items-center justify-center rounded-l-lg border border-border bg-background active:bg-muted disabled:opacity-30 transition-colors touch-manipulation select-none"
+    >
+      <Minus className="h-3.5 w-3.5" />
+    </button>
+    <Input
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      min="0"
+      max="20"
+      value={inputStr}
+      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+        onChange(team, e.target.value)
+      }
+      onBlur={() => onBlur(team)}
+      disabled={disabled}
+      className="w-10 h-9 text-center text-base font-bold px-0 rounded-none border-x-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+    />
+    <button
+      type="button"
+      onClick={() => onIncrement(team)}
+      disabled={disabled || numValue === 20}
+      aria-label={`Aumentar goles ${team === "home" ? "local" : "visitante"}`}
+      className="h-9 w-9 flex items-center justify-center rounded-r-lg border border-border bg-background active:bg-muted disabled:opacity-30 transition-colors touch-manipulation select-none"
+    >
+      <Plus className="h-3.5 w-3.5" />
+    </button>
+  </div>
+);
 
 export default function PredictionCard({
   match,
@@ -311,146 +400,30 @@ export default function PredictionCard({
     }
   };
 
-  // ── Shared score stepper ────────────────────────────────────────────────────
-  const ScoreControl = ({ team }: { team: "home" | "away" }) => {
-    const inputStr = team === "home" ? homeInputStr : awayInputStr;
-    const numValue = team === "home" ? homeScore : awayScore;
-
-    return (
-      <div className="flex items-center">
-        <button
-          type="button"
-          onClick={() => decrementScore(team)}
-          disabled={isDisabled || isSaving || numValue === 0}
-          aria-label={`Reducir goles ${team === "home" ? "local" : "visitante"}`}
-          className="h-9 w-9 flex items-center justify-center rounded-l-lg border border-border bg-background active:bg-muted disabled:opacity-30 transition-colors touch-manipulation select-none"
-        >
-          <Minus className="h-3.5 w-3.5" />
-        </button>
-        <Input
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          min="0"
-          max="20"
-          value={inputStr}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            handleInputChange(team, e.target.value)
-          }
-          onBlur={() => handleInputBlur(team)}
-          disabled={isDisabled || isSaving}
-          className="w-10 h-9 text-center text-base font-bold px-0 rounded-none border-x-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-        />
-        <button
-          type="button"
-          onClick={() => incrementScore(team)}
-          disabled={isDisabled || isSaving || numValue === 20}
-          aria-label={`Aumentar goles ${team === "home" ? "local" : "visitante"}`}
-          className="h-9 w-9 flex items-center justify-center rounded-r-lg border border-border bg-background active:bg-muted disabled:opacity-30 transition-colors touch-manipulation select-none"
-        >
-          <Plus className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    );
-  };
-
   const homePlayerSrc = isPast ? null : getPlayerForTeam(match.homeTeam);
   const awayPlayerSrc = isPast ? null : getPlayerForTeam(match.awayTeam);
 
   const countdown = useCountdown(matchDate, serverOffset);
 
-  const visualWinner =
-    homeScore > awayScore ? "home" : awayScore > homeScore ? "away" : "draw";
-
-  const CompactScoreInput = ({
-    team,
-  }: {
-    team: "home" | "away";
-  }) => {
-    const inputStr = team === "home" ? homeInputStr : awayInputStr;
-
-    return (
-      <Input
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        min="0"
-        max="20"
-        value={inputStr}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          handleInputChange(team, e.target.value)
-        }
-        onBlur={() => handleInputBlur(team)}
-        disabled={isDisabled || isSaving}
-        className="w-12 h-10 text-center text-lg font-black px-0 rounded-lg border"
-      />
-    );
-  };
-
-  const SideFigure = ({
-    team,
-    playerSrc,
-    side,
-  }: {
-    team: Team;
-    playerSrc: string | null;
-    side: "home" | "away";
-  }) => {
-    const isWinner = visualWinner === side;
-    const isLoser = visualWinner !== side && visualWinner !== "draw";
-    const isDraw = visualWinner === "draw";
-
-    if (playerSrc) {
+  const detailsLink = (() => {
+    if (match.id.startsWith("match_")) {
+      const detailId = match.id.replace("match_", "");
+      if (!detailId) return null;
       return (
-        <div
-          className="relative h-28 w-20 sm:h-32 sm:w-24 md:h-36 md:w-28 flex-shrink-0 select-none transition-transform duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95"
-          aria-hidden="true"
+        <Link
+          href={`/matches/${encodeURIComponent(detailId)}`}
+          className="text-[10px] sm:text-xs text-primary font-medium hover:underline"
+          onClick={(e) => e.stopPropagation()}
         >
-          <Image
-            src={team.flag}
-            alt={team.name}
-            fill
-            className="object-cover rounded-xl opacity-40"
-            unoptimized
-            sizes="(max-width: 640px) 80px, (max-width: 768px) 96px, 112px"
-          />
-          {isWinner && (
-            <div
-              className="absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.5),transparent_70%)] blur-md pointer-events-none animate-glow-pulse"
-              aria-hidden="true"
-            />
-          )}
-          <Image
-            src={playerSrc}
-            alt=""
-            fill
-            className={cn(
-              "object-contain transition-all duration-300",
-              isWinner &&
-                "scale-110 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)] drop-shadow-[0_0_22px_rgba(250,204,21,0.5)]",
-              isLoser && "grayscale opacity-50",
-              isDraw && "opacity-75",
-            )}
-            unoptimized
-            sizes="(max-width: 640px) 80px, (max-width: 768px) 96px, 112px"
-          />
-        </div>
+          Detalles →
+        </Link>
       );
     }
+    return null;
+  })();
 
-    return (
-      <div className="relative h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 flex-shrink-0">
-        <Image
-          src={team.flag}
-          alt={team.name}
-          fill
-          className="object-contain"
-          unoptimized
-          sizes="(max-width: 640px) 56px, (max-width: 768px) 64px, 80px"
-        />
-      </div>
-    );
-  };
+  const visualWinner =
+    homeScore > awayScore ? "home" : awayScore > homeScore ? "away" : "draw";
 
   // ── COMPACT (list) mode ─────────────────────────────────────────────────────
   if (compact) {
@@ -471,10 +444,17 @@ export default function PredictionCard({
                 team={match.homeTeam}
                 playerSrc={homePlayerSrc}
                 side="home"
+                visualWinner={visualWinner}
               />
             </div>
 
             <div className="min-w-0">
+              {detailsLink && (
+                <div className="hidden sm:flex justify-end mb-1">
+                  {detailsLink}
+                </div>
+              )}
+
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 w-full">
                 <div className="flex items-center justify-end gap-1 min-w-0">
                   <span className="sm:hidden font-mono font-bold text-xs tracking-wide">
@@ -530,11 +510,23 @@ export default function PredictionCard({
                     ⚽
                   </div>
                 )}
-                <CompactScoreInput team="home" />
+                <CompactScoreInput
+                  team="home"
+                  inputStr={homeInputStr}
+                  onChange={handleInputChange}
+                  onBlur={handleInputBlur}
+                  disabled={isDisabled || isSaving}
+                />
                 <span className="text-muted-foreground font-bold text-sm w-3 text-center select-none">
                   –
                 </span>
-                <CompactScoreInput team="away" />
+                <CompactScoreInput
+                  team="away"
+                  inputStr={awayInputStr}
+                  onChange={handleInputChange}
+                  onBlur={handleInputBlur}
+                  disabled={isDisabled || isSaving}
+                />
                 {(!saved || isSaving) && !isPast && (
                   <button
                     type="button"
@@ -604,16 +596,30 @@ export default function PredictionCard({
               );
             })()}
 
-          {/* Meta row — hora + countdown en mobile · sm+: info completa alineada */}
-          <div className="mt-1.5 flex flex-col sm:flex-row items-center justify-between text-[10px] sm:text-xs text-muted-foreground gap-1 w-full">
-            <span className="hidden sm:inline truncate">
+          {/* Meta — desktop: fase/ciudad + hora grande en filas propias · mobile: hora compacta */}
+          <div className="mt-1.5 flex flex-col items-center text-muted-foreground w-full">
+            <span className="hidden sm:inline text-xs font-medium">
               {match.group ? `Grupo ${match.group}` : match.stage} ·{" "}
               {translateCity(match.city)}
             </span>
-            <span className="text-center">
+            <span className="hidden sm:inline mt-0.5 text-base sm:text-lg font-bold text-foreground text-center">
               {matchDate.toLocaleTimeString("es-MX", {
                 hour: "2-digit",
                 minute: "2-digit",
+                hour12: true,
+                timeZone: "America/Mexico_City",
+              })}
+            </span>
+            {!isPast && (
+              <span className="hidden sm:inline text-[10px] text-muted-foreground/70">
+                (faltan {countdown})
+              </span>
+            )}
+            <span className="sm:hidden text-[10px] text-center">
+              {matchDate.toLocaleTimeString("es-MX", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
                 timeZone: "America/Mexico_City",
               })}
               {!isPast && (
@@ -621,24 +627,6 @@ export default function PredictionCard({
                   (faltan {countdown})
                 </span>
               )}
-            </span>
-            <span className="hidden sm:inline flex-shrink-0">
-              {(() => {
-                if (match.id.startsWith("match_")) {
-                  const detailId = match.id.replace("match_", "");
-                  if (!detailId) return null;
-                  return (
-                    <Link
-                      href={`/matches/${encodeURIComponent(detailId)}`}
-                      className="ml-3 text-primary font-medium hover:underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Detalles →
-                    </Link>
-                  );
-                }
-                return null;
-              })()}
             </span>
           </div>
               {error && (
@@ -651,6 +639,7 @@ export default function PredictionCard({
                 team={match.awayTeam}
                 playerSrc={awayPlayerSrc}
                 side="away"
+                visualWinner={visualWinner}
               />
             </div>
           </div>
@@ -700,7 +689,16 @@ export default function PredictionCard({
                   {translateCountry(match.homeTeam.name)}
                 </p>
               </div>
-              <ScoreControl team="home" />
+              <ScoreControl
+                team="home"
+                inputStr={homeInputStr}
+                numValue={homeScore}
+                onIncrement={incrementScore}
+                onDecrement={decrementScore}
+                onChange={handleInputChange}
+                onBlur={handleInputBlur}
+                disabled={isDisabled || isSaving}
+              />
             </div>
             <div className="text-center text-xs text-muted-foreground font-medium">
               VS
@@ -720,7 +718,16 @@ export default function PredictionCard({
                   {translateCountry(match.awayTeam.name)}
                 </p>
               </div>
-              <ScoreControl team="away" />
+              <ScoreControl
+                team="away"
+                inputStr={awayInputStr}
+                numValue={awayScore}
+                onIncrement={incrementScore}
+                onDecrement={decrementScore}
+                onChange={handleInputChange}
+                onBlur={handleInputBlur}
+                disabled={isDisabled || isSaving}
+              />
             </div>
           </div>
 

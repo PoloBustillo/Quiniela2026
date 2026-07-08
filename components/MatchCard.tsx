@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import Image from "next/image";
 import { Calendar, MapPin, Clock } from "lucide-react";
 import { parseMatchDate } from "@/lib/points";
+import { getPlayerForTeam } from "@/lib/team-players";
+import SideFigure from "@/components/SideFigure";
 
 interface MatchTeam {
   id: number;
@@ -25,6 +26,8 @@ interface Match {
   homeTeam: MatchTeam;
   awayTeam: MatchTeam;
   stage: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
 }
 
 interface MatchCardProps {
@@ -48,12 +51,28 @@ export function MatchCard({ match }: MatchCardProps) {
   const timeStr = matchDate.toLocaleTimeString("es-MX", {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: true,
     timeZone: "America/Mexico_City",
   });
 
+  const isFinished =
+    match.homeScore != null &&
+    match.awayScore != null;
+
+  const visualWinner = isFinished
+    ? match.homeScore! > match.awayScore!
+      ? "home"
+      : match.awayScore! > match.homeScore!
+        ? "away"
+        : "draw"
+    : null;
+
+  const homePlayerSrc = getPlayerForTeam(homeTeam);
+  const awayPlayerSrc = getPlayerForTeam(awayTeam);
+
   return (
     <Link href={`/matches/${match.id}`} className="block group">
-      <Card className="hover:shadow-lg hover:border-primary/40 transition-all group-hover:scale-[1.01]">
+      <Card className="hover:shadow-lg hover:border-primary/40 transition-all group-hover:scale-[1.01] overflow-hidden">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             {match.matchNumber > 0 ? (
@@ -74,20 +93,25 @@ export function MatchCard({ match }: MatchCardProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Teams */}
-          <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
+          <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-center">
             {/* Home Team */}
             <div className="flex flex-col items-center gap-2">
-              <div className="relative w-16 h-12">
-                <Image
-                  src={homeTeam?.flag || "/flags/tbd.png"}
-                  alt={homeTeam?.name || "TBD"}
-                  fill
-                  className="object-contain"
-                />
-              </div>
+              <SideFigure
+                team={homeTeam}
+                playerSrc={homePlayerSrc}
+                side="home"
+                visualWinner={visualWinner}
+                className="h-32 w-24 sm:h-36 sm:w-28 md:h-40 md:w-32"
+                sizes="(max-width: 640px) 128px, 160px"
+              />
               <p className="text-sm font-semibold text-center">
                 {homeTeam?.name || "TBD"}
               </p>
+              {isFinished && (
+                <p className="text-lg font-bold text-foreground">
+                  {match.homeScore}
+                </p>
+              )}
             </div>
 
             {/* VS */}
@@ -95,17 +119,22 @@ export function MatchCard({ match }: MatchCardProps) {
 
             {/* Away Team */}
             <div className="flex flex-col items-center gap-2">
-              <div className="relative w-16 h-12">
-                <Image
-                  src={awayTeam?.flag || "/flags/tbd.png"}
-                  alt={awayTeam?.name || "TBD"}
-                  fill
-                  className="object-contain"
-                />
-              </div>
+              <SideFigure
+                team={awayTeam}
+                playerSrc={awayPlayerSrc}
+                side="away"
+                visualWinner={visualWinner}
+                className="h-32 w-24 sm:h-36 sm:w-28 md:h-40 md:w-32"
+                sizes="(max-width: 640px) 128px, 160px"
+              />
               <p className="text-sm font-semibold text-center">
                 {awayTeam?.name || "TBD"}
               </p>
+              {isFinished && (
+                <p className="text-lg font-bold text-foreground">
+                  {match.awayScore}
+                </p>
+              )}
             </div>
           </div>
 
