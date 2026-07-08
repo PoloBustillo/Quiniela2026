@@ -62,6 +62,14 @@ export default function PredictionCard({
   const [awayScore, setAwayScore] = useState(
     existingPrediction?.awayScore ?? 0,
   );
+  // String mirrors of the score inputs: allow empty while editing so the
+  // keyboard doesn't close when the user clears the field to type a new value.
+  const [homeInputStr, setHomeInputStr] = useState(
+    String(existingPrediction?.homeScore ?? 0),
+  );
+  const [awayInputStr, setAwayInputStr] = useState(
+    String(existingPrediction?.awayScore ?? 0),
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(!!existingPrediction);
   const [error, setError] = useState<string | null>(null);
@@ -220,79 +228,121 @@ export default function PredictionCard({
     if (isDisabled) return;
     if (team === "home") {
       triggerBall("home");
-      setHomeScore((prev) => Math.min(prev + 1, 20));
+      setHomeScore((prev) => {
+        const next = Math.min(prev + 1, 20);
+        setHomeInputStr(String(next));
+        return next;
+      });
     } else {
       triggerBall("away");
-      setAwayScore((prev) => Math.min(prev + 1, 20));
+      setAwayScore((prev) => {
+        const next = Math.min(prev + 1, 20);
+        setAwayInputStr(String(next));
+        return next;
+      });
     }
   };
 
   const decrementScore = (team: "home" | "away") => {
     if (isDisabled) return;
     if (team === "home") {
-      setHomeScore((prev) => Math.max(prev - 1, 0));
+      setHomeScore((prev) => {
+        const next = Math.max(prev - 1, 0);
+        setHomeInputStr(String(next));
+        return next;
+      });
     } else {
-      setAwayScore((prev) => Math.max(prev - 1, 0));
+      setAwayScore((prev) => {
+        const next = Math.max(prev - 1, 0);
+        setAwayInputStr(String(next));
+        return next;
+      });
     }
+  };
+
+  const normalizeScore = (value: string) => {
+    if (value === "" || value.trim() === "") return 0;
+    const num = parseInt(value, 10);
+    if (Number.isNaN(num)) return 0;
+    return Math.max(0, Math.min(20, num));
   };
 
   const handleInputChange = (team: "home" | "away", value: string) => {
     if (isDisabled) return;
-    const numValue = parseInt(value) || 0;
-    const clampedValue = Math.max(0, Math.min(20, numValue));
+
     if (team === "home") {
-      if (clampedValue > homeScore) triggerBall("home");
-      setHomeScore(clampedValue);
+      setHomeInputStr(value);
+      if (value === "") {
+        setHomeScore(0);
+        return;
+      }
+      const clamped = normalizeScore(value);
+      if (clamped > homeScore) triggerBall("home");
+      setHomeScore(clamped);
+      setHomeInputStr(String(clamped));
     } else {
-      if (clampedValue > awayScore) triggerBall("away");
-      setAwayScore(clampedValue);
+      setAwayInputStr(value);
+      if (value === "") {
+        setAwayScore(0);
+        return;
+      }
+      const clamped = normalizeScore(value);
+      if (clamped > awayScore) triggerBall("away");
+      setAwayScore(clamped);
+      setAwayInputStr(String(clamped));
+    }
+  };
+
+  const handleInputBlur = (team: "home" | "away") => {
+    if (team === "home") {
+      setHomeInputStr(String(homeScore));
+    } else {
+      setAwayInputStr(String(awayScore));
     }
   };
 
   // ── Shared score stepper ────────────────────────────────────────────────────
-  const ScoreControl = ({
-    team,
-    value,
-  }: {
-    team: "home" | "away";
-    value: number;
-  }) => (
-    <div className="flex items-center">
-      <button
-        type="button"
-        onClick={() => decrementScore(team)}
-        disabled={isDisabled || isSaving || value === 0}
-        // UI-REC #2: aria-label — remove this line if not needed
-        aria-label={`Reducir goles ${team === "home" ? "local" : "visitante"}`}
-        className="h-9 w-9 flex items-center justify-center rounded-l-lg border border-border bg-background active:bg-muted disabled:opacity-30 transition-colors touch-manipulation select-none"
-      >
-        <Minus className="h-3.5 w-3.5" />
-      </button>
-      <Input
-        type="number"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        min="0"
-        max="20"
-        value={value}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          handleInputChange(team, e.target.value)
-        }
-        disabled={isDisabled || isSaving}
-        className="w-10 h-9 text-center text-base font-bold px-0 rounded-none border-x-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-      />
-      <button
-        type="button"
-        onClick={() => incrementScore(team)}
-        disabled={isDisabled || isSaving || value === 20}
-        // UI-REC #2: aria-label — remove this line if not needed
-        aria-label={`Aumentar goles ${team === "home" ? "local" : "visitante"}`}
-        className="h-9 w-9 flex items-center justify-center rounded-r-lg border border-border bg-background active:bg-muted disabled:opacity-30 transition-colors touch-manipulation select-none"
-      >
-        <Plus className="h-3.5 w-3.5" />
-      </button>
-    </div>
-  );
+  const ScoreControl = ({ team }: { team: "home" | "away" }) => {
+    const inputStr = team === "home" ? homeInputStr : awayInputStr;
+    const numValue = team === "home" ? homeScore : awayScore;
+
+    return (
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={() => decrementScore(team)}
+          disabled={isDisabled || isSaving || numValue === 0}
+          aria-label={`Reducir goles ${team === "home" ? "local" : "visitante"}`}
+          className="h-9 w-9 flex items-center justify-center rounded-l-lg border border-border bg-background active:bg-muted disabled:opacity-30 transition-colors touch-manipulation select-none"
+        >
+          <Minus className="h-3.5 w-3.5" />
+        </button>
+        <Input
+          type="number"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          min="0"
+          max="20"
+          value={inputStr}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            handleInputChange(team, e.target.value)
+          }
+          onBlur={() => handleInputBlur(team)}
+          disabled={isDisabled || isSaving}
+          className="w-10 h-9 text-center text-base font-bold px-0 rounded-none border-x-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+        />
+        <button
+          type="button"
+          onClick={() => incrementScore(team)}
+          disabled={isDisabled || isSaving || numValue === 20}
+          aria-label={`Aumentar goles ${team === "home" ? "local" : "visitante"}`}
+          className="h-9 w-9 flex items-center justify-center rounded-r-lg border border-border bg-background active:bg-muted disabled:opacity-30 transition-colors touch-manipulation select-none"
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  };
 
   const homePlayerSrc = isPast ? null : getPlayerForTeam(match.homeTeam);
   const awayPlayerSrc = isPast ? null : getPlayerForTeam(match.awayTeam);
@@ -304,25 +354,28 @@ export default function PredictionCard({
 
   const CompactScoreInput = ({
     team,
-    value,
   }: {
     team: "home" | "away";
-    value: number;
-  }) => (
-    <Input
-      type="number"
-      inputMode="numeric"
-      pattern="[0-9]*"
-      min="0"
-      max="20"
-      value={value}
-      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-        handleInputChange(team, e.target.value)
-      }
-      disabled={isDisabled || isSaving}
-      className="w-12 h-10 text-center text-lg font-black px-0 rounded-lg border"
-    />
-  );
+  }) => {
+    const inputStr = team === "home" ? homeInputStr : awayInputStr;
+
+    return (
+      <Input
+        type="number"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        min="0"
+        max="20"
+        value={inputStr}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          handleInputChange(team, e.target.value)
+        }
+        onBlur={() => handleInputBlur(team)}
+        disabled={isDisabled || isSaving}
+        className="w-12 h-10 text-center text-lg font-black px-0 rounded-lg border"
+      />
+    );
+  };
 
   const SideFigure = ({
     team,
@@ -408,7 +461,7 @@ export default function PredictionCard({
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 w-full">
                 <div className="flex items-center justify-end gap-1 min-w-0">
                   <span className="sm:hidden font-mono font-bold text-xs tracking-wide">
-                    {match.homeTeam.code}
+                    {match.homeTeam.code.toUpperCase()}
                   </span>
                   <div className="relative w-5 h-4 sm:hidden flex-shrink-0">
                     <Image
@@ -437,7 +490,7 @@ export default function PredictionCard({
                     />
                   </div>
                   <span className="sm:hidden font-mono font-bold text-xs tracking-wide">
-                    {match.awayTeam.code}
+                    {match.awayTeam.code.toUpperCase()}
                   </span>
                   <p className="hidden sm:block text-sm font-medium line-clamp-2 leading-tight">
                     {translateCountry(match.awayTeam.name)}
@@ -460,11 +513,11 @@ export default function PredictionCard({
                     ⚽
                   </div>
                 )}
-                <CompactScoreInput team="home" value={homeScore} />
+                <CompactScoreInput team="home" />
                 <span className="text-muted-foreground font-bold text-sm w-3 text-center select-none">
                   –
                 </span>
-                <CompactScoreInput team="away" value={awayScore} />
+                <CompactScoreInput team="away" />
                 {(!saved || isSaving) && !isPast && (
                   <button
                     type="button"
@@ -534,25 +587,25 @@ export default function PredictionCard({
               );
             })()}
 
-          {/* Meta row — hora + countdown en mobile · sm+: detalles completos */}
-          <div className="mt-1.5 text-[10px] sm:text-xs text-muted-foreground text-center w-full">
-            <span className="hidden sm:inline">
+          {/* Meta row — hora + countdown en mobile · sm+: info completa alineada */}
+          <div className="mt-1.5 flex flex-col sm:flex-row items-center justify-between text-[10px] sm:text-xs text-muted-foreground gap-1 w-full">
+            <span className="hidden sm:inline truncate">
               {match.group ? `Grupo ${match.group}` : match.stage} ·{" "}
-              {translateCity(match.city)} ·{" "}
+              {translateCity(match.city)}
             </span>
-            <span>
+            <span className="text-center">
               {matchDate.toLocaleTimeString("es-MX", {
                 hour: "2-digit",
                 minute: "2-digit",
                 timeZone: "America/Mexico_City",
               })}
+              {!isPast && (
+                <span className="text-muted-foreground/70 ml-1.5">
+                  (faltan {countdown})
+                </span>
+              )}
             </span>
-            {!isPast && (
-              <span className="text-muted-foreground/70 ml-1">
-                (faltan {countdown})
-              </span>
-            )}
-            <span className="hidden sm:inline">
+            <span className="hidden sm:inline flex-shrink-0">
               {(() => {
                 if (match.id.startsWith("match_")) {
                   const detailId = match.id.replace("match_", "");
@@ -560,7 +613,7 @@ export default function PredictionCard({
                   return (
                     <Link
                       href={`/matches/${encodeURIComponent(detailId)}`}
-                      className="ml-2 text-primary font-medium hover:underline"
+                      className="ml-3 text-primary font-medium hover:underline"
                       onClick={(e) => e.stopPropagation()}
                     >
                       Detalles →
@@ -630,7 +683,7 @@ export default function PredictionCard({
                   {translateCountry(match.homeTeam.name)}
                 </p>
               </div>
-              <ScoreControl team="home" value={homeScore} />
+              <ScoreControl team="home" />
             </div>
             <div className="text-center text-xs text-muted-foreground font-medium">
               VS
@@ -650,7 +703,7 @@ export default function PredictionCard({
                   {translateCountry(match.awayTeam.name)}
                 </p>
               </div>
-              <ScoreControl team="away" value={awayScore} />
+              <ScoreControl team="away" />
             </div>
           </div>
 
