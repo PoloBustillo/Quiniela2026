@@ -248,19 +248,10 @@ export function UsersPaymentManager() {
     .filter(m => selectedMatchIds.has(m.id))
     .map(m => m.id);
 
-  // Determinar fase actual: si hay knockout en los próximos partidos
-  const hasKnockoutUpcoming = nextMatches.some(m =>
-    knockoutMatches.some(km => `match_${km.id}` === m.id),
-  );
-
-  // Usuarios que pagaron la fase actual y NO han predicho al menos 1 de los partidos seleccionados
+  // Usuarios que pagaron Fases Finales y NO han predicho al menos 1 de los partidos seleccionados
   const noPredictionsUsers = users.filter((u) => {
     if (!u.isActive) return false;
-    if (hasKnockoutUpcoming) {
-      if (!(u.paidKnockout || u.paidFinals)) return false;
-    } else {
-      if (!u.paidGroupStage) return false;
-    }
+    if (!u.paidFinals) return false;
     if (upcomingMatchIds.length === 0) return false;
     const userPredMatchIds = new Set(u.predictions.map((p) => p.matchId));
     return upcomingMatchIds.some((matchId) => !userPredMatchIds.has(matchId));
