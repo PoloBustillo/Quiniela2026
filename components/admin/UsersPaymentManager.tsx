@@ -226,12 +226,26 @@ export function UsersPaymentManager() {
       id: `match_${m.id}`,
       date: new Date(m.date),
       name: `${m.homeTeam.name} vs ${m.awayTeam.name}`,
+      phase: "GROUP_STAGE" as const,
+      legacyId: undefined as string | undefined,
     }));
     const koMatches = knockoutMatches.map(m => ({
       id: `match_${m.id}`,
       date: new Date(m.matchDate),
       name: `${m.homeTeam?.name ?? "TBD"} vs ${m.awayTeam?.name ?? "TBD"}`,
+      phase: m.phase as string,
+      legacyId: undefined as string | undefined,
     }));
+
+    // Índices legacy (match_1000+) para partidos no-grupo, ordenados por fecha,
+    // igual que en app/api/predictions/route.ts y en la migración legacy.
+    const nonGroupMatches = [...koMatches]
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .filter(m => m.phase !== "GROUP_STAGE");
+    nonGroupMatches.forEach((m, index) => {
+      m.legacyId = `match_${1000 + index}`;
+    });
+
     const now = new Date();
     return [...groupMatches, ...koMatches]
       .sort((a, b) => a.date.getTime() - b.date.getTime())
@@ -248,13 +262,39 @@ export function UsersPaymentManager() {
     .filter(m => selectedMatchIds.has(m.id))
     .map(m => m.id);
 
-  // Usuarios que pagaron Fases Finales y NO han predicho al menos 1 de los partidos seleccionados
+  // Determina la cuota que cubre la fase del partido.
+  const hasPaidForPhase = (u: User, phase: string): boolean => {
+    switch (phase) {
+      case "GROUP_STAGE":
+        return u.paidGroupStage;
+      case "ROUND_OF_32":
+      case "ROUND_OF_16":
+        return u.paidKnockout;
+      case "QUARTER_FINAL":
+      case "SEMI_FINAL":
+      case "THIRD_PLACE":
+      case "FINAL":
+        return u.paidFinals;
+      default:
+        return false;
+    }
+  };
+
+  // Usuarios que pagaron la fase correspondiente a un partido próximo
+  // y NO han predicho al menos 1 de esos partidos (soportando matchId legacy).
   const noPredictionsUsers = users.filter((u) => {
     if (!u.isActive) return false;
-    if (!u.paidFinals) return false;
     if (upcomingMatchIds.length === 0) return false;
+
     const userPredMatchIds = new Set(u.predictions.map((p) => p.matchId));
-    return upcomingMatchIds.some((matchId) => !userPredMatchIds.has(matchId));
+
+    return nextMatches.some((m) => {
+      if (!selectedMatchIds.has(m.id)) return false;
+      if (!hasPaidForPhase(u, m.phase)) return false;
+      const hasPrediction = userPredMatchIds.has(m.id) ||
+        (!!m.legacyId && userPredMatchIds.has(m.legacyId));
+      return !hasPrediction;
+    });
   });
 
   const copyToClipboard = async (
