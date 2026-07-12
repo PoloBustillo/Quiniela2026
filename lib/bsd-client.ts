@@ -26,6 +26,11 @@ export type BsdMatchStatus =
   | "postponed"
   | "cancelled";
 
+export interface BsdExtraTimeScore {
+  home: number;
+  away: number;
+}
+
 export interface BsdLiveEvent {
   id: number;
   league_id: number;
@@ -39,6 +44,7 @@ export interface BsdLiveEvent {
   away_score: number | null;
   home_score_ht: number | null;
   away_score_ht: number | null;
+  extra_time_score?: BsdExtraTimeScore | null;
   live_websocket: boolean;
   last_updated: string;
 }
@@ -56,6 +62,7 @@ export interface BsdEventDetail {
   away_score: number | null;
   home_score_ht: number | null;
   away_score_ht: number | null;
+  extra_time_score?: BsdExtraTimeScore | null;
   penalty_shootout: null | {
     home: number;
     away: number;
@@ -380,6 +387,33 @@ export async function getEventMetadata(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Devuelve el marcador FINAL de BSD, sumando goles de tiempo extra
+ * (AET) cuando existan. No suma penales, ya que esos definen el ganador
+ * pero no el marcador del partido para la quiniela.
+ * Retorna null si aún no hay marcador base.
+ */
+export function getBsdFinalScore(
+  event: Pick<
+    BsdLiveEvent,
+    "home_score" | "away_score" | "extra_time_score"
+  >,
+): { home: number; away: number } | null {
+  if (
+    event.home_score === null ||
+    event.away_score === null ||
+    event.home_score === undefined ||
+    event.away_score === undefined
+  ) {
+    return null;
+  }
+  const extra = event.extra_time_score ?? { home: 0, away: 0 };
+  return {
+    home: event.home_score + extra.home,
+    away: event.away_score + extra.away,
+  };
+}
 
 /**
  * Convierte el status BSD a MatchStatus de Prisma.

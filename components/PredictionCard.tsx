@@ -153,14 +153,20 @@ export default function PredictionCard({
   );
   // String mirrors of the score inputs: allow empty while editing so the
   // keyboard doesn't close when the user clears the field to type a new value.
+  // When the user has NOT predicted yet, inputs start empty (null display)
+  // instead of "0–0", so an untouched match remains null and never gets saved.
   const [homeInputStr, setHomeInputStr] = useState(
-    String(existingPrediction?.homeScore ?? 0),
+    existingPrediction ? String(existingPrediction.homeScore) : "",
   );
   const [awayInputStr, setAwayInputStr] = useState(
-    String(existingPrediction?.awayScore ?? 0),
+    existingPrediction ? String(existingPrediction.awayScore) : "",
   );
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(!!existingPrediction);
+  // Tracks whether the user has touched any score for this match. Prevents the
+  // auto-save timer from persisting a phantom "0–0" prediction for matches the
+  // user never actually filled in.
+  const [hasEntered, setHasEntered] = useState(!!existingPrediction);
   const [error, setError] = useState<string | null>(null);
   const lastSavedRef = useRef(
     existingPrediction
@@ -227,6 +233,7 @@ export default function PredictionCard({
       autoSaveTimerRef.current = null;
     }
     if (isSaving || isDisabled) return;
+    if (!hasEntered) return;
     setError(null);
     // Actualizar ref ANTES del estado para que el efecto vea el nuevo valor
     const prevSaved = lastSavedRef.current;
@@ -287,7 +294,7 @@ export default function PredictionCard({
       autoSaveTimerRef.current = null;
     }
 
-    if (isDisabled || isSaving) return;
+    if (isDisabled || isSaving || !hasEntered) return;
 
     const hasChanged =
       !lastSavedRef.current ||
@@ -306,7 +313,7 @@ export default function PredictionCard({
         autoSaveTimerRef.current = null;
       }
     };
-  }, [homeScore, awayScore, isDisabled, isSaving]);
+  }, [homeScore, awayScore, isDisabled, isSaving, hasEntered]);
 
   const triggerBall = (side: "home" | "away") => {
     ballKeyRef.current += 1;
@@ -315,6 +322,7 @@ export default function PredictionCard({
 
   const incrementScore = (team: "home" | "away") => {
     if (isDisabled) return;
+    setHasEntered(true);
     if (team === "home") {
       triggerBall("home");
       setHomeScore((prev) => {
@@ -334,6 +342,7 @@ export default function PredictionCard({
 
   const decrementScore = (team: "home" | "away") => {
     if (isDisabled) return;
+    setHasEntered(true);
     if (team === "home") {
       setHomeScore((prev) => {
         const next = Math.max(prev - 1, 0);
@@ -370,6 +379,7 @@ export default function PredictionCard({
       if (clamped > homeScore) triggerBall("home");
       setHomeScore(clamped);
       setHomeInputStr(String(clamped));
+      setHasEntered(true);
     } else {
       if (value === "") {
         setAwayInputStr("");
@@ -379,21 +389,26 @@ export default function PredictionCard({
       if (clamped > awayScore) triggerBall("away");
       setAwayScore(clamped);
       setAwayInputStr(String(clamped));
+      setHasEntered(true);
     }
   };
 
   const handleInputBlur = (team: "home" | "away") => {
     if (team === "home") {
       if (homeInputStr === "") {
-        setHomeScore(0);
-        setHomeInputStr("0");
+        if (hasEntered) {
+          setHomeScore(0);
+          setHomeInputStr("0");
+        }
       } else {
         setHomeInputStr(String(homeScore));
       }
     } else {
       if (awayInputStr === "") {
-        setAwayScore(0);
-        setAwayInputStr("0");
+        if (hasEntered) {
+          setAwayScore(0);
+          setAwayInputStr("0");
+        }
       } else {
         setAwayInputStr(String(awayScore));
       }
