@@ -166,6 +166,7 @@ interface LeaderboardByPhaseProps {
   currentUserId: string;
   finishedMatchIds: string[];
   closedMatchIds?: string[];
+  startedMatchIds?: string[];
   finishedMatchDayMap?: Record<string, string>;
   paidCounts: { T1: number; T2: number; T3: number };
   liveMatchIds?: string[];
@@ -337,6 +338,7 @@ export default function LeaderboardByPhase({
   currentUserId,
   finishedMatchIds,
   closedMatchIds = finishedMatchIds,
+  startedMatchIds = [],
   finishedMatchDayMap = {},
   paidCounts,
   liveMatchIds = [],
@@ -503,6 +505,11 @@ export default function LeaderboardByPhase({
     [closedMatchIds],
   );
 
+  const startedSet = useMemo(
+    () => new Set(startedMatchIds),
+    [startedMatchIds],
+  );
+
   const leaderboard = useMemo(() => {
     const phasesForTorneo = TORNEO_PHASES[selectedTorneo] ?? [];
     const visibleUsers = showUnpaidUsers
@@ -522,11 +529,13 @@ export default function LeaderboardByPhase({
         const exact = preds.filter((p) => p.points === 5).length;
         const correct = preds.filter((p) => p.points === 3).length;
         // Only count wrong predictions for *completed* matches
+        // Fallido: 0 puntos y el partido ya inició (en vivo o terminado).
+        // Pendiente: 0 puntos y el partido aún no empieza.
         const wrong = preds.filter(
-          (p) => p.points === 0 && closedSet.has(p.matchId),
+          (p) => p.points === 0 && startedSet.has(p.matchId),
         ).length;
         const pending = preds.filter(
-          (p) => p.points === 0 && !closedSet.has(p.matchId),
+          (p) => p.points === 0 && !startedSet.has(p.matchId),
         ).length;
         return { ...user, points, preds, exact, correct, wrong, pending };
       })
@@ -534,7 +543,7 @@ export default function LeaderboardByPhase({
 
     const rankMap = getCompetitionRank(sorted);
     return sorted.map((u) => ({ ...u, rank: rankMap.get(u.id) ?? 0 }));
-  }, [users, selectedTorneo, closedSet, showUnpaidUsers]);
+  }, [users, selectedTorneo, startedSet, showUnpaidUsers]);
 
   // Guardar posiciones actuales en localStorage SOLO una vez al montar
   // para que en la próxima visita se puedan comparar con las nuevas posiciones
@@ -1123,8 +1132,9 @@ export default function LeaderboardByPhase({
                                   const isFinished = closedSet.has(
                                     pred.matchId,
                                   );
+                                  const isStarted = startedSet.has(pred.matchId);
                                   const isPending =
-                                    !isFinished && pred.points === 0;
+                                    !isStarted && !isFinished;
                                   return (
                                     <div
                                       key={pred.matchId}
@@ -1154,7 +1164,7 @@ export default function LeaderboardByPhase({
                                         <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
                                       ) : pred.points === 3 ? (
                                         <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
-                                      ) : isFinished ? (
+                                      ) : isStarted || isFinished ? (
                                         <XCircle className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
                                       ) : (
                                         <span className="h-3.5 w-3.5 flex-shrink-0 text-center text-[10px] leading-none">

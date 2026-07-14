@@ -444,6 +444,7 @@ export default async function LeaderboardPage() {
           currentUserId={session.user?.id ?? ""}
           finishedMatchIds={finishedMatchIdSet}
           closedMatchIds={closedMatchIdSet}
+          startedMatchIds={Array.from(startedMatchIdSet)}
           finishedMatchDayMap={finishedMatchDayMap}
           paidCounts={{ T1: paidGroupStageCount, T2: paidKnockoutCount, T3: paidFinalsCount }}
           liveMatchIds={Array.from(liveMatchIdSet)}
