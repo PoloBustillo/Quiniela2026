@@ -139,6 +139,18 @@ export async function PUT(request: Request) {
       );
     }
 
+    // Validar que FINISHED solo se asigne si pasaron 2 horas desde el inicio del partido
+    let effectiveStatus = status;
+    if (status === "FINISHED") {
+      const effectiveMatchDate = parsedMatchDate || (await prisma.match.findUnique({ where: { id }, select: { matchDate: true } }))?.matchDate;
+      if (effectiveMatchDate) {
+        const twoHoursAfter = effectiveMatchDate.getTime() + 120 * 60 * 1000;
+        if (Date.now() < twoHoursAfter) {
+          effectiveStatus = "LIVE";
+        }
+      }
+    }
+
     const match = await prisma.match.update({
       where: { id },
       data: {
@@ -146,7 +158,7 @@ export async function PUT(request: Request) {
         ...(awayTeamId && { awayTeamId }),
         ...(homeScore !== undefined && { homeScore }),
         ...(awayScore !== undefined && { awayScore }),
-        ...(status && { status }),
+        ...(effectiveStatus && { status: effectiveStatus }),
         ...(parsedMatchDate && { matchDate: parsedMatchDate }),
         ...(stadium !== undefined && { stadium }),
         ...(city !== undefined && { city }),

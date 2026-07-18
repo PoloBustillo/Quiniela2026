@@ -346,7 +346,11 @@ export function AllMatchesManager() {
       if (edits.city !== undefined && edits.city !== originalMatch.city) {
         updateData.city = edits.city;
       }
-      if (edits.status && edits.status !== originalMatch.status) {
+      if (scoresWereEdited) {
+        const matchDate = new Date(originalMatch.matchDate);
+        const twoHoursAfter = matchDate.getTime() + 120 * 60 * 1000;
+        updateData.status = Date.now() >= twoHoursAfter ? "FINISHED" : "LIVE";
+      } else if (edits.status && edits.status !== originalMatch.status) {
         updateData.status = edits.status;
       }
       if (edits.bsdEventId !== undefined) {
@@ -1126,7 +1130,6 @@ export function AllMatchesManager() {
                                   e.target.value === ""
                                     ? null
                                     : parseInt(e.target.value),
-                                status: "FINISHED",
                               })
                             }
                             className="w-20 text-center"
@@ -1147,7 +1150,6 @@ export function AllMatchesManager() {
                                   e.target.value === ""
                                     ? null
                                     : parseInt(e.target.value),
-                                status: "FINISHED",
                               })
                             }
                             className="w-20 text-center"
@@ -1633,7 +1635,6 @@ export function AllMatchesManager() {
                                   : parseInt(e.target.value);
                               updateKnockoutMatch(match.id, {
                                 homeScore,
-                                status: "FINISHED",
                               });
                             }}
                             className="w-20 text-center"
@@ -1655,7 +1656,6 @@ export function AllMatchesManager() {
                                   : parseInt(e.target.value);
                               updateKnockoutMatch(match.id, {
                                 awayScore,
-                                status: "FINISHED",
                               });
                             }}
                             className="w-20 text-center"
